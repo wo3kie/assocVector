@@ -2,6 +2,7 @@
 #define ASSOC_VECTOR_HPP
 
 #include <algorithm>
+#include <functional>
 #include <cmath>
 
 namespace detail
@@ -35,6 +36,8 @@ namespace detail
     //
     template< typename _Type >
     bool isBetween( _Type const & begin, _Type const & value, _Type const & end ){
+        assert( begin <= end );
+        
         return ( value < begin ) == false && ( end < value ) == false;
     }
 
@@ -194,7 +197,7 @@ namespace detail
     };
 
     template< typename _T, typename _Cmp >
-    void mergeInplace( Array< _T > & storage, Array< _T > & buffer, _Cmp const & cmp )
+    void mergeInplace( Array< _T > & storage, Array< _T > & buffer, _Cmp const & cmp = _Cmp() )
     {
         assert( storage.size + buffer.size <= storage.capacity );
 
