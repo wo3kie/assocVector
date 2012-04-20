@@ -10,7 +10,7 @@ The AssocVector is a container similar to loki::AssocVector created by Andrei Al
 # Project Homepage...
 ################################################################################
 
-http://lukaszczerwinski.pl/assoc_vector.en.html (not yet prepared)
+http://lukaszczerwinski.pl/assoc_vector.en.html
 
 
 
@@ -25,19 +25,114 @@ There is absolutely no guarantee that AssocVector will work without any errors a
 
 
 ################################################################################
+# How to use it...
+################################################################################
+1) Interface of AssocVector is almost the same like std::map
+
+    AssocVector< std::string, int > av;
+
+    av[ "c++" ] = 1983;
+    av[ "java" ] = 1995;
+    av[ "scala" ] = 2001;
+
+    assert( av[ "c++" ] == 1983 );
+    assert( av.count( "java" ) == 1 );
+    assert( av.find( "scala" ) != av.end() );
+
+2) Insert operation is buffered that's why may be much faster
+
+    AssocVector< std::string, int > av;
+
+    for( ... ){
+        av.insert( AssocVector::value_type( key, value ) );
+    }
+
+3) merge operation enforce merging buffer with main storage, after it AssocVector is like an array
+
+    AssocVector< std::string, int > av;
+
+    for( ... ){
+        av.insert( AssocVector::value_type( key, value ) );
+    }
+
+    av.merge();
+
+4) Of course AssocVector works fine even if merge operation is never called.
+
+
+
+################################################################################
+# How it works...
+################################################################################
+
+AssocVector is composed of two arrays, first called storage, second called buffer. Both arrays are keep sorted all the time. Insert operation puts new items into buffer. Since buffer is much shorter than storage it is quite effective. When buffer is completely full it is merged into storage. This operation may be longer however it is performed only sometimes.
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+|   |   |   |
++---+---+---+
+
+After insert 2
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 2 |   |   |
++---+---+---+
+
+After insert 3
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 2 | 3 |   |
++---+---+---+
+
+After insert 49
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 2 | 3 | 49|
++---+---+---+
+
+After insert 5
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 2 | 3 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 49| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 5 |   |   |
++---+---+---+
+
+All the time size of buffer is kept as sqrt( storage.size() / 2 ) which is an optimal coefficient for it.
+
+
+
+################################################################################
 # Requirements...
 ################################################################################
 
 AssocVector depends on following externals:
-• stl
+• C++/STL
 
 
 
 ################################################################################
-#Bugs...
+# Bugs...
 ################################################################################
 There are no bugs. There are "features".
 
+
+
+################################################################################
+# Support and further development...
+################################################################################
+
+Fixing all potential bugs
+Optimise operator[] operation
+Optimise erase operation
+Support for move semantic (and other C++11 features)
 
 
 ################################################################################
