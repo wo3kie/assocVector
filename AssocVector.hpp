@@ -1594,7 +1594,7 @@ std::size_t AssocVector< _Key, _Mapped, _Cmp, _Alloc >::calculateNewBufferCapaci
     std::size_t storageSize
 )
 {
-    return static_cast< std::size_t >( sqrt( storageSize / 2 ) );
+    return static_cast< std::size_t >( sqrt( storageSize ));
 }
 
 template<
@@ -1685,8 +1685,8 @@ typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::allocateAndConstructMemory( std::size_t capacity )
 {
     typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator result
-        = static_cast< typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >
-            ::_Storage::iterator >( _allocator.allocate( capacity ) );
+        = static_cast< typename AssocVector< _Key, _Mapped, _Cmp, _Alloc > ::_Storage::iterator >
+            ( _allocator.allocate( capacity ) );
 
     util::construct_range( result, result + capacity );
 
