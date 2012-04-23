@@ -958,8 +958,14 @@ void test_operator_index_1()
     assert( av.find( 1 ) != av.end() );
     assert( av.find( 1 )->second == 1 );
 
-    av[ 1 ] = 2;
-    assert( av[ 1 ] == 2 );
+    av[ 1 ] = 11;
+    assert( av[ 1 ] == 11 );
+    
+    av[ 3 ] = 33;
+    assert( av[ 3 ] == 33 );
+    
+    av[ 2 ] = 22;
+    assert( av[ 2 ] == 22 );
 }
 
 void test_operator_index_2()

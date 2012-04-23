@@ -11,7 +11,7 @@ namespace util
     void dump( _Iterator begin, _Iterator end, std::ostream & out = std::cout )
     {
         out << '[';
-        
+
         if( begin != end )
         {
             _Iterator current = begin;
@@ -19,12 +19,12 @@ namespace util
             out << '(' << current->first << ',' << current->second << ')';
 
             ++ current;
-            
+
             for( ; current != end ; ++ current ){
                 out << '(' << current->first << ',' << current->second << ')';
             }
         }
-        
+
         out << ']';
     }
 }
@@ -736,7 +736,7 @@ public:
     inline ~AssocVector();
 
     AssocVector operator=( AssocVector const & other );
-    
+
     void reserve( std::size_t newCapacity );
 
     inline iterator begin();
@@ -783,16 +783,11 @@ private:
     typename _Storage::iterator findImpl( _Storage & container, key_type const & k );
     typename _Storage::const_iterator findImpl( _Storage const & container, key_type const & k )const;
 
-    inline typename _Storage::iterator findInStorage( key_type const & k );
-    inline typename _Storage::const_iterator findInStorage( key_type const & k )const;
-
-    inline typename _Storage::iterator findInBuffer( key_type const & k );
-    inline typename _Storage::const_iterator findInBuffer( key_type const & k )const;
-
     bool checkForUpdateStorage( key_type const & k, mapped_type const & m );
     bool checkForUpdateBuffer( key_type const & k, mapped_type const & m );
 
-    bool findOrInsertToBuffer( key_type const & k, mapped_type const & m );
+    std::pair< bool, typename _Storage::iterator >
+    findOrInsertToBuffer( key_type const & k, mapped_type const & m );
 
     void mergeImpl();
 
@@ -837,19 +832,19 @@ bool operator==(
 
     typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator begin = lhs.begin();
     typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator const end = lhs.end();
-    
+
     typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator begin2 = rhs.begin();
-    
+
     for( /*empty*/ ; begin != end ; ++ begin, ++ begin2 ){
         if( begin->first != begin2->first ){
             return false;
         }
-        
+
         if( begin->second != begin2->second ){
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -896,7 +891,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::AssocVector(
     }
 
     std::size_t const defaultMinimalSize = 2*(2*2);
-    
+
     reserve( defaultMinimalSize );
 }
 
@@ -965,7 +960,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator=( AssocVector const & other
 {
     AssocVector< _Key, _Mapped, _Cmp, _Alloc > temp( other );
     temp.swap( * this );
-    
+
     return * this;
 }
 
@@ -1130,11 +1125,15 @@ bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & valu
         return true;
     }
 
-    if( findInStorage( k ) != _storage.end() ){
+    if( _buffer.full() ){
+        merge();
+    }
+
+    if( findImpl( _storage, k ) != _storage.end() ){
         return false;
     }
 
-    return findOrInsertToBuffer( k, m );
+    return findOrInsertToBuffer( k, m ).first;
 }
 
 template<
@@ -1209,7 +1208,7 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
 {
-    typename _Storage::iterator const foundInStorage = findInStorage( k );
+    typename _Storage::iterator const foundInStorage = findImpl( _storage, k );
 
     if( foundInStorage != _storage.end() ){
         return iterator(
@@ -1221,7 +1220,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
         );
     }
 
-    typename _Storage::iterator const foundInBuffer = findInBuffer( k );
+    typename _Storage::iterator const foundInBuffer = findImpl( _buffer, k );
 
     if( foundInBuffer != _buffer.end() ){
         return iterator(
@@ -1245,7 +1244,7 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )const
 {
-    typename _Storage::const_iterator const foundInStorage = findInStorage( k );
+    typename _Storage::const_iterator const foundInStorage = findImpl( _storage, k );
 
     if( foundInStorage != _storage.end() ){
         return const_iterator(
@@ -1257,7 +1256,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )const
         );
     }
 
-    typename _Storage::const_iterator const foundInBuffer = findInBuffer( k );
+    typename _Storage::const_iterator const foundInBuffer = findImpl( _buffer, k );
 
     if( foundInBuffer != _buffer.end() ){
         return const_iterator(
@@ -1296,16 +1295,35 @@ template<
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reference
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
-{// !! not optimized at all !!
-    iterator found = find( k );
-
-    if( found != end() ){
-        return found->second;
+{
+    if( _storage.empty() || _cmp( _storage.back().first, k ) ){
+        push_back( k, mapped_type() );
+        return _storage.back().second;
     }
 
-    insert( value_type( k, mapped_type() ) );
+    if( _buffer.full() ){
+        merge();
+    }
 
-    return find( k )->second;
+    {// check in _storage
+        typename _Storage::iterator const greaterEqualInStorage
+            = std::lower_bound(
+                  _storage.begin()
+                , _storage.end()
+                , k
+                , value_comp()
+            );
+
+        if( greaterEqualInStorage != _storage.end() )
+        {
+            if( _cmp( k, greaterEqualInStorage->first ) == false )
+            {
+                return greaterEqualInStorage->second;
+            }
+        }
+    }
+
+    return findOrInsertToBuffer( k, mapped_type() ).second->second;
 }
 
 template<
@@ -1341,13 +1359,13 @@ template<
 void
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
 {//todo: optimise
-    typename _Storage::iterator const foundInStorage = findInStorage( k );
+    typename _Storage::iterator const foundInStorage = findImpl( _storage, k );
 
     if( foundInStorage != _storage.end() ){
         eraseImpl( _storage, foundInStorage );
     }
 
-    typename _Storage::iterator const foundInBuffer = findInBuffer( k );
+    typename _Storage::iterator const foundInBuffer = findImpl( _buffer, k );
 
     if( foundInBuffer != _buffer.end() ){
         eraseImpl( _buffer, foundInBuffer );
@@ -1456,56 +1474,12 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findInStorage( _Key const & k ){
-    return findImpl( _storage, k );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findInStorage( _Key const & k )const{
-    return findImpl( _storage, k );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findInBuffer( _Key const & k ){
-    return findImpl( _buffer, k );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findInBuffer( _Key const & k )const{
-    return findImpl( _buffer, k );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
 bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::checkForUpdateStorage(
       _Key const & k
     , _Mapped const & m
 )
 {
-    typename _Storage::iterator const greaterEqualInStorage = findInStorage( k );
+    typename _Storage::iterator const greaterEqualInStorage = findImpl( _storage, k );
 
     if( greaterEqualInStorage == _storage.end() ){
         return false;
@@ -1527,7 +1501,7 @@ bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::checkForUpdateBuffer(
     , _Mapped const & m
 )
 {
-    typename _Storage::iterator const greaterEqualInBuffer = findInStorage( k );
+    typename _Storage::iterator const greaterEqualInBuffer = findImpl( _storage, k );
 
     if( greaterEqualInBuffer == _buffer.end() ){
         return false;
@@ -1543,7 +1517,8 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
+std::pair< bool, typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator >
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
       _Key const & k
     , _Mapped const & m
 )
@@ -1556,13 +1531,18 @@ bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
             , value_comp()
         );
 
+    typename _Storage::iterator resultIterator;
+
     if( greaterEqualInBuffer == _buffer.end() )
     {
         _buffer.data[ _buffer.size ] = value_type( k, m );
+
         _buffer.size += 1;
+        
+        return std::make_pair( true, _buffer.data + _buffer.size - 1 );
     }
     else if( _cmp( k, greaterEqualInBuffer->first ) == false ){
-        return false;
+        return std::make_pair( false, greaterEqualInBuffer );
     }
     else
     {
@@ -1572,16 +1552,12 @@ bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
             , greaterEqualInBuffer + 1
         );
 
-        * greaterEqualInBuffer =value_type_private( k, m );
+        * greaterEqualInBuffer = value_type_private( k, m );
 
         _buffer.size += 1;
+        
+        return std::make_pair( true, greaterEqualInBuffer );
     }
-
-    if( _buffer.full() ){
-        merge();
-    }
-
-    return true;
 }
 
 template<
