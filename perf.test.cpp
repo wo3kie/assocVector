@@ -1,5 +1,6 @@
 #include <ctime>
 #include <iostream>
+#include <map>
 
 #include <loki/AssocVector.h>
 
@@ -8,6 +9,8 @@
 struct S{
     S & operator=( S const & other ){
         ++counter;
+
+        return * this;
     }
 
     static int counter;
@@ -67,6 +70,9 @@ template< typename T, typename K >
 void merge( Loki::AssocVector< T, K > & ){}
 
 template< typename T, typename K >
+void merge( std::map< T, K > & ){}
+
+template< typename T, typename K >
 void merge( AssocVector< T, K > & av ){ av.merge(); }
 
 template<
@@ -76,13 +82,13 @@ template<
 void test_find( std::string const & message )
 {
     _Storage< int, S > av;
-    
+
     for( int i = 0 ; i < _N ; ++i ){
         av.insert( std::make_pair( i, S() ) );
     }
 
     merge( av );
-    
+
     std::clock_t start( std::clock() );
 
     for( int i = 0 ; i < _N ; ++i ){
@@ -103,33 +109,71 @@ int main()
 {
     test_push_front< AssocVector, 1000 >( "AssocVector.push_front" );
     test_push_front< Loki::AssocVector, 1000 >( "Loki::AssocVector.push_front" );
-    
+    test_push_front< std::map, 1000 >( "std::map.push_front" );
+
+    std::cout << std::endl;
+
     test_push_front< AssocVector, 10000 >( "AssocVector.push_front" );
     test_push_front< Loki::AssocVector, 10000 >( "Loki::AssocVector.push_front" );
+    test_push_front< std::map, 10000 >( "std::map.push_front" );
+
+    std::cout << std::endl;
 
     test_push_front< AssocVector, 100000 >( "AssocVector.push_front" );
     test_push_front< Loki::AssocVector, 100000 >( "Loki::AssocVector.push_front" );
-    
+    test_push_front< std::map, 100000 >( "std::map.push_front" );
+
     std::cout << std::endl;
-    
+
+    test_push_front< AssocVector, 500000 >( "AssocVector.push_front" );
+    //test_push_front< Loki::AssocVector, 500000 >( "Loki::AssocVector.push_front" );
+    test_push_front< std::map, 500000 >( "std::map.push_front" );
+
+    std::cout << std::endl;
+
     test_push_back< AssocVector, 100000 >( "AssocVector.push_back" );
     test_push_back< Loki::AssocVector, 100000 >( "Loki::AssocVector.push_back" );
-    
+    test_push_back< std::map, 100000 >( "std::map.push_back" );
+
+    std::cout << std::endl;
+
     test_push_back< AssocVector, 1000000 >( "AssocVector.push_back" );
     test_push_back< Loki::AssocVector, 1000000 >( "Loki::AssocVector.push_back" );
+    test_push_back< std::map, 1000000 >( "std::map.push_back" );
+
+    std::cout << std::endl;
 
     test_push_back< AssocVector, 2000000 >( "AssocVector.push_back" );
     test_push_back< Loki::AssocVector, 2000000 >( "Loki::AssocVector.push_back" );
-    
+    test_push_back< std::map, 2000000 >( "std::map.push_back" );
+
     std::cout << std::endl;
-    
+
+    test_push_back< AssocVector, 5000000 >( "AssocVector.push_back" );
+    test_push_back< Loki::AssocVector, 5000000 >( "Loki::AssocVector.push_back" );
+    test_push_back< std::map, 5000000 >( "std::map.push_back" );
+
+    std::cout << std::endl;
+
     test_find< AssocVector, 100000 >( "AssocVector.find" );
     test_find< Loki::AssocVector, 100000 >( "Loki::AssocVector.find" );
-    
+    test_find< std::map, 100000 >( "std::map.find" );
+
+    std::cout << std::endl;
+
     test_find< AssocVector, 1000000 >( "AssocVector.find" );
     test_find< Loki::AssocVector, 1000000 >( "Loki::AssocVector.find" );
+    test_find< std::map, 1000000 >( "std::map.find" );
+
+    std::cout << std::endl;
 
     test_find< AssocVector, 2000000 >( "AssocVector.find" );
     test_find< Loki::AssocVector, 2000000 >( "Loki::AssocVector.find" );
-    
+    test_find< std::map, 2000000 >( "std::map.find" );
+
+    std::cout << std::endl;
+
+    test_find< AssocVector, 5000000 >( "AssocVector.find" );
+    test_find< Loki::AssocVector, 5000000 >( "Loki::AssocVector.find" );
+    test_find< std::map, 5000000 >( "std::map.find" );
 }
