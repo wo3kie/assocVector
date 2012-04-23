@@ -1583,7 +1583,7 @@ std::size_t AssocVector< _Key, _Mapped, _Cmp, _Alloc >::calculateNewStorageCapac
     std::size_t storageSize
 )
 {
-    return static_cast< std::size_t >( 1.5 * storageSize );
+    return static_cast< std::size_t >( 2 * storageSize );
 }
 
 template<
