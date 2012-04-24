@@ -936,16 +936,12 @@ template<
 >
 void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserve( std::size_t newStorageCapacity )
 {
-    newStorageCapacity = std::max< std::size_t >( 8, newStorageCapacity );
-
     if( newStorageCapacity <= _storage.capacity ){
         return;
     }
 
     reserveImpl( _storage, newStorageCapacity );
-
-    std::size_t const newBufferCapacity = calculateNewBufferCapacity( newStorageCapacity );
-    reserveImpl( _buffer, newBufferCapacity );
+    reserveImpl( _buffer, calculateNewBufferCapacity( newStorageCapacity ) );
 }
 
 template<
@@ -1095,9 +1091,13 @@ bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & valu
     if( _buffer.full() ){
         merge();
     }
-
-    if( find( _storage, k ) != _storage.end() ){
-        return false;
+    
+    {//scope
+        typename _Storage::iterator const found = find( _storage, k );
+        
+        if( found != _storage.end() ){
+            return false;
+        }
     }
 
     return findOrInsertToBuffer( k, m ).first;
@@ -1151,11 +1151,7 @@ template<
 >
 bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::update( _Key const & k, _Mapped const & m )
 {
-    if( checkForUpdateStorage( _storage, k, m ) ){
-        return true;
-    }
-
-    return update( _buffer, k, m );
+    return update( _storage, k, m ) || update( _buffer, k, m );
 }
 
 template<
@@ -1263,27 +1259,15 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
     if( _buffer.full() ){
         merge();
     }
-
-    {// check in _storage
-        typename _Storage::iterator const greaterEqual
-            = std::lower_bound(
-                  _storage.begin()
-                , _storage.end()
-                , k
-                , value_comp()
-            );
-
-        if( greaterEqual != _storage.end() )
-        {
-            bool const isEqual = _cmp( k, greaterEqual->first ) == false;
+    
+    {//scope
+        typename _Storage::iterator const found = find( _storage, k );
         
-            if( isEqual )
-            {
-                return greaterEqual->second;
-            }
+        if( found != _storage.end() ){
+            return found->second;
         }
     }
-
+    
     return findOrInsertToBuffer( k, mapped_type() ).second->second;
 }
 
@@ -1451,13 +1435,13 @@ bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::update(
     , _Mapped const & m
 )
 {
-    typename _Storage::iterator const greaterEqualInBuffer = find( storage, k );
+    typename _Storage::iterator const greaterEqual = find( storage, k );
 
-    if( greaterEqualInBuffer == _buffer.end() ){
+    if( greaterEqual == storage.end() ){
         return false;
     }
 
-    greaterEqualInBuffer->second = m;
+    greaterEqual->second = m;
     
     return true;
 }
@@ -1492,13 +1476,9 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
     }
     else
     {
-        bool const isEqual = _cmp( k, greaterEqual->first ) == false;
+        bool const isGreater = _cmp( k, greaterEqual->first );
         
-        if( isEqual )
-        {
-            return std::make_pair( false, greaterEqual );
-        }
-        else
+        if( isGreater )
         {
             util::copyRange(
                   greaterEqual
@@ -1512,6 +1492,10 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
             
             return std::make_pair( true, greaterEqual );
         }
+        else
+        {
+            return std::make_pair( false, greaterEqual );
+        }        
     }
 }
 
