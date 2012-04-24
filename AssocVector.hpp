@@ -210,86 +210,50 @@ namespace util
 }
 
 namespace util
-{
+{    
     template< typename _T, typename _Cmp >
     void mergeInplace(
           util::Array< _T > & storage
         , util::Array< _T > & buffer
         , _Cmp const & cmp = _Cmp()
     )
-    {//todo: simplify -> backward_merge
+    {
 
         assert( storage.size + buffer.size <= storage.capacity );
 
-        if( buffer.size == 0 ){
-            return;
-        }
+        typedef typename util::Array< _T >::iterator Iterator;
+        
+        Iterator whereInsertInStorage = storage.begin() + storage.size + buffer.size - 1;
+        
+        Iterator currentInStorage = storage.begin() + storage.size - 1;
+        Iterator endInStorage = storage.begin() - 1;
 
-        if( storage.size == 0 || cmp( *( storage.end() - 1 ), * buffer.data ) )
+        Iterator currentInBuffer = buffer.begin() + buffer.size - 1;
+        Iterator const endInBuffer = buffer.begin() - 1;
+        
+        while( currentInBuffer != endInBuffer )
         {
-            util::copyRange( buffer.begin(), buffer.end(), storage.end() );
-
-            storage.size += buffer.size;
-            buffer.size = 0;
-
-            return;
+            if(
+                   currentInStorage == endInStorage
+                || cmp( * currentInStorage, * currentInBuffer )
+            )
+            {
+                * whereInsertInStorage = * currentInBuffer;
+                
+                -- currentInBuffer;
+                -- whereInsertInStorage;
+            }
+            else
+            {
+                * whereInsertInStorage = * currentInStorage;
+                
+                -- currentInStorage;
+                -- whereInsertInStorage;
+            }            
         }
 
-        typename util::Array< _T >::iterator storageTerminator = storage.end();
-
-        while( buffer.size != 0 )
-        {
-            _T const & item = buffer.back();
-
-            typename util::Array< _T >::iterator greaterEqual
-                = std::lower_bound(
-                      storage.begin()
-                    , storageTerminator
-                    , item
-                    , cmp
-                );
-
-            if( greaterEqual == storage.begin() )
-            {
-                util::copyRange(
-                      storage.begin()
-                    , storageTerminator
-                    , storage.begin() + buffer.size
-                );
-
-                util::copyRange(
-                      buffer.begin()
-                    , buffer.end()
-                    , storage.begin()
-                );
-
-                storage.size += buffer.size;
-                buffer.size = 0;
-
-                return;
-            }
-            else if( greaterEqual == storageTerminator )
-            {
-                greaterEqual[ buffer.size - 1 ] = item;
-
-                storage.size += 1;
-                buffer.size -= 1;
-            }
-            else{
-                util::copyRange(
-                      greaterEqual
-                    , storageTerminator
-                    , greaterEqual + buffer.size
-                );
-
-                greaterEqual[ buffer.size - 1 ] = item;
-
-                storage.size += 1;
-                buffer.size -= 1;
-
-                storageTerminator = greaterEqual;
-            }
-        }
+        storage.size += buffer.size;
+        buffer.size = 0;
     }
 }
 
@@ -789,7 +753,7 @@ private:
     std::pair< bool, typename _Storage::iterator >
     findOrInsertToBuffer( key_type const & k, mapped_type const & m );
 
-    void mergeImpl();
+    void createNewStorageAndMerge();
 
     void eraseImpl( _Storage & container, typename _Storage::iterator pos );
 
@@ -1280,7 +1244,7 @@ template<
 void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::merge()
 {
     if( _storage.size + _buffer.size >= _storage.capacity ){
-        mergeImpl();
+        createNewStorageAndMerge();
     }
     else{
         util::mergeInplace( _storage, _buffer, value_comp() );
@@ -1590,7 +1554,7 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::mergeImpl()
+void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::createNewStorageAndMerge()
 {
     std::size_t const newStorageCapacity = calculateNewStorageCapacity( _storage.capacity );
 

@@ -249,6 +249,9 @@ void test_mergeInplace_1()
 
         assert( a1.size == 4 );
         assert( a1.capacity == 10 );
+        
+        assert( a2.size == 0 );
+        assert( a2.capacity == 10 );
 
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
@@ -281,6 +284,9 @@ void test_mergeInplace_1()
         assert( a1.size == 4 );
         assert( a1.capacity == 10 );
 
+        assert( a2.size == 0 );
+        assert( a2.capacity == 10 );
+        
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -320,6 +326,9 @@ void test_mergeInplace_1()
         assert( a1.size == 10 );
         assert( a1.capacity == 10 );
 
+        assert( a2.size == 0 );
+        assert( a2.capacity == 10 );
+        
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -365,6 +374,9 @@ void test_mergeInplace_1()
         assert( a1.size == 10 );
         assert( a1.capacity == 10 );
 
+        assert( a2.size == 0 );
+        assert( a2.capacity == 10 );
+        
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -410,6 +422,9 @@ void test_mergeInplace_1()
         assert( a1.size == 10 );
         assert( a1.capacity == 10 );
 
+        assert( a2.size == 0 );
+        assert( a2.capacity == 10 );
+        
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -455,6 +470,9 @@ void test_mergeInplace_1()
         assert( a1.size == 10 );
         assert( a1.capacity == 10 );
 
+        assert( a2.size == 0 );
+        assert( a2.capacity == 10 );
+        
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -500,6 +518,9 @@ void test_mergeInplace_1()
         assert( a1.size == 10 );
         assert( a1.capacity == 10 );
 
+        assert( a2.size == 0 );
+        assert( a2.capacity == 10 );
+        
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -543,6 +564,9 @@ void test_mergeInplace_2()
     assert( storage.capacity == 10 );
     assert( storage.size == 8 );
 
+    assert( buffer.size == 0 );
+    assert( buffer.capacity == 3 );
+    
     assert( storage.data[0].first == 3 );
     assert( storage.data[1].first == 4 );
     assert( storage.data[2].first == 5 );
@@ -572,7 +596,7 @@ void test_mergeInplace_3()
 
     buffer.data = new std::pair< int, int >[ 3 ];
     buffer.size = 0;
-    buffer.capacity = 3;
+    buffer.capacity = 15;
 
     for( int i = 23 ; i < 26 ; ++ i ){
         buffer.data[ buffer.size ++ ] = std::pair< int, int >( i, 0 );
@@ -582,6 +606,9 @@ void test_mergeInplace_3()
 
     assert( storage.capacity == 10 );
     assert( storage.size == 8 );
+
+    assert( buffer.size == 0 );
+    assert( buffer.capacity == 15 );
 
     assert( storage.data[0].first == 10 );
     assert( storage.data[1].first == 11 );
@@ -612,7 +639,7 @@ void test_mergeInplace_4()
 
     buffer.data = new std::pair< int, int >[ 3 ];
     buffer.size = 0;
-    buffer.capacity = 3;
+    buffer.capacity = 10;
 
     for( int i = 13 ; i < 19 ; i += 2 ){
         buffer.data[ buffer.size ++ ] = std::pair< int, int >( i, 0 );
@@ -623,6 +650,9 @@ void test_mergeInplace_4()
     assert( storage.capacity == 10 );
     assert( storage.size == 8 );
 
+    assert( buffer.size == 0 );
+    assert( buffer.capacity == 10 );
+    
     assert( storage.data[0].first == 10 );
     assert( storage.data[1].first == 12 );
     assert( storage.data[2].first == 13 );
@@ -659,6 +689,9 @@ void test_mergeInplace_5()
     assert( storage.capacity == 10 );
     assert( storage.size == 5 );
 
+    assert( buffer.size == 0 );
+    assert( buffer.capacity == 3 );
+    
     assert( storage.data[0].first == 10 );
     assert( storage.data[1].first == 12 );
     assert( storage.data[2].first == 14 );
@@ -681,7 +714,7 @@ void test_mergeInplace_6()
 
     buffer.data = new std::pair< int, int >[ 3 ];
     buffer.size = 0;
-    buffer.capacity = 3;
+    buffer.capacity = 20;
 
     for( int i = 13 ; i < 19 ; i += 2 ){
         buffer.data[ buffer.size ++ ] = std::pair< int, int >( i, 0 );
@@ -692,6 +725,9 @@ void test_mergeInplace_6()
     assert( storage.capacity == 10 );
     assert( storage.size == 3 );
 
+    assert( buffer.size == 0 );
+    assert( buffer.capacity == 20 );
+    
     assert( storage.data[0].first == 13 );
     assert( storage.data[1].first == 15 );
     assert( storage.data[2].first == 17 );
@@ -719,6 +755,9 @@ void test_mergeInplace_7()
     assert( storage.capacity == 10 );
     assert( storage.size == 0 );
 
+    assert( buffer.size == 0 );
+    assert( buffer.capacity == 3 );
+    
     delete [] storage.data;
     delete [] buffer.data;
 }
@@ -753,7 +792,6 @@ void test_insert_in_random_order()
 {
     typedef AssocVector< int, int > AssocVector;
     AssocVector av;
-
 
     av.insert( AssocVector::value_type( 10, 0 ) );
     av.insert( AssocVector::value_type( 9, 0 ) );
