@@ -1531,8 +1531,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
             , value_comp()
         );
 
-    typename _Storage::iterator resultIterator;
-
     if( greaterEqualInBuffer == _buffer.end() )
     {
         _buffer.data[ _buffer.size ] = value_type( k, m );
