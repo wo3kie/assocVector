@@ -1265,7 +1265,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
     }
 
     {// check in _storage
-        typename _Storage::iterator const greaterEqualInStorage
+        typename _Storage::iterator const greaterEqual
             = std::lower_bound(
                   _storage.begin()
                 , _storage.end()
@@ -1273,11 +1273,13 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
                 , value_comp()
             );
 
-        if( greaterEqualInStorage != _storage.end() )
+        if( greaterEqual != _storage.end() )
         {
-            if( _cmp( k, greaterEqualInStorage->first ) == false )
+            bool const isEqual = _cmp( k, greaterEqual->first ) == false;
+        
+            if( isEqual )
             {
-                return greaterEqualInStorage->second;
+                return greaterEqual->second;
             }
         }
     }
@@ -1385,14 +1387,19 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Storage & container, key_type
             , value_comp()
         );
 
-    if(
-           greaterEqual == container.end()
-        || _cmp( k, greaterEqual->first ) == true 
-    ){
+    if( greaterEqual == container.end() ){
         return container.end();
     }
-    else{
-        return greaterEqual;
+    else
+    {
+        bool const isGreater = _cmp( k, greaterEqual->first );
+        
+        if( isGreater ){
+            return container.end();
+        }
+        else{
+            return greaterEqual;
+        }
     }
 }
 
@@ -1416,14 +1423,19 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find(
             , value_comp()
         );
 
-    if(
-           greaterEqual == container.end()
-        || _cmp( k, greaterEqual->first )
-    ){
+    if( greaterEqual == container.end() ){
         return container.end();
     }
-    else{
-        return greaterEqual;
+    else
+    {
+        bool const isGreater = _cmp( k, greaterEqual->first );
+        
+        if( isGreater ){
+            return container.end();
+        }
+        else{
+            return greaterEqual;
+        }
     }
 }
 
@@ -1462,7 +1474,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
     , _Mapped const & m
 )
 {
-    typename _Storage::iterator const greaterEqualInBuffer =
+    typename _Storage::iterator const greaterEqual =
         std::lower_bound(
               _buffer.begin()
             , _buffer.end()
@@ -1470,31 +1482,36 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
             , value_comp()
         );
 
-    if( greaterEqualInBuffer == _buffer.end() )
-    {// push back
+    if( greaterEqual == _buffer.end() )
+    {
         _buffer.data[ _buffer.size ] = value_type( k, m );
 
         _buffer.size += 1;
         
         return std::make_pair( true, _buffer.data + _buffer.size - 1 );
     }
-    else if( _cmp( k, greaterEqualInBuffer->first ) == false )
-    {// not found
-        return std::make_pair( false, greaterEqualInBuffer );
-    }
     else
-    {// insert in the middle
-        util::copyRange(
-              greaterEqualInBuffer
-            , _buffer.end()
-            , greaterEqualInBuffer + 1
-        );
-
-        * greaterEqualInBuffer = value_type_private( k, m );
-
-        _buffer.size += 1;
+    {
+        bool const isEqual = _cmp( k, greaterEqual->first ) == false;
         
-        return std::make_pair( true, greaterEqualInBuffer );
+        if( isEqual )
+        {
+            return std::make_pair( false, greaterEqual );
+        }
+        else
+        {
+            util::copyRange(
+                  greaterEqual
+                , _buffer.end()
+                , greaterEqual + 1
+            );
+
+            * greaterEqual = value_type_private( k, m );
+
+            _buffer.size += 1;
+            
+            return std::make_pair( true, greaterEqual );
+        }
     }
 }
 
