@@ -2,7 +2,7 @@
 # AssocVector...
 ################################################################################
 
-The AssocVector is a container similar to loki::AssocVector created by Andrei Alexandrescu. However 'insert' operation in significantly optimised. All the others operations should not be slower.
+The AssocVector is a container similar to Loki::AssocVector created by Andrei Alexandrescu. However 'insert' operation in significantly optimised. All the others operations should not be slower.
 
 
 
