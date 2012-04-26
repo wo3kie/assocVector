@@ -1516,11 +1516,6 @@ void test_erase_reverse_iterator()
 
 int main()
 {
-    test_erase_iterator();
-    test_erase_reverse_iterator();
-
-    return 0;
-
     test_CmpByFirst_1();
     test_CmpByFirst_2();
     test_CmpByFirst_3();
@@ -1556,6 +1551,9 @@ int main()
 
     test_erase_1();
     test_erase_2();
+    
+    test_erase_iterator();
+    test_erase_reverse_iterator();
 
     test_operator_index_1();
     test_operator_index_2();

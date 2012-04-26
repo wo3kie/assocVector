@@ -166,7 +166,7 @@ _Iterator last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp c
             return greaterEqual;
         }
     }
-    
+
     // we need to go one item backward
 
     // 6 8 10 13 17 19 20 21 22 24
@@ -1118,7 +1118,7 @@ public:
     value_compare value_comp()const{ return value_compare( _cmp ); }
 
     void merge();
-    
+
 private:
     //
     // find
@@ -1843,14 +1843,26 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
 
     if( foundInStorage != _storage.end() )
     {
-        util::insertSorted(
-              _erased
-            , typename _Storage::const_iterator( foundInStorage )
-            , std::less< typename _Storage::const_iterator >()
-        );
+        if(
+               _cmp( _storage.back().first, k ) == false
+            && _cmp( k, _storage.back().first ) == false
+        )
+        {
+            ( & _storage.back() ) -> ~value_type_mutable();
 
-        if( _erased.full() ){
-            util::eraseInplace( _storage, _erased );
+            _storage.size -= 1;
+        }
+        else
+        {
+            util::insertSorted(
+                  _erased
+                , typename _Storage::const_iterator( foundInStorage )
+                , std::less< typename _Storage::const_iterator >()
+            );
+
+            if( _erased.full() ){
+                util::eraseInplace( _storage, _erased );
+            }
         }
 
         return;
@@ -1875,17 +1887,26 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
     std::size_t const size = this->size();
 
     if( util::isBetween( _storage.begin(), pos.base(), _storage.end() ) )
-    {
-        util::insertSorted(
-              _erased
-            , typename _Storage::const_iterator( pos.base() )
-            , std::less< typename _Storage::const_iterator >()
-        );
+    {                
+        if( pos.base() + 1 == _storage.end() )
+        {
+            ( & _storage.back() ) -> ~value_type_mutable();
 
-        INVARIANT( size - 1 == this->size() );
+            _storage.size -= 1;
+        }
+        else
+        {
+            util::insertSorted(
+                  _erased
+                , typename _Storage::const_iterator( pos.base() )
+                , std::less< typename _Storage::const_iterator >()
+            );
 
-        if( _erased.full() ){
-            util::eraseInplace( _storage, _erased );
+            INVARIANT( size - 1 == this->size() );
+
+            if( _erased.full() ){
+                util::eraseInplace( _storage, _erased );
+            }
         }
 
         INVARIANT( size - 1 == this->size() );
