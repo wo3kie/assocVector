@@ -1332,6 +1332,30 @@ void test_iterators_iterate_not_empty_storage_empty_cache()
 
 int main()
 {
+    {
+        typedef AssocVector< int, int > AVII;
+        
+        AVII av;
+        
+        av[ 1 ] = 11;
+        av[ 2 ] = 22;
+        av[ 3 ] = 33;
+        av[ 4 ] = 44;
+
+        av.merge();
+        
+        av.erase( 5 );
+        
+        AVII::iterator begin = av.begin();
+        AVII::iterator end = av.end();
+        
+        for( ; begin != end ; ++ begin ){
+            std::cout << (*begin).first << ", " << (*begin).second << std::endl;
+        }
+    }
+    
+    return 0;
+    
     test_CmpByFirst_1();
     test_CmpByFirst_2();
     test_CmpByFirst_3();
