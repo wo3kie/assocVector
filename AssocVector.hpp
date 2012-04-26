@@ -140,6 +140,52 @@ namespace util
 
 namespace util
 {
+
+template<
+      typename _Iterator
+    , typename _T
+    , typename _Cmp
+>
+_Iterator last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp cmp )
+{
+    _Iterator greaterEqual
+        = std::lower_bound(
+              first
+            , last
+            , t
+            , cmp
+        );
+
+    if( greaterEqual != last )
+    {
+        // lower_bound returns first greater_than/equal_to but we need last less_than
+        bool const isEqual = cmp( * greaterEqual, t ) == false;
+
+        if( isEqual ){
+            // that is OK, request item was found
+            return greaterEqual;
+        }
+    }
+    
+    // we need to go one item backward
+
+    // 6 8 10 13 17 19 20 21 22 24
+    // lower_bound( 23 ):       ^
+    // requested:            ^
+
+    // or
+
+    //  . 6 8 10 13 17 19 20 21 22 24
+    //    ^         :lower_bound( 5 )
+    //  ^           : requested (rend)
+
+    return -- greaterEqual;
+}
+
+}
+
+namespace util
+{
     //
     // Array
     //
@@ -574,7 +620,7 @@ namespace detail
                     , _currentInStorage
                     , std::less< typename _Container::_Storage::const_iterator >()
                 );
-                
+
             _current = calculateCurrent();
         }
 
@@ -681,13 +727,13 @@ namespace detail
         // public for copy constructor only : Iterator -> ConstIterator
         typename _Container::_Storage const * getStorage()const{ return _storage; }
         pointer getCurrentInStorage()const{ return _currentInStorage; }
-        
+
         typename _Container::_Storage const * getBuffer()const{ return _buffer; }
         pointer getCurrentInBuffer()const{ return _currentInBuffer; }
-        
+
         typename _Container::_Erased const * getErased()const{ return _erased; }
         typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
-        
+
         typename _Container::value_compare getCmp()const{ return _cmp; }
         pointer getCurrent()const{ return _current; }
 
@@ -704,7 +750,7 @@ namespace detail
                 ++ _currentInStorage;
                 ++ _currentInErased;
             }
-                
+
             if( _currentInStorage == _storage->end() )
             {
                 if( _currentInBuffer == _buffer->end() ){
@@ -719,7 +765,7 @@ namespace detail
                    _currentInBuffer == _buffer->end()
                 || _cmp( * _currentInStorage, * _currentInBuffer )
             )
-            {               
+            {
                 POSTCONDITION( util::isBetween( _storage->begin(), _currentInStorage, _storage->end() ) );
                 return _currentInStorage;
             }
@@ -738,7 +784,7 @@ namespace detail
 
         typename _Container::_Erased const * _erased;
         typename _Container::_Erased::const_iterator _currentInErased;
-        
+
         typename _Container::value_compare _cmp;
 
         pointer _current;
@@ -766,6 +812,8 @@ namespace detail
             , _currentInStorage( 0 )
             , _buffer( 0 )
             , _currentInBuffer( 0 )
+            , _erased( 0 )
+            , _currentInErased( 0 )
             , _cmp( cmp )
             , _current( 0 )
         {
@@ -777,6 +825,8 @@ namespace detail
             , _currentInStorage( other.getCurrentInStorage() )
             , _buffer( other.getBuffer() )
             , _currentInBuffer( other.getCurrentInBuffer() )
+            , _erased( other.getErased() )
+            , _currentInErased( other.getCurrentInErased() )
             , _cmp( other.getCmp() )
             , _current( other.getCurrent() )
         {
@@ -787,15 +837,27 @@ namespace detail
             , pointer currentInStorage
             , typename _Container::_Storage const & buffer
             , pointer currentInBuffer
+            , typename _Container::_Erased const & erased
             , typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
             : _storage( & storage )
             , _currentInStorage( currentInStorage )
             , _buffer( & buffer )
             , _currentInBuffer( currentInBuffer )
+            , _erased( & erased )
+            , _currentInErased( 0 )
             , _cmp( cmp )
-            , _current( calculateCurrentReverse() )
+            , _current( 0 )
         {
+            _currentInErased
+                = util::last_less_equal(
+                      _erased->begin()
+                    , _erased->end()
+                    , _currentInStorage
+                    , std::less< typename _Container::_Storage::const_iterator >()
+                );
+
+            _current = calculateCurrentReverse();
         }
 
         AssocVectorReverseIterator & operator=( AssocVectorReverseIterator const & other )
@@ -804,6 +866,8 @@ namespace detail
             _currentInStorage =  other._currentInStorage;
             _buffer = other._buffer;
             _currentInBuffer = other._currentInBuffer;
+            _erased = other._erased;
+            _currentInErased = other._currentInErased;
             _cmp = other._cmp;
             _current = other._current;
 
@@ -895,6 +959,7 @@ namespace detail
         pointer getCurrentInStorage()const{ return _currentInStorage; }
         typename _Container::_Storage const * getBuffer()const{ return _buffer; }
         pointer getCurrentInBuffer()const{ return _currentInBuffer; }
+        typename _Container::_Erased const * getErased()const{ return _erased; }
         typename _Container::value_compare getCmp()const{ return _cmp; }
         pointer getCurrent()const{ return _current; }
 
@@ -902,6 +967,16 @@ namespace detail
         pointer
         calculateCurrentReverse()
         {
+           while(
+                   _currentInErased != _erased->rend()
+                && _currentInStorage != _storage->rend()
+                && _currentInStorage == *_currentInErased
+            )
+            {
+                -- _currentInStorage;
+                -- _currentInErased;
+            }
+
             if( _currentInStorage == _storage->rend() )
             {
                 if( _currentInBuffer == _buffer->rend() ){
@@ -913,12 +988,12 @@ namespace detail
             }
             else if( _currentInBuffer == getBuffer()->rend() )
             {
-              POSTCONDITION( util::isBetween( _storage->begin(), _currentInStorage, _storage->end() ) );
+                POSTCONDITION( util::isBetween( _storage->begin(), _currentInStorage, _storage->end() ) );
                 return _currentInStorage;
             }
             else if( _cmp( * _currentInStorage, * _currentInBuffer ) == false )
             {
-              POSTCONDITION( util::isBetween( _storage->begin(), _currentInStorage, _storage->end() ) );
+                POSTCONDITION( util::isBetween( _storage->begin(), _currentInStorage, _storage->end() ) );
                 return _currentInStorage;
             }
 
@@ -931,6 +1006,8 @@ namespace detail
         pointer _currentInStorage;
         typename _Container::_Storage const * _buffer;
         pointer _currentInBuffer;
+        typename _Container::_Erased const * _erased;
+        typename _Container::_Erased::const_iterator _currentInErased;
 
         typename _Container::value_compare _cmp;
 
@@ -1041,6 +1118,7 @@ public:
     value_compare value_comp()const{ return value_compare( _cmp ); }
 
     void merge();
+    
 private:
     //
     // find
@@ -1081,6 +1159,8 @@ private:
     void createNewStorageAndMerge();
 
 public: // public for unit tests only
+    void dump();
+
     std::size_t bufferSize()const{ return _buffer.size; }
     std::size_t bufferCapacity()const{ return _buffer.capacity; }
     _Storage const & storage()const{ return _storage; }
@@ -1350,7 +1430,7 @@ template<
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reverse_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rbegin(){
-    return reverse_iterator( _storage, _storage.rbegin(), _buffer, _buffer.rbegin(), _cmp );
+    return reverse_iterator( _storage, _storage.rbegin(), _buffer, _buffer.rbegin(), _erased, _cmp );
 }
 
 template<
@@ -1372,7 +1452,7 @@ template<
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_reverse_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rbegin()const{
-    return const_reverse_iterator( _storage, _storage.rbegin(), _buffer, _buffer.rbegin(), _cmp );
+    return const_reverse_iterator( _storage, _storage.rbegin(), _buffer, _buffer.rbegin(), _erased, _cmp );
 }
 
 template<
@@ -1394,7 +1474,7 @@ template<
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reverse_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rend(){
-    return reverse_iterator( _storage, _storage.rend(), _buffer, _buffer.rend(), _cmp );
+    return reverse_iterator( _storage, _storage.rend(), _buffer, _buffer.rend(), _erased, _cmp );
 }
 
 template<
@@ -1416,7 +1496,7 @@ template<
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_reverse_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rend()const{
-    return const_reverse_iterator( _storage, _storage.rend(), _buffer, _buffer.rend(), _cmp );
+    return const_reverse_iterator( _storage, _storage.rend(), _buffer, _buffer.rend(), _erased, _cmp );
 }
 
 template<
@@ -2059,6 +2139,29 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::allocateAndConstruct( std::size_t ca
     POSTCONDITION( result != 0 )
 
     return result;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::dump()
+{
+    std::cout << "storage" << std::endl;
+    for( int i = 0 ; i < _storage.size ; ++ i )
+      std::cout << " (" << _storage[i].first << "," << _storage[i].second << ")";
+
+    std::cout << std::endl << "buffer" << std::endl;
+    for( int i = 0 ; i < _buffer.size ; ++ i )
+      std::cout << " (" << _buffer[i].first << "," << _buffer[i].second << ")";
+
+    std::cout << std::endl << "erased" << std::endl;
+    for( int i = 0 ; i < _erased.size ; ++ i )
+      std::cout << " (" << (*_erased[i]).first << "," << (*_erased[i]).second << ")";
+
+    std::cout << std::endl;
 }
 
 #endif
