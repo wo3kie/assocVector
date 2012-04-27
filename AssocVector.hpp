@@ -1229,19 +1229,15 @@ public:
 
     void mergeStorageAndBuffer()
     {
-        std::size_t const __size = size();
-        
+        if( _storage.capacity >= _storage.size + _buffer.size ){
+            util::mergeInplace( _storage, _buffer, value_comp() );
+        }
+        else
         {
-            if( _storage.capacity >= _storage.size + _buffer.size ){
-                util::mergeInplace( _storage, _buffer, value_comp() );
-            }
-            else
-            {
-                std::size_t const oldCapacity = _storage.capacity;
-                
-                reserveAndMergeStorageAndBuffer( calculateNewStorageCapacity( oldCapacity ) );
-                reserve( _erased, calculateNewErasedCapacity( oldCapacity ) );
-            }
+            std::size_t const oldCapacity = _storage.capacity;
+            
+            reserveAndMergeStorageAndBuffer( calculateNewStorageCapacity( oldCapacity ) );
+            reserve( _erased, calculateNewErasedCapacity( oldCapacity ) );
         }
     }
     
@@ -1715,18 +1711,8 @@ void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::pushBack( _Key const & k, _Mapp
         )
     );
 
-    std::size_t const storageSize = _storage.size;
-    std::size_t const bufferSize = _buffer.size;
-    std::size_t const erasedSize = _erased.size;
-
-    if( _storage.size + 1 >= _storage.capacity ){
-        if( _erased.empty() == false ){
-            util::eraseInplace( _storage, _erased );
-        }
-
-        reserve( _storage, calculateNewStorageCapacity( _storage.capacity ) );
-        reserve( _buffer, calculateNewBufferCapacity( _storage.capacity ) );
-        reserve( _erased, calculateNewErasedCapacity( _storage.capacity ) );
+    if( _storage.size == _storage.capacity ){
+        reserve( calculateNewStorageCapacity( _storage.capacity ) );
     }
 
     _storage.data[ _storage.size ] = value_type_mutable( k, m );
