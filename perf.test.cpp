@@ -347,7 +347,7 @@ void push_increasing()
     test_push_increasing< std::map >( 1000, 1000, "std::map.push_increasing" );
 
     test_push_increasing< AssocVector >( 10, 1000000, "AssocVector.push_increasing" );
-    test_push_increasing< Loki::AssocVector >( 00, 1000000, "Loki::AssocVector.push_increasing" );
+    test_push_increasing< Loki::AssocVector >( 10, 1000000, "Loki::AssocVector.push_increasing" );
     test_push_increasing< std::map >( 10, 1000000, "std::map.push_increasing" );
     
     std::cout << std::endl;

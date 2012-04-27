@@ -496,7 +496,8 @@ namespace util
             }
         }
 
-        newStorage.size -= erased.size;
+        newStorage.size = storage.size - erased.size;
+        
         erased.size = 0;
     }
     
@@ -1226,6 +1227,24 @@ public:
         }
     }
 
+    void mergeStorageAndBuffer()
+    {
+        std::size_t const __size = size();
+        
+        {
+            if( _storage.capacity >= _storage.size + _buffer.size ){
+                util::mergeInplace( _storage, _buffer, value_comp() );
+            }
+            else
+            {
+                std::size_t const oldCapacity = _storage.capacity;
+                
+                reserveAndMergeStorageAndBuffer( calculateNewStorageCapacity( oldCapacity ) );
+                reserve( _erased, calculateNewErasedCapacity( oldCapacity ) );
+            }
+        }
+    }
+    
 private:
     //
     // find
@@ -1236,7 +1255,7 @@ private:
     //
     // insert
     //
-    void push_back( key_type const & k, mapped_type const & m );
+    void pushBack( key_type const & k, mapped_type const & m );
 
     std::pair< bool, typename _Storage::iterator >
     findOrInsertToBuffer( key_type const & k, mapped_type const & m );
@@ -1281,6 +1300,7 @@ public: // public for unit tests only
     _Erased const & erased()const{ return _erased; }
 
     static std::size_t calculateNewBufferCapacity( std::size_t storageSize );
+    static std::size_t calculateNewErasedCapacity( std::size_t storageSize );
     static std::size_t calculateNewStorageCapacity( std::size_t storageSize );
 
 private:
@@ -1482,13 +1502,11 @@ void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserve( std::size_t newStorage
     if( _buffer.size > _erased.size )
     {
         reserveAndMergeStorageAndBuffer( newStorageCapacity );
-
-        reserve( _erased, calculateNewBufferCapacity( newStorageCapacity ) );
+        reserve( _erased, calculateNewErasedCapacity( newStorageCapacity ) );
     }
     else
     {
         reserveAndMergeStorageAndErased( newStorageCapacity );
-
         reserve( _buffer, calculateNewBufferCapacity( newStorageCapacity ) );
     }
 }
@@ -1639,14 +1657,14 @@ bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & valu
 
     if( _storage.empty() || _cmp( _storage.back().first, k ) )
     {
-        push_back( k, m );
+        pushBack( k, m );
         return true;
     }
 
     INVARIANT( size == this->size() );
 
     if( _buffer.full() ){
-        merge();
+        mergeStorageAndBuffer();
     }
 
     INVARIANT( size == this->size() );
@@ -1688,7 +1706,7 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::push_back( _Key const & k, _Mapped const & m )
+void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::pushBack( _Key const & k, _Mapped const & m )
 {
     PRECONDITION(
         (
@@ -1708,7 +1726,7 @@ void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::push_back( _Key const & k, _Map
 
         reserve( _storage, calculateNewStorageCapacity( _storage.capacity ) );
         reserve( _buffer, calculateNewBufferCapacity( _storage.capacity ) );
-        reserve( _erased, calculateNewBufferCapacity( _storage.capacity ) );
+        reserve( _erased, calculateNewErasedCapacity( _storage.capacity ) );
     }
 
     _storage.data[ _storage.size ] = value_type_mutable( k, m );
@@ -1876,7 +1894,7 @@ typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reference
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
 {
     if( _storage.empty() || _cmp( _storage.back().first, k ) ){
-        push_back( k, mapped_type() );
+        pushBack( k, mapped_type() );
         return _storage.back().second;
     }
 
@@ -2119,6 +2137,19 @@ std::size_t AssocVector< _Key, _Mapped, _Cmp, _Alloc >::calculateNewBufferCapaci
 )
 {
     return static_cast< std::size_t >( sqrt( storageSize ));
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+std::size_t AssocVector< _Key, _Mapped, _Cmp, _Alloc >::calculateNewErasedCapacity(
+    std::size_t storageSize
+)
+{
+    return calculateNewBufferCapacity( storageSize );
 }
 
 template<
