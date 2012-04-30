@@ -236,9 +236,9 @@ void test_copyRange_overlap_copy_to_begining()
 }
 
 //
-// test_mergeInplace
+// test_merge
 //
-void test_mergeInplace_1()
+void test_merge_1()
 {
     using array::Array;
 
@@ -259,7 +259,7 @@ void test_mergeInplace_1()
 
         a2._size = 4;
 
-        array::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
         assert( a1.size() == 4 );
         assert( a1.capacity() == 10 );
@@ -293,7 +293,7 @@ void test_mergeInplace_1()
         a2._capacity = 10;
         a2._size = 0;
 
-        array::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
         assert( a1.size() == 4 );
         assert( a1.capacity() == 10 );
@@ -335,7 +335,7 @@ void test_mergeInplace_1()
 
         a2._size = 4;
 
-        array::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
@@ -383,7 +383,7 @@ void test_mergeInplace_1()
 
         a2._size = 4;
 
-        array::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
@@ -431,7 +431,7 @@ void test_mergeInplace_1()
 
         a2._size = 4;
 
-        array::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
@@ -479,7 +479,7 @@ void test_mergeInplace_1()
 
         a2._size = 4;
 
-        array::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
@@ -527,7 +527,7 @@ void test_mergeInplace_1()
 
         a2._size = 4;
 
-        array::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
@@ -551,7 +551,7 @@ void test_mergeInplace_1()
     }
 }
 
-void test_mergeInplace_2()
+void test_merge_2()
 {
     array::Array< std::pair< int, int > > storage;
 
@@ -573,7 +573,7 @@ void test_mergeInplace_2()
         buffer._data[ buffer._size ++ ] = std::pair< int, int >( i, 0 );
     }
 
-    array::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     assert( storage.capacity() == 10 );
     assert( storage.size() == 8 );
@@ -594,7 +594,7 @@ void test_mergeInplace_2()
     delete [] buffer._data;
 }
 
-void test_mergeInplace_3()
+void test_merge_3()
 {
     array::Array< std::pair< int, int > > storage;
 
@@ -616,7 +616,7 @@ void test_mergeInplace_3()
         buffer._data[ buffer._size ++ ] = std::pair< int, int >( i, 0 );
     }
 
-    array::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     assert( storage.capacity() == 10 );
     assert( storage.size() == 8 );
@@ -637,7 +637,7 @@ void test_mergeInplace_3()
     delete [] buffer._data;
 }
 
-void test_mergeInplace_4()
+void test_merge_4()
 {
     array::Array< std::pair< int, int > > storage;
 
@@ -659,7 +659,7 @@ void test_mergeInplace_4()
         buffer._data[ buffer._size ++ ] = std::pair< int, int >( i, 0 );
     }
 
-    array::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     assert( storage.capacity() == 10 );
     assert( storage.size() == 8 );
@@ -680,7 +680,7 @@ void test_mergeInplace_4()
     delete [] buffer._data;
 }
 
-void test_mergeInplace_5()
+void test_merge_5()
 {
     array::Array< std::pair< int, int > > storage;
 
@@ -698,7 +698,7 @@ void test_mergeInplace_5()
     buffer._size = 0;
     buffer._capacity = 3;
 
-    array::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     assert( storage.capacity() == 10 );
     assert( storage.size() == 5 );
@@ -716,7 +716,7 @@ void test_mergeInplace_5()
     delete [] buffer._data;
 }
 
-void test_mergeInplace_6()
+void test_merge_6()
 {
     array::Array< std::pair< int, int > > storage;
 
@@ -734,7 +734,7 @@ void test_mergeInplace_6()
         buffer._data[ buffer._size ++ ] = std::pair< int, int >( i, 0 );
     }
 
-    array::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     assert( storage.capacity() == 10 );
     assert( storage.size() == 3 );
@@ -750,7 +750,7 @@ void test_mergeInplace_6()
     delete [] buffer._data;
 }
 
-void test_mergeInplace_7()
+void test_merge_7()
 {
     array::Array< std::pair< int, int > > storage;
 
@@ -764,7 +764,7 @@ void test_mergeInplace_7()
     buffer._size = 0;
     buffer._capacity = 3;
 
-    array::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     assert( storage.capacity() == 10 );
     assert( storage.size() == 0 );
@@ -1531,13 +1531,13 @@ int main()
     test_copyRange_overlap_more_than_half();
     test_copyRange_overlap_copy_to_begining();
 
-    test_mergeInplace_1();
-    test_mergeInplace_2();
-    test_mergeInplace_3();
-    test_mergeInplace_4();
-    test_mergeInplace_5();
-    test_mergeInplace_6();
-    test_mergeInplace_7();
+    test_merge_1();
+    test_merge_2();
+    test_merge_3();
+    test_merge_4();
+    test_merge_5();
+    test_merge_6();
+    test_merge_7();
 
     test_push_back();
 
