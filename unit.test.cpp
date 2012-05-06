@@ -264,7 +264,7 @@ void test_merge_1()
         assert( a1.size() == 4 );
         assert( a1.capacity() == 10 );
 
-        assert( a2.size() == 0 );
+        assert( a2.size() == 4 );
         assert( a2.capacity() == 10 );
 
         assert( a1[0] == 1 );
@@ -340,7 +340,7 @@ void test_merge_1()
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
 
-        assert( a2.size() == 0 );
+        assert( a2.size() == 4 );
         assert( a2.capacity() == 10 );
 
         assert( a1[0] == 1 );
@@ -388,7 +388,7 @@ void test_merge_1()
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
 
-        assert( a2.size() == 0 );
+        assert( a2.size() == 4 );
         assert( a2.capacity() == 10 );
 
         assert( a1[0] == 1 );
@@ -436,7 +436,7 @@ void test_merge_1()
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
 
-        assert( a2.size() == 0 );
+        assert( a2.size() == 4 );
         assert( a2.capacity() == 10 );
 
         assert( a1[0] == 1 );
@@ -484,7 +484,7 @@ void test_merge_1()
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
 
-        assert( a2.size() == 0 );
+        assert( a2.size() == 4 );
         assert( a2.capacity() == 10 );
 
         assert( a1[0] == 1 );
@@ -532,7 +532,7 @@ void test_merge_1()
         assert( a1.size() == 10 );
         assert( a1.capacity() == 10 );
 
-        assert( a2.size() == 0 );
+        assert( a2.size() == 4 );
         assert( a2.capacity() == 10 );
 
         assert( a1[0] == 1 );
@@ -578,7 +578,7 @@ void test_merge_2()
     assert( storage.capacity() == 10 );
     assert( storage.size() == 8 );
 
-    assert( buffer.size() == 0 );
+    assert( buffer.size() == 3 );
     assert( buffer.capacity() == 3 );
 
     assert( storage._data[0].first == 3 );
@@ -621,7 +621,7 @@ void test_merge_3()
     assert( storage.capacity() == 10 );
     assert( storage.size() == 8 );
 
-    assert( buffer.size() == 0 );
+    assert( buffer.size() == 3 );
     assert( buffer.capacity() == 15 );
 
     assert( storage._data[0].first == 10 );
@@ -664,7 +664,7 @@ void test_merge_4()
     assert( storage.capacity() == 10 );
     assert( storage.size() == 8 );
 
-    assert( buffer.size() == 0 );
+    assert( buffer.size() == 3 );
     assert( buffer.capacity() == 10 );
 
     assert( storage._data[0].first == 10 );
@@ -739,7 +739,7 @@ void test_merge_6()
     assert( storage.capacity() == 10 );
     assert( storage.size() == 3 );
 
-    assert( buffer.size() == 0 );
+    assert( buffer.size() == 3 );
     assert( buffer.capacity() == 20 );
 
     assert( storage._data[0].first == 13 );

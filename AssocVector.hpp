@@ -182,6 +182,12 @@ _Iterator last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp c
 namespace array
 {
     //
+    // I need much more control over Array inside AssocVector than std::vector offers
+    //
+
+    // C' style array with some useful methods and functions
+    
+    //
     // Array
     //
     template< typename _T >
@@ -269,18 +275,23 @@ namespace array
             return _data[ index ];
         }
     };
+}
 
-    template< typename _Alloc >
-    Array< typename _Alloc::value_type >
+namespace array
+{   
+    template<
+          typename _T
+        , typename _Alloc
+    >
+    Array< _T >
     create(
             std::size_t capacity
-          , _Alloc allocator
+          , _Alloc allocator = std::allocator< _T >()
     )
     {
-        Array< typename _Alloc::value_type > result;
+        Array< _T > result;
 
-        result._data
-            = static_cast< typename _Alloc::value_type * >( allocator.allocate( capacity ) );
+        result._data = static_cast< _T * >( allocator.allocate( capacity ) );
 
         INVARIANT( result._data != 0 );
 
@@ -308,7 +319,7 @@ namespace array
         PRECONDITION( dest._size == 0 );
         PRECONDITION( dest._data == 0 );
 
-        dest = create( origin.capacity(), allocator );
+        dest = create< _T >( origin.capacity(), allocator );
 
         util::copyRange( origin.begin(), origin.end(), dest.begin() );
 
@@ -349,26 +360,25 @@ namespace array
     >
     void
     reserve(
-          Array< _T > & container
+          Array< _T > & array
         , std::size_t capacity
         , _Alloc allocator
     )
     {
-        if( capacity <= container.capacity() ){
+        if( capacity <= array.capacity() ){
             return;
         }
 
-        std::size_t const size = container.size();
+        std::size_t const size = array.size();
 
-        Array< _T > newArray = array::create( capacity, allocator );
+        Array< _T > newArray = array::create< _T >( capacity, allocator );
 
-        util::copyRange( container.begin(), container.end(), newArray.begin() );
+        util::copyRange( array.begin(), array.end(), newArray.begin() );
+        array::destroy( array, allocator );
 
-        array::destroy( container, allocator );
-
-        container._size = size;
-        container._capacity = capacity;
-        container._data = newArray._data;
+        array._size = size;
+        array._capacity = capacity;
+        array._data = newArray._data;
     }
 
     template< typename _T >
@@ -491,15 +501,16 @@ namespace array
             }
         }
 
-        INVARIANT( size == array.size() );
-
         insert( array, found, t );
 
         return true;
     }
 
     template< typename _T >
-    void erase( Array< _T > & array, typename Array< _T >::iterator pos )
+    void erase(
+          Array< _T > & array
+        , typename Array< _T >::iterator pos
+    )
     {
         PRECONDITION( array.begin() <= pos );
         PRECONDITION( pos < array.end() );
@@ -513,7 +524,7 @@ namespace array
     template< typename _T >
     void mergeWithErased(
           array::Array< _T > & storage
-        , array::Array< typename array::Array< _T >::const_iterator > & erased
+        , array::Array< typename array::Array< _T >::const_iterator > const & erased
     )
     {
         PRECONDITION( storage.size() >= erased.size() );
@@ -524,10 +535,7 @@ namespace array
 
         typedef typename array::Array< _T >::const_iterator StorageConstIterator;
         typedef typename array::Array< _T >::iterator StorageIterator;
-
-        typedef typename array::Array<
-            typename array::Array< _T >::const_iterator
-        >::const_iterator ErasedConstIterator;
+        typedef typename array::Array< StorageConstIterator >::const_iterator ErasedConstIterator;
 
         StorageConstIterator currentInStorage = erased.front();
         INVARIANT( util::isBetween( storage.begin(), currentInStorage, storage.end() ) );
@@ -564,13 +572,12 @@ namespace array
         INVARIANT( currentInErased == endInErased );
 
         storage._size -= erased.size();
-        erased._size = 0;
     }
 
     template< typename _T >
     void mergeWithErased(
           array::Array< _T > & storage
-        , array::Array< typename array::Array< _T >::const_iterator > & erased
+        , array::Array< typename array::Array< _T >::const_iterator > const & erased
         , array::Array< _T > & newStorage
     )
     {
@@ -578,10 +585,7 @@ namespace array
 
         typedef typename array::Array< _T >::iterator StorageIterator;
         typedef typename array::Array< _T >::const_iterator StorageConstIterator;
-
-        typedef typename array::Array<
-            typename array::Array< _T >::const_iterator
-        >::const_iterator ErasedConstIterator;
+        typedef typename array::Array< StorageConstIterator >::const_iterator ErasedConstIterator;
 
         StorageConstIterator currentInStorage = storage.begin();
         StorageConstIterator const endInStorage = storage.end();
@@ -613,8 +617,6 @@ namespace array
         }
 
         newStorage._size = storage.size() - erased.size();
-
-        erased._size = 0;
     }
 
     template<
@@ -664,7 +666,6 @@ namespace array
         }
 
         storage._size += buffer.size();
-        buffer._size = 0;
     }
 }
 
@@ -1274,6 +1275,8 @@ private:
     //
     // merge
     //
+    void mergeStorageWithBuffer();
+    void mergeStorageWithErased();
     void reserveStorageAndMergeWithBuffer( std::size_t storageCapacity );
 
     //
@@ -1347,7 +1350,8 @@ bool operator==(
 
     typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator begin2 = rhs.begin();
 
-    for( /*empty*/ ; begin != end ; ++ begin, ++ begin2 ){
+    for( /*empty*/ ; begin != end ; ++ begin, ++ begin2 )
+    {
         if( begin->first != begin2->first ){
             return false;
         }
@@ -1412,13 +1416,13 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::AssocVector(
     , _allocator( other._allocator )
 {
     array::init( _storage );
-    array::create( _storage, other._storage, getAllocator( _storage ) );
+    array::create< value_type_mutable >( _storage, other._storage, getAllocator( _storage ) );
 
     array::init( _buffer );
-    array::create( _buffer, other._buffer, getAllocator( _buffer ) );
+    array::create< value_type_mutable >( _buffer, other._buffer, getAllocator( _buffer ) );
 
     array::init( _erased );
-    array::create( _erased, other._erased, getAllocator( _erased ) );
+    array::create< typename _Storage::const_iterator >( _erased, other._erased, getAllocator( _erased ) );
 
     POSTCONDITION( operator==( *this, other ) );
 }
@@ -1466,7 +1470,7 @@ void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserve( std::size_t newStorage
     }
 
     if( _erased.empty() == false ){
-        array::mergeWithErased( _storage, _erased, _storage );
+        mergeStorageWithErased();
     }
 
     reserveStorageAndMergeWithBuffer( newStorageCapacity );
@@ -1800,10 +1804,10 @@ void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::merge()
     }
 
     if( _erased.empty() == false ){
-        array::mergeWithErased( _storage, _erased );
+        mergeStorageWithErased();
     }
 
-    array::merge( _storage, _buffer, value_comp() );
+    mergeStorageWithBuffer();
 }
 
 template<
@@ -1884,7 +1888,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
         );
 
         if( _erased.full() ){
-            array::mergeWithErased( _storage, _erased );
+            mergeStorageWithErased();
         }
     }
 }
@@ -1920,7 +1924,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
             );
 
             if( _erased.full() ){
-                array::mergeWithErased( _storage, _erased );
+                mergeStorageWithErased();
             }
         }
     }
@@ -1977,8 +1981,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserveStorageAndMergeWithBuffer(
     std::size_t const bufferCapacity
         = calculateNewBufferCapacity( storageCapacity );
 
-    _Storage newStorage = array::create( storageCapacity, getAllocator( _storage ) );
-    _Storage newBuffer = array::create( bufferCapacity, getAllocator( _buffer ) );
+    _Storage newStorage = array::create< value_type_mutable >( storageCapacity, getAllocator( _storage ) );
+    _Storage newBuffer = array::create< value_type_mutable >( bufferCapacity, getAllocator( _buffer ) );
 
     std::merge(
           _storage.begin()
@@ -2006,6 +2010,32 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserveStorageAndMergeWithBuffer(
         _buffer._size = 0;
         _buffer._capacity = bufferCapacity;
     }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+void
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::mergeStorageWithBuffer()
+{
+    array::merge( _storage, _buffer, value_comp() );
+    _buffer._size = 0;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+void
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::mergeStorageWithErased()
+{
+    array::mergeWithErased( _storage, _erased );
+    _erased._size = 0;
 }
 
 template<
