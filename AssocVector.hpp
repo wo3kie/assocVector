@@ -1735,7 +1735,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
     typename _Storage::iterator const foundInBuffer = find( _buffer, k );
 
     if( foundInBuffer == _buffer.end() ){
-        end();
+        return end();
     }
 
     return iterator(
