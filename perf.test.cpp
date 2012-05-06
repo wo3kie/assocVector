@@ -1,13 +1,10 @@
 //#define AV_UNIT_TESTS
 
-#ifdef AV_UNIT_TESTS
-    #define AV_USE_LOKI
-    #define AV_USE_STD_MAP
-    
+#ifdef AV_UNIT_TESTS    
     unsigned const REPS = 1;
 #else
-    #define AV_USE_LOKI
-    #define AV_USE_STD_MAP
+    //#define AV_USE_LOKI
+    //#define AV_USE_STD_MAP
 
     unsigned const REPS = 10;
 #endif
@@ -21,6 +18,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <vector>
 
 #include "AssocVector.hpp"
 
@@ -230,12 +228,16 @@ void test_erase_random( int tests, std::vector< int > const & array, std::string
         << std::endl;
 }
 
-template< typename T, typename K >
-void merge( Loki::AssocVector< T, K > & ){}
+#ifdef AV_USE_LOKI
+    template< typename T, typename K >
+    void merge( Loki::AssocVector< T, K > & ){}
+#endif
 
-template< typename T, typename K >
-void merge( std::map< T, K > & ){}
-
+#ifdef AV_USE_STD_MAP
+    template< typename T, typename K >
+    void merge( std::map< T, K > & ){}
+#endif
+    
 template< typename T, typename K >
 void merge( AssocVector< T, K > & av ){ av.merge(); }
 
