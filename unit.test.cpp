@@ -86,7 +86,7 @@ namespace detail
         static int counter;
 
     private:
-        int _some_data_to_make_sizeof_not_zero;
+        int _some_data_to_makes_size_of_not_zero;
     };
 
     int For_ConstructRange_DestroyRange_Tests::counter = 0;
@@ -244,20 +244,20 @@ void test_merge_1()
 
     {
         Array< int > a1;
-        a1._data = new int[ 10 ];
-        a1._capacity = 10;
-        a1._size = 0;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
+        a1.setSize( 0 );
 
         Array< int > a2;
-        a2._data = new int[ 10 ];
-        a2._capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 1;
         a2[1] = 2;
         a2[2] = 3;
         a2[3] = 4;
 
-        a2._size = 4;
+        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -272,26 +272,26 @@ void test_merge_1()
         assert( a1[2] == 3 );
         assert( a1[3] == 4 );
 
-        delete [] a1._data;
-        delete [] a2._data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1._data = new int[ 10 ];
-        a1._capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 1;
         a1[1] = 2;
         a1[2] = 3;
         a1[3] = 4;
 
-        a1._size = 4;
+        a1.setSize( 4 );
 
         Array< int > a2;
-        a2._data = new int[ 10 ];
-        a2._capacity = 10;
-        a2._size = 0;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
+        a2.setSize( 0 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -306,14 +306,14 @@ void test_merge_1()
         assert( a1[2] == 3 );
         assert( a1[3] == 4 );
 
-        delete [] a1._data;
-        delete [] a2._data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1._data = new int[ 10 ];
-        a1._capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 1;
         a1[1] = 2;
@@ -322,18 +322,18 @@ void test_merge_1()
         a1[4] = 5;
         a1[5] = 6;
 
-        a1._size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2._data = new int[ 10 ];
-        a2._capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 7;
         a2[1] = 8;
         a2[2] = 9;
         a2[3] = 10;
 
-        a2._size = 4;
+        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -354,14 +354,14 @@ void test_merge_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 10 );
 
-        delete [] a1._data;
-        delete [] a2._data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1._data = new int[ 10 ];
-        a1._capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 1;
         a1[1] = 3;
@@ -370,18 +370,18 @@ void test_merge_1()
         a1[4] = 9;
         a1[5] = 11;
 
-        a1._size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2._data = new int[ 10 ];
-        a2._capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 2;
         a2[1] = 4;
         a2[2] = 6;
         a2[3] = 8;
 
-        a2._size = 4;
+        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -402,14 +402,14 @@ void test_merge_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 11 );
 
-        delete [] a1._data;
-        delete [] a2._data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1._data = new int[ 10 ];
-        a1._capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 5;
         a1[1] = 6;
@@ -418,18 +418,18 @@ void test_merge_1()
         a1[4] = 9;
         a1[5] = 10;
 
-        a1._size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2._data = new int[ 10 ];
-        a2._capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 1;
         a2[1] = 2;
         a2[2] = 3;
         a2[3] = 4;
 
-        a2._size = 4;
+        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -450,14 +450,14 @@ void test_merge_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 10 );
 
-        delete [] a1._data;
-        delete [] a2._data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1._data = new int[ 10 ];
-        a1._capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 1;
         a1[1] = 2;
@@ -466,18 +466,18 @@ void test_merge_1()
         a1[4] = 9;
         a1[5] = 10;
 
-        a1._size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2._data = new int[ 10 ];
-        a2._capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 4;
         a2[1] = 5;
         a2[2] = 6;
         a2[3] = 7;
 
-        a2._size = 4;
+        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -498,14 +498,14 @@ void test_merge_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 10 );
 
-        delete [] a1._data;
-        delete [] a2._data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1._data = new int[ 10 ];
-        a1._capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 2;
         a1[1] = 3;
@@ -514,18 +514,18 @@ void test_merge_1()
         a1[4] = 8;
         a1[5] = 9;
 
-        a1._size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2._data = new int[ 10 ];
-        a2._capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 1;
         a2[1] = 4;
         a2[2] = 7;
         a2[3] = 10;
 
-        a2._size = 4;
+        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -546,8 +546,8 @@ void test_merge_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 10 );
 
-        delete [] a1._data;
-        delete [] a2._data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 }
 
@@ -555,22 +555,24 @@ void test_merge_2()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage._data = new std::pair< int, int >[ 10 ];
-    storage._size = 0;
-    storage._capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 15 ; ++ i ){
-        storage._data[ storage._size ++ ] = std::pair< int, int >( i, 0 );
+        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
+        storage.setSize( storage.size() + 1 );
     }
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer._data = new std::pair< int, int >[ 3 ];
-    buffer._size = 0;
-    buffer._capacity = 3;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 3 );
 
     for( int i = 3 ; i < 6 ; ++ i ){
-        buffer._data[ buffer._size ++ ] = std::pair< int, int >( i, 0 );
+        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
+        buffer.setSize( buffer.size() + 1 );
     }
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -581,39 +583,41 @@ void test_merge_2()
     assert( buffer.size() == 3 );
     assert( buffer.capacity() == 3 );
 
-    assert( storage._data[0].first == 3 );
-    assert( storage._data[1].first == 4 );
-    assert( storage._data[2].first == 5 );
-    assert( storage._data[3].first == 10 );
-    assert( storage._data[4].first == 11 );
-    assert( storage._data[5].first == 12 );
-    assert( storage._data[6].first == 13 );
-    assert( storage._data[7].first == 14 );
+    assert( storage[0].first == 3 );
+    assert( storage[1].first == 4 );
+    assert( storage[2].first == 5 );
+    assert( storage[3].first == 10 );
+    assert( storage[4].first == 11 );
+    assert( storage[5].first == 12 );
+    assert( storage[6].first == 13 );
+    assert( storage[7].first == 14 );
 
-    delete [] storage._data;
-    delete [] buffer._data;
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
 void test_merge_3()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage._data = new std::pair< int, int >[ 10 ];
-    storage._size = 0;
-    storage._capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 15 ; ++ i ){
-        storage._data[ storage._size ++ ] = std::pair< int, int >( i, 0 );
+        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
+        storage.setSize( storage.size() + 1 );
     }
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer._data = new std::pair< int, int >[ 3 ];
-    buffer._size = 0;
-    buffer._capacity = 15;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 15 );
 
     for( int i = 23 ; i < 26 ; ++ i ){
-        buffer._data[ buffer._size ++ ] = std::pair< int, int >( i, 0 );
+        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
+        buffer.setSize( buffer.size() + 1 );
     }
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -624,39 +628,41 @@ void test_merge_3()
     assert( buffer.size() == 3 );
     assert( buffer.capacity() == 15 );
 
-    assert( storage._data[0].first == 10 );
-    assert( storage._data[1].first == 11 );
-    assert( storage._data[2].first == 12 );
-    assert( storage._data[3].first == 13 );
-    assert( storage._data[4].first == 14 );
-    assert( storage._data[5].first == 23 );
-    assert( storage._data[6].first == 24 );
-    assert( storage._data[7].first == 25 );
+    assert( storage[0].first == 10 );
+    assert( storage[1].first == 11 );
+    assert( storage[2].first == 12 );
+    assert( storage[3].first == 13 );
+    assert( storage[4].first == 14 );
+    assert( storage[5].first == 23 );
+    assert( storage[6].first == 24 );
+    assert( storage[7].first == 25 );
 
-    delete [] storage._data;
-    delete [] buffer._data;
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
 void test_merge_4()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage._data = new std::pair< int, int >[ 10 ];
-    storage._size = 0;
-    storage._capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 20 ; i += 2 ){
-        storage._data[ storage._size ++ ] = std::pair< int, int >( i, 0 );
+        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
+        storage.setSize( storage.size() + 1 );
     }
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer._data = new std::pair< int, int >[ 3 ];
-    buffer._size = 0;
-    buffer._capacity = 10;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 10 );
 
     for( int i = 13 ; i < 19 ; i += 2 ){
-        buffer._data[ buffer._size ++ ] = std::pair< int, int >( i, 0 );
+        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
+        buffer.setSize( buffer.size() + 1 );
     }
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -667,36 +673,37 @@ void test_merge_4()
     assert( buffer.size() == 3 );
     assert( buffer.capacity() == 10 );
 
-    assert( storage._data[0].first == 10 );
-    assert( storage._data[1].first == 12 );
-    assert( storage._data[2].first == 13 );
-    assert( storage._data[3].first == 14 );
-    assert( storage._data[4].first == 15 );
-    assert( storage._data[5].first == 16 );
-    assert( storage._data[6].first == 17 );
-    assert( storage._data[7].first == 18 );
+    assert( storage[0].first == 10 );
+    assert( storage[1].first == 12 );
+    assert( storage[2].first == 13 );
+    assert( storage[3].first == 14 );
+    assert( storage[4].first == 15 );
+    assert( storage[5].first == 16 );
+    assert( storage[6].first == 17 );
+    assert( storage[7].first == 18 );
 
-    delete [] storage._data;
-    delete [] buffer._data;
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
 void test_merge_5()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage._data = new std::pair< int, int >[ 10 ];
-    storage._size = 0;
-    storage._capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 20 ; i += 2 ){
-        storage._data[ storage._size ++ ] = std::pair< int, int >( i, 0 );
+        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
+        storage.setSize( storage.size() + 1 );
     }
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer._data = new std::pair< int, int >[ 3 ];
-    buffer._size = 0;
-    buffer._capacity = 3;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 3 );
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
@@ -706,32 +713,33 @@ void test_merge_5()
     assert( buffer.size() == 0 );
     assert( buffer.capacity() == 3 );
 
-    assert( storage._data[0].first == 10 );
-    assert( storage._data[1].first == 12 );
-    assert( storage._data[2].first == 14 );
-    assert( storage._data[3].first == 16 );
-    assert( storage._data[4].first == 18 );
+    assert( storage[0].first == 10 );
+    assert( storage[1].first == 12 );
+    assert( storage[2].first == 14 );
+    assert( storage[3].first == 16 );
+    assert( storage[4].first == 18 );
 
-    delete [] storage._data;
-    delete [] buffer._data;
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
 void test_merge_6()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage._data = new std::pair< int, int >[ 10 ];
-    storage._size = 0;
-    storage._capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer._data = new std::pair< int, int >[ 3 ];
-    buffer._size = 0;
-    buffer._capacity = 20;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 20 );
 
     for( int i = 13 ; i < 19 ; i += 2 ){
-        buffer._data[ buffer._size ++ ] = std::pair< int, int >( i, 0 );
+        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
+        buffer.setSize( buffer.size() + 1 );
     }
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -742,27 +750,27 @@ void test_merge_6()
     assert( buffer.size() == 3 );
     assert( buffer.capacity() == 20 );
 
-    assert( storage._data[0].first == 13 );
-    assert( storage._data[1].first == 15 );
-    assert( storage._data[2].first == 17 );
+    assert( storage[0].first == 13 );
+    assert( storage[1].first == 15 );
+    assert( storage[2].first == 17 );
 
-    delete [] storage._data;
-    delete [] buffer._data;
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
 void test_merge_7()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage._data = new std::pair< int, int >[ 10 ];
-    storage._size = 0;
-    storage._capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer._data = new std::pair< int, int >[ 3 ];
-    buffer._size = 0;
-    buffer._capacity = 3;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 3 );
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
@@ -772,8 +780,8 @@ void test_merge_7()
     assert( buffer.size() == 0 );
     assert( buffer.capacity() == 3 );
 
-    delete [] storage._data;
-    delete [] buffer._data;
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
 //
@@ -833,7 +841,7 @@ void test_insert_in_random_order()
     av.insert( AssocVector::value_type( 15, 0 ) );
 
     av.insert( AssocVector::value_type( 19, 0 ) );
-    
+
     assert( av.size() == 20 );
 
     for( int i = 0 ; i < av.size() ; ++ i ){
@@ -1042,7 +1050,7 @@ namespace detail
     {
         bool operator<( For_Test_User_Type_K const & k )const{return false;}
     };
-    
+
     std::ostream & operator<<( std::ostream & out , For_Test_User_Type_K const & )
     {
         return out << "[]";
@@ -1051,7 +1059,7 @@ namespace detail
     struct For_Test_User_Type_M
     {
     };
-    
+
     std::ostream & operator<<( std::ostream & out , For_Test_User_Type_M const & )
     {
         return out << "[]";
@@ -1551,7 +1559,7 @@ int main()
 
     test_erase_1();
     test_erase_2();
-    
+
     test_erase_iterator();
     test_erase_reverse_iterator();
 
