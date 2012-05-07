@@ -2,6 +2,7 @@
 #define ASSOC_VECTOR_HPP
 
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <cmath>
 
