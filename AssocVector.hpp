@@ -310,10 +310,9 @@ namespace array
             return _data[ index ];
         }
 
-    public:
+    private:
         _T * _data;
 
-    private:
         std::size_t _capacity;
         std::size_t _size;
     };
@@ -512,7 +511,7 @@ namespace array
 
         array.setSize( array.size() + 1 );
     }
-    
+
     template< typename _T >
     inline
     void pushBack(
@@ -1925,11 +1924,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
         {
             foundInStorage -> ~value_type_mutable();
             _storage.setSize( _storage.size() - 1 );
-            
+
             return;
         }
     }
-    
+
     {//erase from _storage
         array::insertSorted(
               _erased
@@ -1963,17 +1962,17 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
             return;
         }
     }
-    
+
     {//erase from back
         if( pos.base() + 1 == _storage.end() )
         {
             pos.base() -> ~value_type_mutable();
             _storage.setSize( _storage.size() - 1 );
-            
+
             return;
         }
     }
-    
+
     {//erase from _storage
         array::insertSorted(
               _erased
