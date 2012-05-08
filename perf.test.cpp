@@ -536,7 +536,7 @@ void erase_increasing()
     test_erase_increasing< std::map< int, S > >( 100 * REPS, 1000, "std::map< int, S >.erase_increasing" );
 #endif
 
-    std::cout << "AssocVector.erase_increasing: " << REPS << "x1000000 times: -s," << std::endl;
+    test_erase_increasing< AssocVector< int, S > >( REPS, 1000000, "AssocVector.erase_increasing" );
 #ifdef AV_USE_LOKI
     std::cout << "Loki::AssocVector.erase_increasing: " << REPS << "x1000000 times: -s," << std::endl;
 #endif

@@ -5,6 +5,20 @@
 
 #include "AssocVector.hpp"
 
+namespace std
+{
+
+template<
+      typename _T1
+    , typename _T2
+>
+std::ostream & operator<<( std::ostream & out, std::pair< _T1, _T2 > const & pair )
+{
+    return out << "(" << pair.first << "," << pair.second << ")";
+}
+
+}
+
 //
 // test_CmpByFirst
 //
@@ -72,7 +86,7 @@ namespace detail
         static int counter;
 
     private:
-        int _some_data_to_make_sizeof_not_zero;
+        int _some_data_to_makes_size_of_not_zero;
     };
 
     int For_ConstructRange_DestroyRange_Tests::counter = 0;
@@ -222,84 +236,84 @@ void test_copyRange_overlap_copy_to_begining()
 }
 
 //
-// test_mergeInplace
+// test_merge
 //
-void test_mergeInplace_1()
+void test_merge_1()
 {
-    using util::Array;
+    using array::Array;
 
     {
         Array< int > a1;
-        a1.data = new int[ 10 ];
-        a1.capacity = 10;
-        a1.size = 0;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
+        a1.setSize( 0 );
 
         Array< int > a2;
-        a2.data = new int[ 10 ];
-        a2.capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 1;
         a2[1] = 2;
         a2[2] = 3;
         a2[3] = 4;
 
-        a2.size = 4;
+        a2.setSize( 4 );
 
-        util::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size == 4 );
-        assert( a1.capacity == 10 );
-        
-        assert( a2.size == 0 );
-        assert( a2.capacity == 10 );
+        assert( a1.size() == 4 );
+        assert( a1.capacity() == 10 );
+
+        assert( a2.size() == 4 );
+        assert( a2.capacity() == 10 );
 
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
         assert( a1[3] == 4 );
 
-        delete [] a1.data;
-        delete [] a2.data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.data = new int[ 10 ];
-        a1.capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 1;
         a1[1] = 2;
         a1[2] = 3;
         a1[3] = 4;
 
-        a1.size = 4;
+        a1.setSize( 4 );
 
         Array< int > a2;
-        a2.data = new int[ 10 ];
-        a2.capacity = 10;
-        a2.size = 0;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
+        a2.setSize( 0 );
 
-        util::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size == 4 );
-        assert( a1.capacity == 10 );
+        assert( a1.size() == 4 );
+        assert( a1.capacity() == 10 );
 
-        assert( a2.size == 0 );
-        assert( a2.capacity == 10 );
-        
+        assert( a2.size() == 0 );
+        assert( a2.capacity() == 10 );
+
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
         assert( a1[3] == 4 );
 
-        delete [] a1.data;
-        delete [] a2.data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.data = new int[ 10 ];
-        a1.capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 1;
         a1[1] = 2;
@@ -308,27 +322,27 @@ void test_mergeInplace_1()
         a1[4] = 5;
         a1[5] = 6;
 
-        a1.size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2.data = new int[ 10 ];
-        a2.capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 7;
         a2[1] = 8;
         a2[2] = 9;
         a2[3] = 10;
 
-        a2.size = 4;
+        a2.setSize( 4 );
 
-        util::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size == 10 );
-        assert( a1.capacity == 10 );
+        assert( a1.size() == 10 );
+        assert( a1.capacity() == 10 );
 
-        assert( a2.size == 0 );
-        assert( a2.capacity == 10 );
-        
+        assert( a2.size() == 4 );
+        assert( a2.capacity() == 10 );
+
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -340,14 +354,14 @@ void test_mergeInplace_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 10 );
 
-        delete [] a1.data;
-        delete [] a2.data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.data = new int[ 10 ];
-        a1.capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 1;
         a1[1] = 3;
@@ -356,27 +370,27 @@ void test_mergeInplace_1()
         a1[4] = 9;
         a1[5] = 11;
 
-        a1.size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2.data = new int[ 10 ];
-        a2.capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 2;
         a2[1] = 4;
         a2[2] = 6;
         a2[3] = 8;
 
-        a2.size = 4;
+        a2.setSize( 4 );
 
-        util::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size == 10 );
-        assert( a1.capacity == 10 );
+        assert( a1.size() == 10 );
+        assert( a1.capacity() == 10 );
 
-        assert( a2.size == 0 );
-        assert( a2.capacity == 10 );
-        
+        assert( a2.size() == 4 );
+        assert( a2.capacity() == 10 );
+
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -388,14 +402,14 @@ void test_mergeInplace_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 11 );
 
-        delete [] a1.data;
-        delete [] a2.data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.data = new int[ 10 ];
-        a1.capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 5;
         a1[1] = 6;
@@ -404,27 +418,27 @@ void test_mergeInplace_1()
         a1[4] = 9;
         a1[5] = 10;
 
-        a1.size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2.data = new int[ 10 ];
-        a2.capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 1;
         a2[1] = 2;
         a2[2] = 3;
         a2[3] = 4;
 
-        a2.size = 4;
+        a2.setSize( 4 );
 
-        util::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size == 10 );
-        assert( a1.capacity == 10 );
+        assert( a1.size() == 10 );
+        assert( a1.capacity() == 10 );
 
-        assert( a2.size == 0 );
-        assert( a2.capacity == 10 );
-        
+        assert( a2.size() == 4 );
+        assert( a2.capacity() == 10 );
+
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -436,14 +450,14 @@ void test_mergeInplace_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 10 );
 
-        delete [] a1.data;
-        delete [] a2.data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.data = new int[ 10 ];
-        a1.capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 1;
         a1[1] = 2;
@@ -452,27 +466,27 @@ void test_mergeInplace_1()
         a1[4] = 9;
         a1[5] = 10;
 
-        a1.size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2.data = new int[ 10 ];
-        a2.capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 4;
         a2[1] = 5;
         a2[2] = 6;
         a2[3] = 7;
 
-        a2.size = 4;
+        a2.setSize( 4 );
 
-        util::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size == 10 );
-        assert( a1.capacity == 10 );
+        assert( a1.size() == 10 );
+        assert( a1.capacity() == 10 );
 
-        assert( a2.size == 0 );
-        assert( a2.capacity == 10 );
-        
+        assert( a2.size() == 4 );
+        assert( a2.capacity() == 10 );
+
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -484,14 +498,14 @@ void test_mergeInplace_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 10 );
 
-        delete [] a1.data;
-        delete [] a2.data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.data = new int[ 10 ];
-        a1.capacity = 10;
+        a1.setData( new int[ 10 ] );
+        a1.setCapacity( 10 );
 
         a1[0] = 2;
         a1[1] = 3;
@@ -500,27 +514,27 @@ void test_mergeInplace_1()
         a1[4] = 8;
         a1[5] = 9;
 
-        a1.size = 6;
+        a1.setSize( 6 );
 
         Array< int > a2;
-        a2.data = new int[ 10 ];
-        a2.capacity = 10;
+        a2.setData( new int[ 10 ] );
+        a2.setCapacity( 10 );
 
         a2[0] = 1;
         a2[1] = 4;
         a2[2] = 7;
         a2[3] = 10;
 
-        a2.size = 4;
+        a2.setSize( 4 );
 
-        util::mergeInplace( a1, a2, std::less< int >() );
+        array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size == 10 );
-        assert( a1.capacity == 10 );
+        assert( a1.size() == 10 );
+        assert( a1.capacity() == 10 );
 
-        assert( a2.size == 0 );
-        assert( a2.capacity == 10 );
-        
+        assert( a2.size() == 4 );
+        assert( a2.capacity() == 10 );
+
         assert( a1[0] == 1 );
         assert( a1[1] == 2 );
         assert( a1[2] == 3 );
@@ -532,234 +546,242 @@ void test_mergeInplace_1()
         assert( a1[8] == 9 );
         assert( a1[9] == 10 );
 
-        delete [] a1.data;
-        delete [] a2.data;
+        delete [] a1.getData();
+        delete [] a2.getData();
     }
 }
 
-void test_mergeInplace_2()
+void test_merge_2()
 {
-    util::Array< std::pair< int, int > > storage;
+    array::Array< std::pair< int, int > > storage;
 
-    storage.data = new std::pair< int, int >[ 10 ];
-    storage.size = 0;
-    storage.capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 15 ; ++ i ){
-        storage.data[ storage.size ++ ] = std::pair< int, int >( i, 0 );
+        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
+        storage.setSize( storage.size() + 1 );
     }
 
-    util::Array< std::pair< int, int > > buffer;
+    array::Array< std::pair< int, int > > buffer;
 
-    buffer.data = new std::pair< int, int >[ 3 ];
-    buffer.size = 0;
-    buffer.capacity = 3;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 3 );
 
     for( int i = 3 ; i < 6 ; ++ i ){
-        buffer.data[ buffer.size ++ ] = std::pair< int, int >( i, 0 );
+        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
+        buffer.setSize( buffer.size() + 1 );
     }
 
-    util::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity == 10 );
-    assert( storage.size == 8 );
+    assert( storage.capacity() == 10 );
+    assert( storage.size() == 8 );
 
-    assert( buffer.size == 0 );
-    assert( buffer.capacity == 3 );
-    
-    assert( storage.data[0].first == 3 );
-    assert( storage.data[1].first == 4 );
-    assert( storage.data[2].first == 5 );
-    assert( storage.data[3].first == 10 );
-    assert( storage.data[4].first == 11 );
-    assert( storage.data[5].first == 12 );
-    assert( storage.data[6].first == 13 );
-    assert( storage.data[7].first == 14 );
+    assert( buffer.size() == 3 );
+    assert( buffer.capacity() == 3 );
 
-    delete [] storage.data;
-    delete [] buffer.data;
+    assert( storage[0].first == 3 );
+    assert( storage[1].first == 4 );
+    assert( storage[2].first == 5 );
+    assert( storage[3].first == 10 );
+    assert( storage[4].first == 11 );
+    assert( storage[5].first == 12 );
+    assert( storage[6].first == 13 );
+    assert( storage[7].first == 14 );
+
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
-void test_mergeInplace_3()
+void test_merge_3()
 {
-    util::Array< std::pair< int, int > > storage;
+    array::Array< std::pair< int, int > > storage;
 
-    storage.data = new std::pair< int, int >[ 10 ];
-    storage.size = 0;
-    storage.capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 15 ; ++ i ){
-        storage.data[ storage.size ++ ] = std::pair< int, int >( i, 0 );
+        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
+        storage.setSize( storage.size() + 1 );
     }
 
-    util::Array< std::pair< int, int > > buffer;
+    array::Array< std::pair< int, int > > buffer;
 
-    buffer.data = new std::pair< int, int >[ 3 ];
-    buffer.size = 0;
-    buffer.capacity = 15;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 15 );
 
     for( int i = 23 ; i < 26 ; ++ i ){
-        buffer.data[ buffer.size ++ ] = std::pair< int, int >( i, 0 );
+        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
+        buffer.setSize( buffer.size() + 1 );
     }
 
-    util::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity == 10 );
-    assert( storage.size == 8 );
+    assert( storage.capacity() == 10 );
+    assert( storage.size() == 8 );
 
-    assert( buffer.size == 0 );
-    assert( buffer.capacity == 15 );
+    assert( buffer.size() == 3 );
+    assert( buffer.capacity() == 15 );
 
-    assert( storage.data[0].first == 10 );
-    assert( storage.data[1].first == 11 );
-    assert( storage.data[2].first == 12 );
-    assert( storage.data[3].first == 13 );
-    assert( storage.data[4].first == 14 );
-    assert( storage.data[5].first == 23 );
-    assert( storage.data[6].first == 24 );
-    assert( storage.data[7].first == 25 );
+    assert( storage[0].first == 10 );
+    assert( storage[1].first == 11 );
+    assert( storage[2].first == 12 );
+    assert( storage[3].first == 13 );
+    assert( storage[4].first == 14 );
+    assert( storage[5].first == 23 );
+    assert( storage[6].first == 24 );
+    assert( storage[7].first == 25 );
 
-    delete [] storage.data;
-    delete [] buffer.data;
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
-void test_mergeInplace_4()
+void test_merge_4()
 {
-    util::Array< std::pair< int, int > > storage;
+    array::Array< std::pair< int, int > > storage;
 
-    storage.data = new std::pair< int, int >[ 10 ];
-    storage.size = 0;
-    storage.capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 20 ; i += 2 ){
-        storage.data[ storage.size ++ ] = std::pair< int, int >( i, 0 );
+        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
+        storage.setSize( storage.size() + 1 );
     }
 
-    util::Array< std::pair< int, int > > buffer;
+    array::Array< std::pair< int, int > > buffer;
 
-    buffer.data = new std::pair< int, int >[ 3 ];
-    buffer.size = 0;
-    buffer.capacity = 10;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 10 );
 
     for( int i = 13 ; i < 19 ; i += 2 ){
-        buffer.data[ buffer.size ++ ] = std::pair< int, int >( i, 0 );
+        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
+        buffer.setSize( buffer.size() + 1 );
     }
 
-    util::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity == 10 );
-    assert( storage.size == 8 );
+    assert( storage.capacity() == 10 );
+    assert( storage.size() == 8 );
 
-    assert( buffer.size == 0 );
-    assert( buffer.capacity == 10 );
-    
-    assert( storage.data[0].first == 10 );
-    assert( storage.data[1].first == 12 );
-    assert( storage.data[2].first == 13 );
-    assert( storage.data[3].first == 14 );
-    assert( storage.data[4].first == 15 );
-    assert( storage.data[5].first == 16 );
-    assert( storage.data[6].first == 17 );
-    assert( storage.data[7].first == 18 );
+    assert( buffer.size() == 3 );
+    assert( buffer.capacity() == 10 );
 
-    delete [] storage.data;
-    delete [] buffer.data;
+    assert( storage[0].first == 10 );
+    assert( storage[1].first == 12 );
+    assert( storage[2].first == 13 );
+    assert( storage[3].first == 14 );
+    assert( storage[4].first == 15 );
+    assert( storage[5].first == 16 );
+    assert( storage[6].first == 17 );
+    assert( storage[7].first == 18 );
+
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
-void test_mergeInplace_5()
+void test_merge_5()
 {
-    util::Array< std::pair< int, int > > storage;
+    array::Array< std::pair< int, int > > storage;
 
-    storage.data = new std::pair< int, int >[ 10 ];
-    storage.size = 0;
-    storage.capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 20 ; i += 2 ){
-        storage.data[ storage.size ++ ] = std::pair< int, int >( i, 0 );
+        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
+        storage.setSize( storage.size() + 1 );
     }
 
-    util::Array< std::pair< int, int > > buffer;
+    array::Array< std::pair< int, int > > buffer;
 
-    buffer.data = new std::pair< int, int >[ 3 ];
-    buffer.size = 0;
-    buffer.capacity = 3;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 3 );
 
-    util::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity == 10 );
-    assert( storage.size == 5 );
+    assert( storage.capacity() == 10 );
+    assert( storage.size() == 5 );
 
-    assert( buffer.size == 0 );
-    assert( buffer.capacity == 3 );
-    
-    assert( storage.data[0].first == 10 );
-    assert( storage.data[1].first == 12 );
-    assert( storage.data[2].first == 14 );
-    assert( storage.data[3].first == 16 );
-    assert( storage.data[4].first == 18 );
+    assert( buffer.size() == 0 );
+    assert( buffer.capacity() == 3 );
 
-    delete [] storage.data;
-    delete [] buffer.data;
+    assert( storage[0].first == 10 );
+    assert( storage[1].first == 12 );
+    assert( storage[2].first == 14 );
+    assert( storage[3].first == 16 );
+    assert( storage[4].first == 18 );
+
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
-void test_mergeInplace_6()
+void test_merge_6()
 {
-    util::Array< std::pair< int, int > > storage;
+    array::Array< std::pair< int, int > > storage;
 
-    storage.data = new std::pair< int, int >[ 10 ];
-    storage.size = 0;
-    storage.capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
-    util::Array< std::pair< int, int > > buffer;
+    array::Array< std::pair< int, int > > buffer;
 
-    buffer.data = new std::pair< int, int >[ 3 ];
-    buffer.size = 0;
-    buffer.capacity = 20;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 20 );
 
     for( int i = 13 ; i < 19 ; i += 2 ){
-        buffer.data[ buffer.size ++ ] = std::pair< int, int >( i, 0 );
+        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
+        buffer.setSize( buffer.size() + 1 );
     }
 
-    util::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity == 10 );
-    assert( storage.size == 3 );
+    assert( storage.capacity() == 10 );
+    assert( storage.size() == 3 );
 
-    assert( buffer.size == 0 );
-    assert( buffer.capacity == 20 );
-    
-    assert( storage.data[0].first == 13 );
-    assert( storage.data[1].first == 15 );
-    assert( storage.data[2].first == 17 );
+    assert( buffer.size() == 3 );
+    assert( buffer.capacity() == 20 );
 
-    delete [] storage.data;
-    delete [] buffer.data;
+    assert( storage[0].first == 13 );
+    assert( storage[1].first == 15 );
+    assert( storage[2].first == 17 );
+
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
-void test_mergeInplace_7()
+void test_merge_7()
 {
-    util::Array< std::pair< int, int > > storage;
+    array::Array< std::pair< int, int > > storage;
 
-    storage.data = new std::pair< int, int >[ 10 ];
-    storage.size = 0;
-    storage.capacity = 10;
+    storage.setData( new std::pair< int, int >[ 10 ] );
+    storage.setSize( 0 );
+    storage.setCapacity( 10 );
 
-    util::Array< std::pair< int, int > > buffer;
+    array::Array< std::pair< int, int > > buffer;
 
-    buffer.data = new std::pair< int, int >[ 3 ];
-    buffer.size = 0;
-    buffer.capacity = 3;
+    buffer.setData( new std::pair< int, int >[ 3 ] );
+    buffer.setSize( 0 );
+    buffer.setCapacity( 3 );
 
-    util::mergeInplace( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity == 10 );
-    assert( storage.size == 0 );
+    assert( storage.capacity() == 10 );
+    assert( storage.size() == 0 );
 
-    assert( buffer.size == 0 );
-    assert( buffer.capacity == 3 );
-    
-    delete [] storage.data;
-    delete [] buffer.data;
+    assert( buffer.size() == 0 );
+    assert( buffer.capacity() == 3 );
+
+    delete [] storage.getData();
+    delete [] buffer.getData();
 }
 
 //
@@ -998,10 +1020,10 @@ void test_operator_index_1()
 
     av[ 1 ] = 11;
     assert( av[ 1 ] == 11 );
-    
+
     av[ 3 ] = 33;
     assert( av[ 3 ] == 33 );
-    
+
     av[ 2 ] = 22;
     assert( av[ 2 ] == 22 );
 }
@@ -1029,9 +1051,19 @@ namespace detail
         bool operator<( For_Test_User_Type_K const & k )const{return false;}
     };
 
+    std::ostream & operator<<( std::ostream & out , For_Test_User_Type_K const & )
+    {
+        return out << "[]";
+    }
+
     struct For_Test_User_Type_M
     {
     };
+
+    std::ostream & operator<<( std::ostream & out , For_Test_User_Type_M const & )
+    {
+        return out << "[]";
+    }
 }
 
 //
@@ -1063,7 +1095,7 @@ void test_copy_constructor()
     assocVector1[ "d" ] = 4;
     assocVector1[ "e" ] = 5;
 
-    AssocVector assocVector2( assocVector1 );    
+    AssocVector assocVector2( assocVector1 );
     assert( assocVector1 == assocVector2 );
 }
 
@@ -1330,6 +1362,166 @@ void test_iterators_iterate_not_empty_storage_empty_cache()
     }
 }
 
+void test_erase_iterator()
+{
+    typedef AssocVector< int, int > AVII;
+
+    AVII av;
+
+    av[ 1 ] = 11;
+    av[ 2 ] = 22;
+    av[ 3 ] = 33;
+    av[ 4 ] = 44;
+
+    av.merge();
+
+    {
+        av.erase( 5 );
+
+        AVII::iterator current = av.begin();
+
+        assert( ( * current ).first == 1 && ( * current ).second == 11 );
+
+        ++ current;
+        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+
+        ++ current;
+        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+
+        ++ current;
+        assert( ( * current ).first == 4 && ( * current ).second == 44 );
+
+        ++ current;
+        assert( current == av.end() );
+    }
+    {
+        av.erase( 4 );
+
+        AVII::iterator current = av.begin();
+
+        assert( ( * current ).first == 1 && ( * current ).second == 11 );
+
+        ++ current;
+        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+
+        ++ current;
+        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+
+        ++ current;
+        assert( current == av.end() );
+    }
+    {
+        av.erase( 1 );
+
+        AVII::iterator current = av.begin();
+
+        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+
+        ++ current;
+        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+
+        ++ current;
+        assert( current == av.end() );
+    }
+    {
+        av.erase( 2 );
+
+        AVII::iterator current = av.begin();
+
+        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+
+        ++ current;
+        assert( current == av.end() );
+    }
+    {
+        av.erase( 3 );
+
+        AVII::iterator current = av.begin();
+
+        assert( current == av.end() );
+    }
+}
+
+void test_erase_reverse_iterator()
+{
+    typedef AssocVector< int, int > AVII;
+
+    AVII av;
+
+    av[ 1 ] = 11;
+    av[ 2 ] = 22;
+    av[ 3 ] = 33;
+    av[ 4 ] = 44;
+
+    av.merge();
+
+    {
+        av.erase( 5 );
+
+        AVII::reverse_iterator current = av.rbegin();
+
+        assert( ( * current ).first == 4 && ( * current ).second == 44 );
+
+        ++ current;
+        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+
+        ++ current;
+        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+
+        ++ current;
+        assert( ( * current ).first == 1 && ( * current ).second == 11 );
+
+        ++ current;
+        assert( current == av.rend() );
+    }
+    {
+        av.erase( 4 );
+
+        AVII::reverse_iterator current = av.rbegin();
+
+        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+
+        ++ current;
+        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+
+        ++ current;
+        assert( ( * current ).first == 1 && ( * current ).second == 11 );
+
+        ++ current;
+        assert( current == av.rend() );
+    }
+    {
+        av.erase( 1 );
+
+        AVII::reverse_iterator current = av.rbegin();
+
+        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+
+        ++ current;
+        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+
+        ++ current;
+        assert( current == av.rend() );
+    }
+    {
+        av.erase( 2 );
+
+        AVII::reverse_iterator current = av.rbegin();
+
+        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+
+        ++ current;
+        assert( current == av.rend() );
+    }
+    {
+        av.erase( 3 );
+
+        AVII::reverse_iterator current = av.rbegin();
+
+        assert( current == av.rend() );
+    }
+}
+
 int main()
 {
     test_CmpByFirst_1();
@@ -1347,13 +1539,13 @@ int main()
     test_copyRange_overlap_more_than_half();
     test_copyRange_overlap_copy_to_begining();
 
-    test_mergeInplace_1();
-    test_mergeInplace_2();
-    test_mergeInplace_3();
-    test_mergeInplace_4();
-    test_mergeInplace_5();
-    test_mergeInplace_6();
-    test_mergeInplace_7();
+    test_merge_1();
+    test_merge_2();
+    test_merge_3();
+    test_merge_4();
+    test_merge_5();
+    test_merge_6();
+    test_merge_7();
 
     test_push_back();
 
@@ -1367,6 +1559,9 @@ int main()
 
     test_erase_1();
     test_erase_2();
+
+    test_erase_iterator();
+    test_erase_reverse_iterator();
 
     test_operator_index_1();
     test_operator_index_2();
