@@ -753,11 +753,25 @@ namespace detail
     >
     struct AssocVectorIterator
     {
+    private:
+        typedef typename std::iterator_traits< _Iterator >::pointer pointer_mutable;
+
+    public:
         typedef std::bidirectional_iterator_tag iterator_category;
         typedef typename std::iterator_traits< _Iterator >::value_type  value_type;
         typedef typename std::iterator_traits< _Iterator >::difference_type difference_type;
-        typedef typename std::iterator_traits< _Iterator >::reference reference;
-        typedef typename std::iterator_traits< _Iterator >::pointer   pointer;
+
+        // make key const
+        typedef std::pair<
+              typename value_type::first_type const
+            , typename value_type::second_type
+        > & reference;
+
+        // make key const
+        typedef std::pair<
+              typename value_type::first_type const
+            , typename value_type::second_type
+        > * pointer;
 
         AssocVectorIterator(
             typename _Container::value_compare const & cmp = typename _Container::value_compare()
@@ -788,9 +802,9 @@ namespace detail
 
         AssocVectorIterator(
               typename _Container::_Storage const & storage
-            , pointer currentInStorage
+            , pointer_mutable currentInStorage
             , typename _Container::_Storage const & buffer
-            , pointer currentInBuffer
+            , pointer_mutable currentInBuffer
             , typename _Container::_Erased const & erased
             , typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
@@ -892,13 +906,14 @@ namespace detail
 
             ( * this ).operator--();
 
+            
             return result;
         }
 
         reference operator*()const{
             PRECONDITION( _current != 0 );
 
-            return * _current;
+            return * base();
         }
 
         pointer operator->()const{
@@ -910,24 +925,33 @@ namespace detail
         pointer base()const{
             PRECONDITION( _current != 0 );
 
-            return _current;
+            // make key const
+            // pair< T1, T2 > * -> pair< T1 const, T2 > *
+            //return reinterpret_cast< pointer >( _current );
+            
+            return
+                reinterpret_cast< pointer >(
+                    const_cast< void * >(
+                        reinterpret_cast< void const * >( _current )
+                    )
+                );
         }
 
         // public for copy constructor only : Iterator -> ConstIterator
         typename _Container::_Storage const * getStorage()const{ return _storage; }
-        pointer getCurrentInStorage()const{ return _currentInStorage; }
+        pointer_mutable getCurrentInStorage()const{ return _currentInStorage; }
 
         typename _Container::_Storage const * getBuffer()const{ return _buffer; }
-        pointer getCurrentInBuffer()const{ return _currentInBuffer; }
+        pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
 
         typename _Container::_Erased const * getErased()const{ return _erased; }
         typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
 
         typename _Container::value_compare getCmp()const{ return _cmp; }
-        pointer getCurrent()const{ return _current; }
+        pointer_mutable getCurrent()const{ return _current; }
 
     private:
-        pointer
+        pointer_mutable
         calculateCurrent()
         {
            while(
@@ -964,16 +988,16 @@ namespace detail
 
     private:
         typename _Container::_Storage const * _storage;
-        pointer _currentInStorage;
+        pointer_mutable _currentInStorage;
         typename _Container::_Storage const * _buffer;
-        pointer _currentInBuffer;
+        pointer_mutable _currentInBuffer;
 
         typename _Container::_Erased const * _erased;
         typename _Container::_Erased::const_iterator _currentInErased;
 
         typename _Container::value_compare _cmp;
 
-        pointer _current;
+        pointer_mutable _current;
     };
 
     //
@@ -1951,22 +1975,27 @@ template<
 void
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
 {
+    // iterator::base converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
+    // revert real iterator type: pair< T1 const, T2 > * -> pair< T1, T2 > *
+    value_type_mutable * const posBase
+        = reinterpret_cast< value_type_mutable * >( pos.base() );
+
     {//erase from _buffer
-        if( util::isBetween( _buffer.begin(), pos.base(), _buffer.end() ) ){
-            return array::erase( _buffer, pos.base() );
+        if( util::isBetween( _buffer.begin(), posBase, _buffer.end() ) ){
+            return array::erase( _buffer, posBase );
         }
     }
 
     {//item not present in container
-        if( util::isBetween( _storage.begin(), pos.base(), _storage.end() ) == false ){
+        if( util::isBetween( _storage.begin(), posBase, _storage.end() ) == false ){
             return;
         }
     }
 
     {//erase from back
-        if( pos.base() + 1 == _storage.end() )
+        if( posBase + 1 == _storage.end() )
         {
-            pos.base() -> ~value_type_mutable();
+            posBase -> ~value_type_mutable();
             _storage.setSize( _storage.size() - 1 );
 
             return;
@@ -1976,7 +2005,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
     {//erase from _storage
         array::insertSorted(
               _erased
-            , typename _Storage::const_iterator( pos.base() )
+            , typename _Storage::const_iterator( posBase )
             , std::less< typename _Storage::const_iterator >()
         );
 
@@ -2121,9 +2150,9 @@ bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::update(
     , _Mapped const & m
 )
 {
-    typename _Storage::iterator const found = find( k );
+    iterator const found = find( k );
 
-    if( found == storage.end() ){
+    if( found == end() ){
         return false;
     }
 

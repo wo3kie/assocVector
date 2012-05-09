@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -1326,13 +1327,19 @@ void test_iterator_1()
     Iterator current = av.begin();
     Iterator end = av.end();
 
-    assert(    current->first == 0 );
-    assert( ++ current->first == 1 );
-    assert( ++ current->first == 2 );
-    assert( ++ current->first == 3 );
-    assert( ++ current->first == 4 );
-    assert( ++ current->first == 5 );
-    assert( ++ current->first == 6 );
+    assert( current->first == 0 );
+    ++current;
+    assert( current->first == 1 );
+    ++current;
+    assert( current->first == 2 );
+    ++current;
+    assert( current->first == 3 );
+    ++current;
+    assert( current->first == 4 );
+    ++current;
+    assert( current->first == 5 );
+    ++current;
+    assert( current->first == 6 );
 }
 
 //
@@ -1522,8 +1529,124 @@ void test_erase_reverse_iterator()
     }
 }
 
+template<
+      typename _T1
+    , typename _T2
+>
+bool isEqual(
+      AssocVector< _T1, _T2 > const & av
+    , std::map< _T1, _T2 > const & map
+)
+{
+    if( av.size() != map.size() ){
+        return false;
+    }
+    
+    return std::equal( av.begin(), av.end(), map.begin() );
+}
+
+void black_box_test()
+{
+    typedef AssocVector< int, int > AV;
+    AV av;
+    
+    typedef std::map< int, int > MAP;
+    MAP map;
+    
+    assert( isEqual( av, map ) );
+    
+    for( int i = 0 ; i < 1024 ; ++ i )
+    {
+        int const operation = rand() % 5;
+        
+        switch( operation )
+        {
+            case 0:
+                {
+                    int const key = rand();
+                    int const value = rand();
+                    
+                    av.insert( AV::value_type( key, value ) );
+                    map.insert( AV::value_type( key, value ) );
+                    
+                    assert( isEqual( av, map ) );
+                }
+                
+                break;
+                
+            case 1:
+                {
+                    int const key = rand();
+                    
+                    AV::iterator foundAV = av.find( key );
+                    MAP::iterator foundMap = map.find( key );
+                    
+                    assert(
+                           ( foundAV == av.end() && foundMap == map.end() )
+                        || ( * foundAV == * foundMap )
+                    );
+                    
+                    assert( isEqual( av, map ) );
+                }
+                
+                break;
+                
+            case 2:
+                {
+                    int const key = rand();
+                    
+                    av.erase( key );
+                    map.erase( key );
+                    
+                    assert( isEqual( av, map ) );
+                }
+                
+            case 3:
+                {
+                    int const key = rand();
+                    
+                    AV::iterator foundAV = av.find( key );
+                    MAP::iterator foundMap = map.find( key );
+                    
+                    if( foundAV == av.end() && foundMap == map.end() )
+                    {
+                        // empty
+                    }
+                    else
+                    {
+                        av.erase( foundAV );
+                        map.erase( foundMap );
+                    }
+                    
+                    assert( isEqual( av, map ) );
+                }
+                
+                break;
+                
+            case 4:
+                {
+                    int const key = rand();
+                    int const value = rand();
+                    
+                    AV::iterator foundAV = av.find( key );
+                    MAP::iterator foundMap = map.find( key );
+                    
+                    av[ key ] = value;
+                    map[ key ] = value;
+                    
+                    assert( isEqual( av, map ) );
+                }
+                
+                break;
+
+        }
+    }
+}
+
 int main()
 {
+    black_box_test();
+    
     test_CmpByFirst_1();
     test_CmpByFirst_2();
     test_CmpByFirst_3();
