@@ -80,27 +80,58 @@ namespace util
 namespace util
 {
     //
-    // destroy_range
+    // destroyRange
     //
+    namespace detail
+    {
+        template< bool _HasTrivialDestructor >
+        struct DestroyRangeImpl
+        {
+        };
+
+        template<>
+        struct DestroyRangeImpl< true >
+        {
+            template< typename _Ptr >
+            static
+            void destroy( _Ptr, _Ptr )
+            {
+            }
+        };    
+
+        template<>
+        struct DestroyRangeImpl< false >
+        {
+            template< typename _Ptr >
+            static
+            void destroy( _Ptr begin, _Ptr const end )
+            {
+                typedef typename std::iterator_traits< _Ptr >::value_type T;
+
+                for( /*empty*/ ; begin != end ; ++ begin ){
+                    begin -> T::~T();
+                }
+            }
+        };
+    }
+    
     template< typename _Ptr >
     inline
-    void destroy_range( _Ptr begin, _Ptr const end )
+    void destroyRange( _Ptr begin, _Ptr const end )
     {
         PRECONDITION( begin <= end );
 
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
-        for( /*empty*/ ; begin != end ; ++ begin ){
-            begin -> T::~T();
-        }
+        detail::DestroyRangeImpl< __has_trivial_destructor( T ) >::destroy( begin, end );
     }
 
     //
-    // construct_range
+    // constructRange
     //
     template< typename _Ptr >
     inline
-    void construct_range( _Ptr begin, _Ptr const end )
+    void constructRange( _Ptr begin, _Ptr const end )
     {
         PRECONDITION( begin <= end );
 
@@ -339,7 +370,7 @@ namespace array
         result.setSize( 0 );
         result.setCapacity( capacity );
 
-        util::construct_range( result.getData(), result.getData() + capacity );
+        util::constructRange( result.getData(), result.getData() + capacity );
 
         return result;
     }
@@ -387,7 +418,7 @@ namespace array
         , _Alloc allocator
     )
     {
-        util::destroy_range( array.begin(), array.end() );
+        util::destroyRange( array.begin(), array.end() );
         allocator.deallocate( array.getData(), array.capacity() );
 
         init( array );

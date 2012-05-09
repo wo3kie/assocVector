@@ -106,10 +106,10 @@ void test_constructRange_destroyRange()
     detail::For_ConstructRange_DestroyRange_Tests * memory = allocator.allocate( numberOfObjects );
     assert( detail::For_ConstructRange_DestroyRange_Tests::counter == 0 );
 
-    util::construct_range( memory, memory + numberOfObjects );
+    util::constructRange( memory, memory + numberOfObjects );
     assert( detail::For_ConstructRange_DestroyRange_Tests::counter == 10 );
 
-    util::destroy_range( memory, memory + numberOfObjects );
+    util::destroyRange( memory, memory + numberOfObjects );
     assert( detail::For_ConstructRange_DestroyRange_Tests::counter == 0 );
 
     allocator.deallocate( memory, numberOfObjects );
