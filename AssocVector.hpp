@@ -1341,9 +1341,8 @@ public:
     inline std::size_t count( key_type const & k )const;
 
     //
-    // update
+    // operator[]
     //
-    bool update( key_type const & k, mapped_type const & m );
     reference operator[]( key_type const & k );
 
     //
@@ -1379,11 +1378,6 @@ private:
 
     std::pair< bool, typename _Storage::iterator >
     findOrInsertToBuffer( key_type const & k, mapped_type const & m );
-
-    //
-    // update
-    //
-    bool update( _Storage & storage, key_type const & k, mapped_type const & m );
 
     //
     // isErased
@@ -1776,18 +1770,6 @@ template<
     , typename _Alloc
 >
 bool
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::update( _Key const & k, _Mapped const & m )
-{
-    return update( _storage, k, m ) || update( _buffer, k, m );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-bool
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::isErased(
     typename AssocVector::_Storage::const_iterator iterator
 )const
@@ -2167,29 +2149,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find(
 )const
 {
     return array::findInSorted( container, value_type_mutable( k, mapped_type() ), value_comp() );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-bool AssocVector< _Key, _Mapped, _Cmp, _Alloc >::update(
-      _Storage & storage
-    , _Key const & k
-    , _Mapped const & m
-)
-{
-    iterator const found = find( k );
-
-    if( found == end() ){
-        return false;
-    }
-
-    found->second = m;
-
-    return true;
 }
 
 template<
