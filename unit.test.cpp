@@ -1122,6 +1122,30 @@ void test_assign_operator()
 }
 
 //
+// test_clear
+//
+void test_clear()
+{
+    typedef AssocVector< std::string, int > AssocVector;
+
+    AssocVector assocVector;
+
+    assocVector[ "a" ] = 1;
+    assocVector[ "b" ] = 2;
+    assocVector[ "c" ] = 3;
+    assocVector[ "d" ] = 4;
+    assocVector[ "e" ] = 5;
+
+    assocVector.erase( "a" );
+    
+    assert( assocVector.size() == 4 );
+    
+    assocVector.clear();
+    
+    assert( assocVector.empty() );
+}
+
+//
 // test_iterator_to_const_iterator_conversion
 //
 void test_iterator_to_const_iterator_conversion()
@@ -1693,6 +1717,8 @@ int main()
 
     test_copy_constructor();
     test_assign_operator();
+    
+    test_clear();
 
     test_iterator_to_const_iterator_conversion();
 

@@ -1297,6 +1297,7 @@ public:
     AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Alloc > const & other );
 
     inline ~AssocVector();
+    inline void clear();
 
     AssocVector & operator=( AssocVector const & other );
 
@@ -1529,6 +1530,24 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::~AssocVector()
     array::destroy( _storage, getAllocator( _storage ) );
     array::destroy( _buffer, getAllocator( _buffer ) );
     array::destroy( _erased, getAllocator( _erased ) );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+void
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::clear()
+{
+    util::destroyRange( _storage.begin(), _storage.end() );
+    util::destroyRange( _buffer.begin(), _buffer.end() );
+    
+    _storage.setSize( 0 );
+    _buffer.setSize( 0 );
+    _erased.setSize( 0 );
+    
 }
 
 template<
