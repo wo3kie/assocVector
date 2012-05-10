@@ -1,4 +1,5 @@
 //#define AV_UNIT_TESTS
+
 #define AV_USE_BOOST_RANDOM
 
 #define AV_BREAK_IF_TIMEOUT( _timeout_ ) \
@@ -10,10 +11,10 @@
             } \
         } \
     }
-    
+
 #ifdef AV_UNIT_TESTS
     unsigned const REPS = 1000;
-    
+
     unsigned const AV_TIMEOUT = 10;
 #else
     #define AV_USE_VECTOR
@@ -21,7 +22,7 @@
     #define AV_USE_STD_MAP
 
     unsigned const REPS = 10000000;
-    
+
     unsigned const AV_TIMEOUT = 60;
 #endif
 
@@ -33,15 +34,15 @@
     #include <map>
 #endif
 
-#include <ctime>
-#include <iostream>
-#include <string>
-#include <vector>
-
 #ifdef AV_USE_BOOST_RANDOM
     #include <boost/random/mersenne_twister.hpp>
     #include <boost/random/uniform_int_distribution.hpp>
 #endif
+
+#include <ctime>
+#include <iostream>
+#include <string>
+#include <vector>
 
 #include "AssocVector.hpp"
 
@@ -87,16 +88,22 @@ void test_push_increasing( int tests, int rep, std::string const & message )
     std::clock_t const start_suite( std::clock() );
 
     bool timeout = false;
-    
+
+    std::clock_t total_time = 0;
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
 
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = 0 ; ! timeout && counter < rep ; ++counter ){
             av.insert( std::make_pair( counter, S() ) );
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -106,7 +113,7 @@ void test_push_increasing( int tests, int rep, std::string const & message )
         << "x"
         <<  rep
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -114,18 +121,24 @@ template< typename _Storage >
 void test_push_decreasing( int tests, int rep, std::string const & message )
 {
     std::clock_t const start_suite( std::clock() );
-    
+
     bool timeout = false;
+
+    std::clock_t total_time = 0;
 
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
 
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = rep ; ! timeout && counter > 0 ; --counter ){
             av.insert( std::make_pair( counter, S() ) );
-        
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -135,7 +148,7 @@ void test_push_decreasing( int tests, int rep, std::string const & message )
         << "x"
         <<  rep
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -145,18 +158,24 @@ void test_push_decreasing_push_back_reverse( int tests, int rep, std::string con
     std::clock_t const start_suite( std::clock() );
 
     bool timeout = false;
-    
+
+    std::clock_t total_time = 0;
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
 
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = 0 ; ! timeout && counter < rep ; ++counter ){
             av.push_back( std::make_pair( counter, S() ) );
-        
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
 
         std::reverse( av.begin(), av.end() );
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -166,7 +185,7 @@ void test_push_decreasing_push_back_reverse( int tests, int rep, std::string con
         << "x"
         <<  rep
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -176,14 +195,18 @@ void test_push_random_push_back_sort( int tests, std::vector< int > const & arra
     std::clock_t const start_suite( std::clock() );
 
     bool timeout = false;
-    
+
+    std::clock_t total_time = 0;
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
 
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = 0 ; ! timeout && counter < array.size() ; ++counter ){
             av.push_back( std::make_pair( array[ counter ], S() ) );
-        
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
 
@@ -192,6 +215,8 @@ void test_push_random_push_back_sort( int tests, std::vector< int > const & arra
             , av.end()
             , util::CmpByFirst< std::pair< int, S >, std::less< int > >()
         );
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -201,7 +226,7 @@ void test_push_random_push_back_sort( int tests, std::vector< int > const & arra
         << "x"
         <<  array.size()
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -209,18 +234,24 @@ template< typename _Storage >
 void test_push_random( int tests, std::vector< int > const & array, std::string const & message )
 {
     std::clock_t const start_suite( std::clock() );
-    
+
     bool timeout = false;
+
+    std::clock_t total_time = 0;
 
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
 
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = 0 ; ! timeout && counter < array.size() ; ++counter ){
             av.insert( std::make_pair( array[ counter ], S() ) );
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -230,7 +261,7 @@ void test_push_random( int tests, std::vector< int > const & array, std::string 
         << "x"
         <<  array.size()
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -238,11 +269,11 @@ template< typename _Storage >
 void test_erase_increasing( int tests, int rep, std::string const & message )
 {
     std::clock_t const start_suite( std::clock() );
-    
+
     bool timeout = false;
 
     std::clock_t total_time = 0;
-    
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
@@ -255,7 +286,7 @@ void test_erase_increasing( int tests, int rep, std::string const & message )
 
         for( int counter = 0 ; ! timeout && counter < rep ; ++counter ){
             av.erase( counter );
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
 
@@ -269,7 +300,7 @@ void test_erase_increasing( int tests, int rep, std::string const & message )
         << "x"
         <<  rep
         << " times: "
-        << total_time/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -277,9 +308,9 @@ template< typename _Storage >
 void test_erase_decreasing( int tests, int rep, std::string const & message )
 {
     std::clock_t const start_suite( std::clock() );
-    
+
     bool timeout = false;
-    
+
     std::clock_t total_time = 0;
 
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
@@ -294,7 +325,7 @@ void test_erase_decreasing( int tests, int rep, std::string const & message )
 
         for( int counter = rep ; ! timeout && counter > 0 ; --counter ){
             av.erase( counter );
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
 
@@ -308,7 +339,7 @@ void test_erase_decreasing( int tests, int rep, std::string const & message )
         << "x"
         <<  rep
         << " times: "
-        << total_time/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -316,9 +347,9 @@ template< typename _Storage >
 void test_erase_random( int tests, std::vector< int > const & array, std::string const & message )
 {
     std::clock_t const start_suite( std::clock() );
-    
+
     bool timeout = false;
-    
+
     std::clock_t total_time = 0;
 
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
@@ -333,7 +364,7 @@ void test_erase_random( int tests, std::vector< int > const & array, std::string
 
         for( int counter = 0 ; ! timeout && counter < array.size() ; ++counter ){
             av.erase( array[ counter ] );
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
 
@@ -347,7 +378,7 @@ void test_erase_random( int tests, std::vector< int > const & array, std::string
         << "x"
         <<  array.size()
         << " times: "
-        << total_time/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -368,22 +399,28 @@ template< typename _Storage >
 void test_find( int tests, int rep, std::string const & message )
 {
     std::clock_t const start_suite( std::clock() );
-    
+
     bool timeout = false;
-    
+
     _Storage av;
 
     for( int i = 0 ; i < rep ; ++i ){
         av.insert( std::make_pair( i, S() ) );
     }
 
+    std::clock_t total_time = 0;
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = 0 ; ! timeout && counter < rep ; ++counter ){
             av.find( counter );
-        
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -393,7 +430,7 @@ void test_find( int tests, int rep, std::string const & message )
         << "x"
         <<  rep
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -403,17 +440,23 @@ void test_index_operator_increasing( int tests, int rep, std::string const & mes
     std::clock_t const start_suite( std::clock() );
 
     bool timeout = false;
-    
+
+    std::clock_t total_time = 0;
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
 
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = 0 ; ! timeout && counter < rep ; ++counter ){
             av[ counter ] = S();
             S s = av[counter];
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -423,7 +466,7 @@ void test_index_operator_increasing( int tests, int rep, std::string const & mes
         << "x"
         <<  rep
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -431,19 +474,25 @@ template< typename _Storage >
 void test_index_operator_decreasing( int tests, int rep, std::string const & message )
 {
     std::clock_t const start_suite( std::clock() );
-    
+
     bool timeout = false;
-    
+
+    std::clock_t total_time = 0;
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
 
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = rep ; ! timeout && counter > 0 ; --counter ){
             av[ counter ] = S();
             S s = av[counter];
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -453,7 +502,7 @@ void test_index_operator_decreasing( int tests, int rep, std::string const & mes
         << "x"
         <<  rep
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -463,19 +512,25 @@ void test_index_operator_random( int tests, std::vector< int > const & array, st
     std::clock_t const start_suite( std::clock() );
 
     bool timeout = false;
-    
+
+    std::clock_t total_time = 0;
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
+
+        std::clock_t const start_test( std::clock() );
 
         for( int counter = 0 ; ! timeout && counter < array.size() ; ++ counter ){
             int const value = array[ counter ];
 
             av[ value ] = S();
             S s = av[ value ];
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -485,7 +540,7 @@ void test_index_operator_random( int tests, std::vector< int > const & array, st
         << "x"
         <<  array.size()
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -499,25 +554,29 @@ void test_random_operations(
     std::clock_t const start_suite( std::clock() );
 
     bool timeout = false;
-    
+
+    std::clock_t total_time = 0;
+
     for( int j = 0 ; ! timeout && j < tests ; ++ j )
     {
         _Storage av;
 
+        std::clock_t const start_test( std::clock() );
+
         for( int counter = 0 ; ! timeout && counter < array.size() ; ++ counter ){
             int const operation = array[ counter ].first;
             int const value = array[ counter ].second;
-            
+
             switch( operation )
             {
                 case 0:
                     av.insert( std::make_pair( value, S() ) );
                     break;
-                    
+
                 case 1:
                     av.find( value );
                     break;
-                    
+
                 case 2:
                     av.erase( value );
                     break;
@@ -525,9 +584,11 @@ void test_random_operations(
                 default:
                     assert( false );
             }
-            
+
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
+
+        total_time += ( std::clock() - start_test );
     }
 
     std::cout
@@ -537,7 +598,7 @@ void test_random_operations(
         << "x"
         <<  array.size()
         << " times: "
-        << std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC)
+        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
         << "s\n";
 }
 
@@ -588,10 +649,10 @@ void push_random()
         std::vector< int > array;
 
         for( int j = 0 ; j < i ; ++ j )
-            array.push_back( random() );
+            array.push_back( rand() + rand() - rand() );
 
         test_push_random< AssocVector< int, S > >( REPS / i, array, "push_random.AssocVector" );
-        
+
 #ifdef AV_USE_VECTOR
         test_push_random_push_back_sort< std::vector< std::pair< int, S > > >( REPS / i, array, "  push_random.std::vector.push_back.sort" );
 #endif
@@ -613,7 +674,7 @@ void index_operator_increasing()
     for( int i = 100 ; i <= REPS ; i *= 10 )
     {
         test_index_operator_increasing< AssocVector< int, S > >( REPS / i, i, "index_operator_increasing.AssocVector" );
-    
+
 #ifdef AV_USE_LOKI
         test_index_operator_increasing< Loki::AssocVector< int, S > >( REPS / i, i, "index_operator_increasing.Loki::AssocVector" );
 #endif
@@ -651,10 +712,10 @@ void index_operator_random()
         std::vector< int > array;
 
         for( int j = 0 ; j < i ; ++ j )
-            array.push_back( random() );
+            array.push_back( rand() + rand() - rand() );
 
         test_index_operator_random< AssocVector< int, S > >( REPS / i, array, "index_operator_random.AssocVector" );
-        
+
 #ifdef AV_USE_LOKI
         test_index_operator_random< Loki::AssocVector< int, S > >( REPS / i, array, "index_operator_random.Loki::AssocVector" );
 #endif
@@ -672,7 +733,7 @@ void find()
     for( int i = 100 ; i <= REPS ; i *= 10 )
     {
         test_find< AssocVector< int, S > >( REPS / i, i, "find.AssocVector" );
-        
+
 #ifdef AV_USE_LOKI
     test_find< Loki::AssocVector< int, S > >( REPS / i, i, "find.Loki::AssocVector" );
 #endif
@@ -728,10 +789,10 @@ void erase_random()
         std::vector< int > array;
 
         for( int j = 0 ; j < i ; ++ j )
-            array.push_back( random() );
+            array.push_back( rand() + rand() - rand() );
 
         test_erase_random< AssocVector< int, S > >( REPS / i, array, "erase_randomAssocVector" );
-    
+
 #ifdef AV_USE_LOKI
         test_erase_random< Loki::AssocVector< int, S > >( REPS / i, array, "erase_random.Loki::AssocVector" );
 #endif
@@ -751,11 +812,11 @@ void random_operations()
         std::vector< std::pair< int, int > > array;
 
         for( int j = 0 ; j < i/2 ; ++ j )
-            array.push_back( std::make_pair( 0, random() ) );
+            array.push_back( std::make_pair( 0, rand() + rand() - rand() ) );
 
         for( int j = i/2 ; j < i ; ++ j )
-            array.push_back( std::make_pair( random() % 3, random() ) );
-        
+            array.push_back( std::make_pair( rand() % 3, rand() + rand() - rand() ) );
+
         test_random_operations< AssocVector< int, S > >( REPS / i, array, "test_random_operations.AssocVector" );
 
 #ifdef AV_USE_LOKI
@@ -805,6 +866,6 @@ int main()
     erase_increasing();
     erase_decreasing();
     erase_random();
-    
+
     random_operations();
 }
