@@ -1,4 +1,5 @@
 //#define AV_UNIT_TESTS
+#define AV_USE_BOOST_RANDOM
 
 #define AV_BREAK_IF_TIMEOUT( _timeout_ ) \
     { \
@@ -9,17 +10,17 @@
             } \
         } \
     }
-
+    
 #ifdef AV_UNIT_TESTS
     unsigned const REPS = 1000;
     
     unsigned const AV_TIMEOUT = 10;
 #else
-    //#define AV_USE_VECTOR
+    #define AV_USE_VECTOR
     #define AV_USE_LOKI
     #define AV_USE_STD_MAP
 
-    unsigned const REPS = 1000000;
+    unsigned const REPS = 10000000;
     
     unsigned const AV_TIMEOUT = 60;
 #endif
@@ -27,6 +28,7 @@
 #ifdef AV_USE_LOKI
     #include <loki/AssocVector.h>
 #endif
+
 #ifdef AV_USE_STD_MAP
     #include <map>
 #endif
@@ -36,7 +38,25 @@
 #include <string>
 #include <vector>
 
+#ifdef AV_USE_BOOST_RANDOM
+    #include <boost/random/mersenne_twister.hpp>
+    #include <boost/random/uniform_int_distribution.hpp>
+#endif
+
 #include "AssocVector.hpp"
+
+int random()
+{
+#ifdef AV_USE_BOOST_RANDOM
+    static boost::random::mt19937 gen;
+    
+    boost::random::uniform_int_distribution<> dist( 1, 1024 * 1024 * 1024 );
+    
+    return dist( gen );
+#else
+    return rand();
+#endif
+}
 
 unsigned const MessageAlignment = 50;
 
@@ -568,7 +588,7 @@ void push_random()
         std::vector< int > array;
 
         for( int j = 0 ; j < i ; ++ j )
-            array.push_back( rand() + rand() - rand() );
+            array.push_back( random() );
 
         test_push_random< AssocVector< int, S > >( REPS / i, array, "push_random.AssocVector" );
         
@@ -631,7 +651,7 @@ void index_operator_random()
         std::vector< int > array;
 
         for( int j = 0 ; j < i ; ++ j )
-            array.push_back( rand() + rand() - rand() );
+            array.push_back( random() );
 
         test_index_operator_random< AssocVector< int, S > >( REPS / i, array, "index_operator_random.AssocVector" );
         
@@ -708,7 +728,7 @@ void erase_random()
         std::vector< int > array;
 
         for( int j = 0 ; j < i ; ++ j )
-            array.push_back( rand() + rand() - rand() );
+            array.push_back( random() );
 
         test_erase_random< AssocVector< int, S > >( REPS / i, array, "erase_randomAssocVector" );
     
@@ -731,10 +751,10 @@ void random_operations()
         std::vector< std::pair< int, int > > array;
 
         for( int j = 0 ; j < i/2 ; ++ j )
-            array.push_back( std::make_pair( 0, rand() + rand() - rand() ) );
+            array.push_back( std::make_pair( 0, random() ) );
 
         for( int j = i/2 ; j < i ; ++ j )
-            array.push_back( std::make_pair( rand() % 3, rand() + rand() - rand() ) );
+            array.push_back( std::make_pair( random() % 3, random() ) );
         
         test_random_operations< AssocVector< int, S > >( REPS / i, array, "test_random_operations.AssocVector" );
 
