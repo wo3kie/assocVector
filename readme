@@ -100,12 +100,20 @@ After insert 49
 After insert 5
 
 +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-| 0 | 2 | 3 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 49| 50|
+| 0 | 1 | 2 | 3 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 49| 50|
 +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 | 5 |   |   |
 +---+---+---+
 
-All the time size of buffer is kept as sqrt( storage.size() / 2 ) which is an optimal coefficient for it.
+After AssocVector::merge called
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 49| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+|   |   |   |
++---+---+---+
+
+All the time size of buffer is kept as sqrt(storage.size()) which is an optimal coefficient for it.
 
 
 
@@ -130,9 +138,8 @@ There are no bugs. There are "features".
 ################################################################################
 
 Fixing all potential bugs
-Optimise operator[] operation
-Optimise erase operation
 Support for move semantic (and other C++11 features)
+
 
 
 ################################################################################
