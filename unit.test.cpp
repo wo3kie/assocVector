@@ -1137,11 +1137,11 @@ void test_clear()
     assocVector[ "e" ] = 5;
 
     assocVector.erase( "a" );
-    
+
     assert( assocVector.size() == 4 );
-    
+
     assocVector.clear();
-    
+
     assert( assocVector.empty() );
 }
 
@@ -1565,7 +1565,7 @@ bool isEqual(
     if( av.size() != map.size() ){
         return false;
     }
-    
+
     return std::equal( av.begin(), av.end(), map.begin() );
 }
 
@@ -1573,65 +1573,65 @@ void black_box_test()
 {
     typedef AssocVector< int, int > AV;
     AV av;
-    
+
     typedef std::map< int, int > MAP;
     MAP map;
-    
+
     assert( isEqual( av, map ) );
-    
+
     for( int i = 0 ; i < 1024 ; ++ i )
     {
         int const operation = rand() % 5;
-        
+
         switch( operation )
         {
             case 0:
                 {
                     int const key = rand();
                     int const value = rand();
-                    
+
                     av.insert( AV::value_type( key, value ) );
                     map.insert( AV::value_type( key, value ) );
-                    
+
                     assert( isEqual( av, map ) );
                 }
-                
+
                 break;
-                
+
             case 1:
                 {
                     int const key = rand();
-                    
+
                     AV::iterator foundAV = av.find( key );
                     MAP::iterator foundMap = map.find( key );
-                    
+
                     assert(
                            ( foundAV == av.end() && foundMap == map.end() )
                         || ( * foundAV == * foundMap )
                     );
-                    
+
                     assert( isEqual( av, map ) );
                 }
-                
+
                 break;
-                
+
             case 2:
                 {
                     int const key = rand();
-                    
+
                     av.erase( key );
                     map.erase( key );
-                    
+
                     assert( isEqual( av, map ) );
                 }
-                
+
             case 3:
                 {
                     int const key = rand();
-                    
+
                     AV::iterator foundAV = av.find( key );
                     MAP::iterator foundMap = map.find( key );
-                    
+
                     if( foundAV == av.end() && foundMap == map.end() )
                     {
                         // empty
@@ -1641,26 +1641,26 @@ void black_box_test()
                         av.erase( foundAV );
                         map.erase( foundMap );
                     }
-                    
+
                     assert( isEqual( av, map ) );
                 }
-                
+
                 break;
-                
+
             case 4:
                 {
                     int const key = rand();
                     int const value = rand();
-                    
+
                     AV::iterator foundAV = av.find( key );
                     MAP::iterator foundMap = map.find( key );
-                    
+
                     av[ key ] = value;
                     map[ key ] = value;
-                    
+
                     assert( isEqual( av, map ) );
                 }
-                
+
                 break;
 
         }
@@ -1670,7 +1670,7 @@ void black_box_test()
 int main()
 {
     black_box_test();
-    
+
     test_CmpByFirst_1();
     test_CmpByFirst_2();
     test_CmpByFirst_3();
@@ -1717,7 +1717,7 @@ int main()
 
     test_copy_constructor();
     test_assign_operator();
-    
+
     test_clear();
 
     test_iterator_to_const_iterator_conversion();

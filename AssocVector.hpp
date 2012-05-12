@@ -97,7 +97,7 @@ namespace util
             void destroy( _Ptr, _Ptr )
             {
             }
-        };    
+        };
 
         template<>
         struct DestroyRangeImpl< false >
@@ -114,7 +114,7 @@ namespace util
             }
         };
     }
-    
+
     template< typename _Ptr >
     inline
     void destroyRange( _Ptr begin, _Ptr const end )
@@ -711,9 +711,6 @@ namespace array
     {
         PRECONDITION( storage.size() + buffer.size() <= storage.capacity() );
 
-        std::size_t const storageSize = storage.size();
-        std::size_t const bufferSize = buffer.size();
-
         typedef typename array::Array< _T >::iterator Iterator;
 
         Iterator whereInsertInStorage = storage.begin() + storage.size() + buffer.size() - 1;
@@ -937,7 +934,7 @@ namespace detail
 
             ( * this ).operator--();
 
-            
+
             return result;
         }
 
@@ -959,7 +956,7 @@ namespace detail
             // make key const
             // pair< T1, T2 > * -> pair< T1 const, T2 > *
             //return reinterpret_cast< pointer >( _current );
-            
+
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
@@ -1543,11 +1540,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::clear()
 {
     util::destroyRange( _storage.begin(), _storage.end() );
     util::destroyRange( _buffer.begin(), _buffer.end() );
-    
+
     _storage.setSize( 0 );
     _buffer.setSize( 0 );
     _erased.setSize( 0 );
-    
+
 }
 
 template<
