@@ -444,68 +444,37 @@ namespace array
     }
 
     template<
-          typename _Array
-        , typename _Iterator
+          typename _Iterator
         , typename _T
         , typename _Cmp
     >
     _Iterator
-    findInSortedImpl(
-          _Array array
-        , _T const t
+    findInSorted(
+          _Iterator begin
+        , _Iterator end
+        , _T const & t
         , _Cmp cmp
     )
     {
         _Iterator const found
             = std::lower_bound(
-                  array.begin()
-                , array.end()
+                  begin
+                , end
                 , t
                 , cmp
             );
 
-        if( found == array.end() ){
-            return array.end();
+        if( found == end ){
+            return end;
         }
 
         bool const isGreater = cmp( t, * found );
 
         if( isGreater ){
-            return array.end();
+            return end;
         }
-        else{
-            return found;
-        }
-    }
 
-    template<
-          typename _T
-        , typename _Cmp
-    >
-    inline
-    typename Array< _T >::iterator
-    findInSorted(
-          Array< _T > & array
-        , _T const t
-        , _Cmp cmp = std::less< _T >()
-    )
-    {
-        return findInSortedImpl< Array< _T >, typename Array< _T >::iterator >( array, t, cmp );
-    }
-
-    template<
-          typename _T
-        , typename _Cmp
-    >
-    inline
-    typename Array< _T >::const_iterator
-    findInSorted(
-          Array< _T > const & array
-        , _T const t
-        , _Cmp cmp = std::less< _T >()
-    )
-    {
-        return findInSortedImpl< Array< _T > const, typename Array< _T >::const_iterator >( array, t, cmp );
+        return found;
     }
 
     template< typename _T >
@@ -524,19 +493,6 @@ namespace array
 
         * pos = t;
 
-        array.setSize( array.size() + 1 );
-    }
-
-    template< typename _T >
-    inline
-    void pushBack(
-          Array< _T > & array
-        , _T const & t
-    )
-    {
-        PRECONDITION( array.size() + 1 <= array.capacity() );
-
-        array[ array.size() ] = t;
         array.setSize( array.size() + 1 );
     }
 
@@ -1749,7 +1705,10 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::pushBack( _Key const & k, _Mapped co
         reserve( calculateNewStorageCapacity( _storage.capacity() ) );
     }
 
-    array::pushBack( _storage, value_type_mutable( k, m ) );
+    {//push back
+        _storage[ _storage.size() ] = value_type_mutable( k, m );
+        _storage.setSize( _storage.size() + 1 );
+    }
 }
 
 template<
@@ -1765,7 +1724,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::isErased(
 {
     typename _Erased::const_iterator const foundInErased
         = array::findInSorted(
-              _erased
+              _erased.begin()
+            , _erased.end()
             , iterator
             , std::less< typename _Storage::const_iterator >()
         );
@@ -2037,7 +1997,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find(
     , key_type const & k
 )
 {
-    return array::findInSorted( container, value_type_mutable( k, mapped_type() ), value_comp() );
+    return array::findInSorted( container.begin(), container.end(), value_type_mutable( k, mapped_type() ), value_comp() );
 }
 
 template<
@@ -2125,7 +2085,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find(
     , key_type const & k
 )const
 {
-    return array::findInSorted( container, value_type_mutable( k, mapped_type() ), value_comp() );
+    return array::findInSorted( container.begin(), container.end(), value_type_mutable( k, mapped_type() ), value_comp() );
 }
 
 template<
