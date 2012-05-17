@@ -11,30 +11,6 @@
 
 namespace util
 {
-    template< typename _Iterator >
-    void dump( _Iterator begin, _Iterator end, std::ostream & out = std::cout )
-    {
-        out << '[';
-
-        if( begin != end )
-        {
-            _Iterator current = begin;
-
-            out << '(' << current->first << ',' << current->second << ')';
-
-            ++ current;
-
-            for( ; current != end ; ++ current ){
-                out << '(' << current->first << ',' << current->second << ')';
-            }
-        }
-
-        out << ']';
-    }
-}
-
-namespace util
-{
     //
     // CmpByFirst
     //
@@ -404,8 +380,6 @@ namespace array
     {
         util::destroyRange( array.begin(), array.end() );
         allocator.deallocate( array.getData(), array.capacity() );
-
-        init( array );
     }
 
     template<
@@ -434,13 +408,6 @@ namespace array
         array.setSize( size );
         array.setCapacity( capacity );
         array.setData( newArray.getData() );
-    }
-
-    template< typename _T >
-    inline
-    void dump( Array< _T > const & array, std::ostream & out = std::cout )
-    {
-        dump( array.begin(), array.end(), out );
     }
 
     template<
