@@ -22,7 +22,7 @@
     #define AV_TEST_STD_MAP
     #define AV_TEST_BOOST_HASH
 
-    unsigned const REPS = 10000000;
+    unsigned const REPS = 1000000;
 
     unsigned const AV_TIMEOUT = 60;
 #endif
@@ -64,7 +64,7 @@ int random()
 #endif
 }
 
-unsigned const MessageAlignment = 50;
+unsigned const MessageAlignment = 60;
 
 std::string make_padding( std::string const & message, int length )
 {
@@ -73,9 +73,12 @@ std::string make_padding( std::string const & message, int length )
     return message + std::string( paddingSize, ' ' );
 }
 
-struct S
+template< typename _T >
+std::string name(){}
+
+struct S1
 {
-    S & operator=( S const & other )
+    S1 & operator=( S1 const & other )
     {
         ++counter;
 
@@ -85,7 +88,73 @@ struct S
     static unsigned counter;
 };
 
-unsigned S::counter = 0;
+unsigned S1::counter = 0;
+
+template<>
+std::string name< S1 >(){ return "S1"; }
+
+struct S2
+{
+    S2()
+    {
+        b = 0;
+        s = 0;
+        i = 0;
+        u = 0;
+        c = 0;
+        f = 0;
+        d = 0;
+        v = 0;
+    }
+
+    S2 & operator=( S2 const & other )
+    {
+        b = other.b;
+        s = other.s;
+        i = other.i;
+        u = other.u;
+        c = other.c;
+        f = other.f;
+        d = other.d;
+        v = other.v;
+
+        return * this;
+    }
+
+    bool b;
+    short s;
+    int i;
+    unsigned u;
+    char c;
+    float f;
+    double d;
+    void * v;
+};
+
+template<>
+std::string name< S2 >(){ return "S2"; }
+
+struct S3
+{
+    S3()
+    {
+        for( int i = 0 ; i < 10 ; ++ i ){
+            array.push_back( rand() );
+        }
+    }
+
+    S3 & operator=( S3 const & other )
+    {
+        array = other.array;
+
+        return * this;
+    }
+
+    std::vector< int > array;
+};
+
+template<>
+std::string name< S3 >(){ return "S3"; }
 
 void printSummary(
       std::string const & message
@@ -122,7 +191,7 @@ void test_push_increasing( unsigned tests, unsigned rep, std::string const & mes
         std::clock_t const start_test( std::clock() );
 
         for( unsigned counter = 0 ; ! timeout && counter < rep ; ++counter ){
-            av.insert( std::make_pair( counter, S() ) );
+            av.insert( std::make_pair( counter, typename _Storage::mapped_type() ) );
 
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
@@ -149,7 +218,7 @@ void test_push_decreasing( unsigned tests, unsigned rep, std::string const & mes
         std::clock_t const start_test( std::clock() );
 
         for( unsigned counter = rep ; ! timeout && counter > 0 ; --counter ){
-            av.insert( std::make_pair( counter, S() ) );
+            av.insert( std::make_pair( counter, typename _Storage::mapped_type() ) );
 
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
@@ -176,7 +245,7 @@ void test_push_decreasing_push_back_reverse( unsigned tests, unsigned rep, std::
         std::clock_t const start_test( std::clock() );
 
         for( unsigned counter = 0 ; ! timeout && counter < rep ; ++counter ){
-            av.push_back( std::make_pair( counter, S() ) );
+            av.push_back( std::make_pair( counter, typename _Storage::value_type::second_type() ) );
 
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
@@ -205,7 +274,12 @@ void test_push_random_push_back_sort( unsigned tests, std::vector< int > const &
         std::clock_t const start_test( std::clock() );
 
         for( unsigned counter = 0 ; ! timeout && counter < array.size() ; ++counter ){
-            av.push_back( std::make_pair( array[ counter ], S() ) );
+            av.push_back(
+                std::make_pair(
+                      array[ counter ]
+                    , typename _Storage::value_type::second_type()
+                )
+            );
 
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
@@ -213,7 +287,10 @@ void test_push_random_push_back_sort( unsigned tests, std::vector< int > const &
         std::sort(
               av.begin()
             , av.end()
-            , util::CmpByFirst< std::pair< int, S >, std::less< int > >()
+            , util::CmpByFirst<
+                  std::pair< int, typename _Storage::value_type::second_type() >
+                , std::less< int >
+            >()
         );
 
         total_time += ( std::clock() - start_test );
@@ -238,7 +315,7 @@ void test_push_random( unsigned tests, std::vector< int > const & array, std::st
         std::clock_t const start_test( std::clock() );
 
         for( unsigned counter = 0 ; ! timeout && counter < array.size() ; ++counter ){
-            av.insert( std::make_pair( array[ counter ], S() ) );
+            av.insert( std::make_pair( array[ counter ], typename _Storage::mapped_type() ) );
 
             AV_BREAK_IF_TIMEOUT( AV_TIMEOUT );
         }
@@ -263,7 +340,7 @@ void test_erase_increasing( unsigned tests, unsigned rep, std::string const & me
         _Storage av;
 
         for( unsigned i = 0 ; i < rep ; ++i ){
-            av.insert( std::make_pair( i, S() ) );
+            av.insert( std::make_pair( i, typename _Storage::mapped_type() ) );
         }
 
         std::clock_t const start_test( std::clock() );
@@ -294,7 +371,7 @@ void test_erase_decreasing( unsigned tests, unsigned rep, std::string const & me
         _Storage av;
 
         for( unsigned i = 0 ; i < rep ; ++i ){
-            av.insert( std::make_pair( i, S() ) );
+            av.insert( std::make_pair( i, typename _Storage::mapped_type() ) );
         }
 
         std::clock_t const start_test( std::clock() );
@@ -325,7 +402,7 @@ void test_erase_random( unsigned tests, std::vector< int > const & array, std::s
         _Storage av;
 
         for( unsigned i = 0 ; i < array.size() ; ++i ){
-            av.insert( std::make_pair( array[ i ], S() ) );
+            av.insert( std::make_pair( array[ i ], typename _Storage::mapped_type() ) );
         }
 
         std::clock_t const start_test( std::clock() );
@@ -349,12 +426,12 @@ void test_erase_random( unsigned tests, std::vector< int > const & array, std::s
 
 #ifdef AV_TEST_STD_MAP
     template< typename T, typename K >
-    void merge( std::map< int, S > & ){}
+    void merge( std::map< T, K > & ){}
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
     template< typename T, typename K >
-    void merge( boost::unordered_map< int, S > & ){}
+    void merge( boost::unordered_map< T, K > & ){}
 #endif
 
 template< typename T, typename K >
@@ -370,7 +447,7 @@ void test_find( unsigned tests, unsigned rep, std::string const & message )
     _Storage av;
 
     for( unsigned i = 0 ; i < rep ; ++i ){
-        av.insert( std::make_pair( i, S() ) );
+        av.insert( std::make_pair( i, typename _Storage::mapped_type() ) );
     }
 
     std::clock_t total_time = 0;
@@ -407,8 +484,8 @@ void test_index_operator_increasing( unsigned tests, unsigned rep, std::string c
         std::clock_t const start_test( std::clock() );
 
         for( unsigned counter = 0 ; ! timeout && counter < rep ; ++counter ){
-            av[ counter ] = S();
-            S s = av[counter];
+            av[ counter ] = typename _Storage::mapped_type();
+            typename _Storage::mapped_type s = av[counter];
 
             (void)s;
 
@@ -437,8 +514,8 @@ void test_index_operator_decreasing( unsigned tests, unsigned rep, std::string c
         std::clock_t const start_test( std::clock() );
 
         for( unsigned counter = rep ; ! timeout && counter > 0 ; --counter ){
-            av[ counter ] = S();
-            S s = av[counter];
+            av[ counter ] = typename _Storage::mapped_type();
+            typename _Storage::mapped_type s = av[counter];
 
             (void)s;
 
@@ -469,8 +546,8 @@ void test_index_operator_random( unsigned tests, std::vector< int > const & arra
         for( unsigned counter = 0 ; ! timeout && counter < array.size() ; ++ counter ){
             int const value = array[ counter ];
 
-            av[ value ] = S();
-            S s = av[ value ];
+            av[ value ] = typename _Storage::mapped_type();
+            typename _Storage::mapped_type s = av[ value ];
 
             (void)s;
 
@@ -509,7 +586,7 @@ void test_random_operations(
             switch( operation )
             {
                 case 0:
-                    av.insert( std::make_pair( value, S() ) );
+                    av.insert( std::make_pair( value, typename _Storage::mapped_type() ) );
                     break;
 
                 case 1:
@@ -533,54 +610,58 @@ void test_random_operations(
     printSummary( message, tests, array.size(), timeout, total_time );
 }
 
+
+template< typename _T >
 void push_increasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_push_increasing< AssocVector< int, S > >( REPS / i, i, "push_increasing.AssocVector" );
+        test_push_increasing< AssocVector< int, _T > >( REPS / i, i, "push_increasing.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-        test_push_increasing< Loki::AssocVector< int, S > >( REPS / i, i, "push_increasing.Loki::AssocVector" );
+        test_push_increasing< Loki::AssocVector< int, _T > >( REPS / i, i, "push_increasing.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_push_increasing< std::map< int, S > >( REPS / i, i, "push_increasing.std::map" );
+        test_push_increasing< std::map< int, _T > >( REPS / i, i, "push_increasing.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_push_increasing< boost::unordered_map< int, S > >( REPS / i, i, "push_increasing.boost::unordered_map" );
+        test_push_increasing< boost::unordered_map< int, _T > >( REPS / i, i, "push_increasing.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void push_decreasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_push_decreasing< AssocVector< int, S > >( REPS / i, i, "push_decreasing.AssocVector" );
+        test_push_decreasing< AssocVector< int, _T > >( REPS / i, i, "push_decreasing.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_VECTOR
-        test_push_decreasing_push_back_reverse< std::vector< std::pair< int, S > > >( REPS / i, i, "  push_decreasing.std::vector.push_back.reverse" );
+        test_push_decreasing_push_back_reverse< std::vector< std::pair< int, _T > > >( REPS / i, i, "  push_decreasing.std::vector< int, _T >.push_back.reverse" );
 #endif
 
 #ifdef AV_TEST_LOKI
-        test_push_decreasing< Loki::AssocVector< int, S > >( REPS / i, i, "push_decreasing.Loki::AssocVector" );
+        test_push_decreasing< Loki::AssocVector< int, _T > >( REPS / i, i, "push_decreasing.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_push_decreasing< std::map< int, S > >( REPS / i, i, "push_decreasing.std::map" );
+        test_push_decreasing< std::map< int, _T > >( REPS / i, i, "push_decreasing.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_push_decreasing< boost::unordered_map< int, S > >( REPS / i, i, "push_decreasing.boost::unordered_map" );
+        test_push_decreasing< boost::unordered_map< int, _T > >( REPS / i, i, "push_decreasing.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void push_random()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
@@ -590,72 +671,75 @@ void push_random()
         for( unsigned j = 0 ; j < i ; ++ j )
             array.push_back( rand() + rand() - rand() );
 
-        test_push_random< AssocVector< int, S > >( REPS / i, array, "push_random.AssocVector" );
+        test_push_random< AssocVector< int, _T > >( REPS / i, array, "push_random.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_VECTOR
-        test_push_random_push_back_sort< std::vector< std::pair< int, S > > >( REPS / i, array, "  push_random.std::vector.push_back.sort" );
+        //test_push_random_push_back_sort< std::vector< std::pair< int, _T > > >( REPS / i, array, "  push_random.std::vector< int, _T >.push_back.sort" );
 #endif
 
 #ifdef AV_TEST_LOKI
-        test_push_random< Loki::AssocVector< int, S > >( REPS / i, array, "push_random.Loki::AssocVector" );
+        test_push_random< Loki::AssocVector< int, _T > >( REPS / i, array, "push_random.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_push_random< std::map< int, S > >( REPS / i, array, "push_random.std::map" );
+        test_push_random< std::map< int, _T > >( REPS / i, array, "push_random.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_push_random< boost::unordered_map< int, S > >( REPS / i, array, "push_random.boost::unordered_map" );
+        test_push_random< boost::unordered_map< int, _T > >( REPS / i, array, "push_random.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void index_operator_increasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_index_operator_increasing< AssocVector< int, S > >( REPS / i, i, "index_operator_increasing.AssocVector" );
+        test_index_operator_increasing< AssocVector< int, _T > >( REPS / i, i, "index_operator_increasing.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-        test_index_operator_increasing< Loki::AssocVector< int, S > >( REPS / i, i, "index_operator_increasing.Loki::AssocVector" );
+        test_index_operator_increasing< Loki::AssocVector< int, _T > >( REPS / i, i, "index_operator_increasing.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_index_operator_increasing< std::map< int, S > >( REPS / i, i, "index_operator_increasing.std::map" );
+        test_index_operator_increasing< std::map< int, _T > >( REPS / i, i, "index_operator_increasing.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_index_operator_increasing< boost::unordered_map< int, S > >( REPS / i, i, "index_operator_increasing.boost::unordered_map" );
+        test_index_operator_increasing< boost::unordered_map< int, _T > >( REPS / i, i, "index_operator_increasing.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void index_operator_decreasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_index_operator_decreasing< AssocVector< int, S > >( REPS / i, i, "index_operator_decreasing.AssocVector" );
+        test_index_operator_decreasing< AssocVector< int, _T > >( REPS / i, i, "index_operator_decreasing.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-        test_index_operator_decreasing< Loki::AssocVector< int, S > >( REPS / i, i, "index_operator_decreasing.Loki::AssocVector" );
+        test_index_operator_decreasing< Loki::AssocVector< int, _T > >( REPS / i, i, "index_operator_decreasing.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_index_operator_decreasing< std::map< int, S > >( REPS / i, i, "index_operator_decreasing.std::map" );
+        test_index_operator_decreasing< std::map< int, _T > >( REPS / i, i, "index_operator_decreasing.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_index_operator_decreasing< boost::unordered_map< int, S > >( REPS / i, i, "index_operator_decreasing.boost::unordered_map" );
+        test_index_operator_decreasing< boost::unordered_map< int, _T > >( REPS / i, i, "index_operator_decreasing.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void index_operator_random()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
@@ -665,90 +749,94 @@ void index_operator_random()
         for( unsigned j = 0 ; j < i ; ++ j )
             array.push_back( rand() + rand() - rand() );
 
-        test_index_operator_random< AssocVector< int, S > >( REPS / i, array, "index_operator_random.AssocVector" );
+        test_index_operator_random< AssocVector< int, _T > >( REPS / i, array, "index_operator_random.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-        test_index_operator_random< Loki::AssocVector< int, S > >( REPS / i, array, "index_operator_random.Loki::AssocVector" );
+        test_index_operator_random< Loki::AssocVector< int, _T > >( REPS / i, array, "index_operator_random.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_index_operator_random< std::map< int, S > >( REPS / i, array, "index_operator_random.std::map" );
+        test_index_operator_random< std::map< int, _T > >( REPS / i, array, "index_operator_random.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_index_operator_random< boost::unordered_map< int, S > >( REPS / i, array, "index_operator_random.boost::unordered_map" );
+        test_index_operator_random< boost::unordered_map< int, _T > >( REPS / i, array, "index_operator_random.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void find()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_find< AssocVector< int, S > >( REPS / i, i, "find.AssocVector" );
+        test_find< AssocVector< int, _T > >( REPS / i, i, "find.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-    test_find< Loki::AssocVector< int, S > >( REPS / i, i, "find.Loki::AssocVector" );
+    test_find< Loki::AssocVector< int, _T > >( REPS / i, i, "find.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-    test_find< std::map< int, S > >( REPS / i, i, "find.std::map" );
+    test_find< std::map< int, _T > >( REPS / i, i, "find.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-    test_find< boost::unordered_map< int, S > >( REPS / i, i, "find.boost::unordered_map" );
+    test_find< boost::unordered_map< int, _T > >( REPS / i, i, "find.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void erase_increasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_erase_increasing< AssocVector< int, S > >( REPS / i, i, "erase_increasing.AssocVector" );
+        test_erase_increasing< AssocVector< int, _T > >( REPS / i, i, "erase_increasing.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-        test_erase_increasing< Loki::AssocVector< int, S > >( REPS / i, i, "erase_increasing.Loki::AssocVector" );
+        test_erase_increasing< Loki::AssocVector< int, _T > >( REPS / i, i, "erase_increasing.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_erase_increasing< std::map< int, S > >( REPS / i, i, "erase_increasing.std::map" );
+        test_erase_increasing< std::map< int, _T > >( REPS / i, i, "erase_increasing.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_erase_increasing< boost::unordered_map< int, S > >( REPS / i, i, "erase_increasing.boost::unordered_map" );
+        test_erase_increasing< boost::unordered_map< int, _T > >( REPS / i, i, "erase_increasing.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void erase_decreasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_erase_decreasing< AssocVector< int, S > >( REPS / i, i, "erase_decreasing.AssocVector" );
+        test_erase_decreasing< AssocVector< int, _T > >( REPS / i, i, "erase_decreasing.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-        test_erase_decreasing< Loki::AssocVector< int, S > >( REPS / i, i, "erase_decreasing.Loki::AssocVector" );
+        test_erase_decreasing< Loki::AssocVector< int, _T > >( REPS / i, i, "erase_decreasing.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_erase_decreasing< std::map< int, S > >( REPS / i, i, "erase_decreasing.std::map" );
+        test_erase_decreasing< std::map< int, _T > >( REPS / i, i, "erase_decreasing.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_erase_decreasing< boost::unordered_map< int, S > >( REPS / i, i, "erase_decreasing.boost::unordered_map" );
+        test_erase_decreasing< boost::unordered_map< int, _T > >( REPS / i, i, "erase_decreasing.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void erase_random()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
@@ -758,24 +846,25 @@ void erase_random()
         for( unsigned j = 0 ; j < i ; ++ j )
             array.push_back( rand() + rand() - rand() );
 
-        test_erase_random< AssocVector< int, S > >( REPS / i, array, "erase_random.AssocVector" );
+        test_erase_random< AssocVector< int, _T > >( REPS / i, array, "erase_random.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-        test_erase_random< Loki::AssocVector< int, S > >( REPS / i, array, "erase_random.Loki::AssocVector" );
+        test_erase_random< Loki::AssocVector< int, _T > >( REPS / i, array, "erase_random.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_erase_random< std::map< int, S > >( REPS / i, array, "erase_random.std::map" );
+        test_erase_random< std::map< int, _T > >( REPS / i, array, "erase_random.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_erase_random< boost::unordered_map< int, S > >( REPS / i, array, "erase_random.boost::unordered_map" );
+        test_erase_random< boost::unordered_map< int, _T > >( REPS / i, array, "erase_random.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
     }
 }
 
+template< typename _T >
 void random_operations()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
@@ -788,18 +877,18 @@ void random_operations()
         for( unsigned j = i/2 ; j < i ; ++ j )
             array.push_back( std::make_pair( rand() % 3, rand() + rand() - rand() ) );
 
-        test_random_operations< AssocVector< int, S > >( REPS / i, array, "test_random_operations.AssocVector" );
+        test_random_operations< AssocVector< int, _T > >( REPS / i, array, "test_random_operations.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_LOKI
-        test_random_operations< Loki::AssocVector< int, S > >( REPS / i, array, "test_random_operations.Loki::AssocVector" );
+        test_random_operations< Loki::AssocVector< int, _T > >( REPS / i, array, "test_random_operations.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_STD_MAP
-        test_random_operations< std::map< int, S > >( REPS / i, array, "test_random_operations.std::map" );
+        test_random_operations< std::map< int, _T > >( REPS / i, array, "test_random_operations.std::map< int, " + name< _T >() + " >" );
 #endif
 
 #ifdef AV_TEST_BOOST_HASH
-        test_random_operations< boost::unordered_map< int, S > >( REPS / i, array, "test_random_operations.boost::unordered_map" );
+        test_random_operations< boost::unordered_map< int, _T > >( REPS / i, array, "test_random_operations.boost::map< int, " + name< _T >() + " >" );
 #endif
 
         std::cout << std::endl;
@@ -828,19 +917,47 @@ int main()
             << std::endl;
     }
 
-    push_increasing();
-    push_decreasing();
-    push_random();
+    push_increasing< S1 >();
+    push_increasing< S2 >();
+    push_increasing< S3 >();
 
-    index_operator_increasing();
-    index_operator_decreasing();
-    index_operator_random();
+    push_decreasing< S1 >();
+    push_decreasing< S2 >();
+    push_decreasing< S3 >();
 
-    find();
+    push_random< S1 >();
+    push_random< S2 >();
+    push_random< S3 >();
 
-    erase_increasing();
-    erase_decreasing();
-    erase_random();
+    index_operator_increasing< S1 >();
+    index_operator_increasing< S2 >();
+    index_operator_increasing< S3 >();
 
-    random_operations();
+    index_operator_decreasing< S1 >();
+    index_operator_decreasing< S2 >();
+    index_operator_decreasing< S3 >();
+
+    index_operator_random< S1 >();
+    index_operator_random< S2 >();
+    index_operator_random< S3 >();
+
+    find< S1 >();
+    find< S2 >();
+    find< S3 >();
+
+    erase_increasing< S1 >();
+    erase_increasing< S2 >();
+    erase_increasing< S3 >();
+
+    erase_decreasing< S1 >();
+    erase_decreasing< S2 >();
+    erase_decreasing< S3 >();
+
+    erase_random< S1 >();
+    erase_random< S2 >();
+    erase_random< S3 >();
+
+    random_operations< S1 >();
+    random_operations< S2 >();
+    random_operations< S3 >();
 }
