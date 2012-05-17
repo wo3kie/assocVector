@@ -1136,8 +1136,8 @@ namespace detail
         AssocVectorReverseIterator & operator--()
         {
             if(
-                   _currentInStorage == _container->storage().rbegin()
-                && _currentInBuffer == _container->buffer().rbegin()
+                   _currentInStorage == ( _container->storage().end() - 1 )
+                && _currentInBuffer == ( _container->buffer().end() - 1 )
             ){
                 return * this;
             }
@@ -1200,8 +1200,8 @@ namespace detail
         calculateCurrentReverse()
         {
            while(
-                   _currentInErased != _container->erased().rend()
-                && _currentInStorage != _container->storage().rend()
+                   _currentInErased != ( _container->erased().begin() - 1 )
+                && _currentInStorage != ( _container->storage().begin() - 1 )
                 && _currentInStorage == *_currentInErased
             )
             {
@@ -1209,15 +1209,15 @@ namespace detail
                 -- _currentInErased;
             }
 
-            if( _currentInStorage == _container->storage().rend() )
+            if( _currentInStorage == ( _container->storage().begin() - 1 ) )
             {
-                if( _currentInBuffer == _container->buffer().rend() ){
+                if( _currentInBuffer == (_container->buffer().begin() - 1 ) ){
                     return 0;
                 }
 
                 return _currentInBuffer;
             }
-            else if( _currentInBuffer == _container->buffer().rend() )
+            else if( _currentInBuffer == ( _container->buffer().begin() - 1 ) )
             {
                 return _currentInStorage;
             }
