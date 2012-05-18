@@ -960,4 +960,8 @@ int main()
     random_operations< S1 >();
     random_operations< S2 >();
     random_operations< S3 >();
+
+    std::cout << "OK" << std::endl;
+
+    return 0;
 }

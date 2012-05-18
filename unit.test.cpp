@@ -892,6 +892,118 @@ void test_insert_in_decreasing_order()
 }
 
 //
+// test_insert_erase_insert_1
+//
+void test_insert_erase_insert_1()
+{
+    typedef AssocVector< int, int > AssocVector;
+
+    AssocVector av;
+
+    av[ 1 ] = 1;
+    av[ 2 ] = 2;
+    av[ 3 ] = 3;
+    av[ 4 ] = 4;
+    av[ 5 ] = 5;
+
+    av.erase( 3 );
+
+    assert( av.insert( AssocVector::value_type( 3, 33 ) ) == true );
+
+    assert( av.size() == 5 );
+
+    assert( av[ 1 ] == 1 );
+    assert( av[ 2 ] == 2 );
+    assert( av[ 3 ] == 33 );
+    assert( av[ 4 ] == 4 );
+    assert( av[ 5 ] == 5 );
+}
+
+//
+// test_insert_erase_insert_2
+//
+void test_insert_erase_insert_2()
+{
+    typedef AssocVector< int, int > AssocVector;
+
+    AssocVector av;
+
+    av[ 1 ] = 1;
+    av[ 2 ] = 2;
+    av[ 3 ] = 3;
+    av[ 4 ] = 4;
+    av[ 5 ] = 5;
+
+    av.erase( 5 );
+
+    assert( av.insert( AssocVector::value_type( 5, 55 ) ) == true );
+
+    assert( av.size() == 5 );
+
+    assert( av[ 1 ] == 1 );
+    assert( av[ 2 ] == 2 );
+    assert( av[ 3 ] == 3 );
+    assert( av[ 4 ] == 4 );
+    assert( av[ 5 ] == 55 );
+}
+
+//
+// test_insert_erase_insert_3
+//
+void test_insert_erase_insert_3()
+{
+    typedef AssocVector< int, int > AssocVector;
+
+    AssocVector av;
+
+    av[ 1 ] = 1;
+    av[ 2 ] = 2;
+    av[ 3 ] = 3;
+    av[ 4 ] = 4;
+    av[ 5 ] = 5;
+
+    av.erase( 3 );
+
+    av[ 3 ] = 33;
+
+    assert( av.size() == 5 );
+
+    assert( av[ 1 ] == 1 );
+    assert( av[ 2 ] == 2 );
+    assert( av[ 3 ] == 33 );
+    assert( av[ 4 ] == 4 );
+    assert( av[ 5 ] == 5 );
+}
+
+//
+// test_insert_erase_insert_4
+//
+void test_insert_erase_insert_4()
+{
+    typedef AssocVector< int, int > AssocVector;
+
+    AssocVector av;
+
+    av[ 1 ] = 1;
+    av[ 2 ] = 2;
+    av[ 3 ] = 3;
+    av[ 4 ] = 4;
+    av[ 5 ] = 5;
+
+    av.erase( 5 );
+
+    av[ 5 ] = 55;
+
+    assert( av.size() == 5 );
+
+    assert( av[ 1 ] == 1 );
+    assert( av[ 2 ] == 2 );
+    assert( av[ 3 ] == 3 );
+    assert( av[ 4 ] == 4 );
+    assert( av[ 5 ] == 55 );
+}
+
+//
 // test_find
 //
 void test_find_1()
@@ -1577,7 +1689,7 @@ struct S1
 
         return * this;
     }
-    
+
     bool operator==( S1 const & other )const
     {
         return i == other.i;
@@ -1613,7 +1725,7 @@ struct S2
 
         return * this;
     }
-    
+
     bool operator==( S2 const & other )const
     {
         return
@@ -1657,7 +1769,7 @@ struct S3
     {
         return array == other.array;
     }
-    
+
     std::vector< int > array;
 };
 
@@ -1794,6 +1906,11 @@ int main()
     test_insert_in_random_order();
     test_insert_in_increasing_order();
     test_insert_in_decreasing_order();
+
+    test_insert_erase_insert_1();
+    test_insert_erase_insert_2();
+    test_insert_erase_insert_3();
+    test_insert_erase_insert_4();
 
     test_find_1();
     test_find_2();

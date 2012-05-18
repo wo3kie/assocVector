@@ -1650,23 +1650,41 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
     _Key const & k = value.first;
     _Mapped const & m = value.second;
 
-    if( _storage.empty() || _cmp( _storage.back().first, k ) ){
-        return pushBack( k, m ), true;
+    {//push back to storage
+        if( _storage.empty() || _cmp( _storage.back().first, k ) ){
+            return pushBack( k, m ), true;
+        }
     }
 
-    if( _buffer.full() ){
-        merge();
+    typename _Storage::iterator const foundInStorage = find( _storage, k );
+
+    {//find or insert to buffer
+        if( foundInStorage == _storage.end() ){
+            return findOrInsertToBuffer( k, m ).first;;
+        }
     }
 
-    {//scope
-        typename _Storage::iterator const found = find( _storage, k );
+    typename _Erased::iterator const foundInErased
+        = array::findInSorted(
+              _erased.begin()
+            , _erased.end()
+            , foundInStorage
+            , std::less< typename _Storage::const_iterator >()
+        );
 
-        if( found != _storage.end() ){
+    {// item is already in storage
+        if( foundInErased == _erased.end() ){
             return false;
         }
     }
 
-    return findOrInsertToBuffer( k, m ).first;
+    {// item is in storage but is also marked as erased
+        array::erase( _erased, foundInErased );
+
+        foundInStorage->second = m;
+
+        return true;
+    }
 }
 
 template<
@@ -1837,26 +1855,41 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reference
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
 {
-    if( _storage.empty() || _cmp( _storage.back().first, k ) ){
-        return pushBack( k, mapped_type() ), _storage.back().second;
-    }
-
-    if( _buffer.full() ){
-        merge();
-    }
-
-    {//scope
-        typename _Storage::iterator const foundInStorage = find( _storage, k );
-
-        if( foundInStorage != _storage.end() )
-        {
-            if( isErased( foundInStorage ) == false ){
-                return foundInStorage->second;
-            }
+    {//push back to storage
+        if( _storage.empty() || _cmp( _storage.back().first, k ) ){
+            return pushBack( k, mapped_type() ), _storage.back().second;
         }
     }
 
-    return findOrInsertToBuffer( k, mapped_type() ).second->second;
+    typename _Storage::iterator const foundInStorage = find( _storage, k );
+
+    {//find or insert to buffer
+        if( foundInStorage == _storage.end() ){
+            return findOrInsertToBuffer( k, mapped_type() ).second->second;
+        }
+    }
+
+    typename _Erased::iterator const foundInErased
+        = array::findInSorted(
+              _erased.begin()
+            , _erased.end()
+            , foundInStorage
+            , std::less< typename _Storage::const_iterator >()
+        );
+
+    {// item is already in storage
+        if( foundInErased == _erased.end() ){
+            return foundInStorage->second;
+        }
+    }
+
+    {// item is in storage but is also marked as erased
+        array::erase( _erased, foundInErased );
+
+        foundInStorage->second = mapped_type();
+
+        return foundInStorage->second;
+    }
 }
 
 template<
@@ -2118,9 +2151,22 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
         }
     }
 
-    array::insert( _buffer, greaterEqual, value_type_mutable( k, m ) );
+    if( _buffer.full() )
+    {
+        merge();
 
-    return std::make_pair( true, greaterEqual );
+        PRECONDITION( _buffer.empty() );
+
+        array::insert( _buffer, _buffer.begin(), value_type_mutable( k, m ) );
+
+        return std::make_pair( true, _buffer.begin() );
+    }
+    else
+    {
+        array::insert( _buffer, greaterEqual, value_type_mutable( k, m ) );
+
+        return std::make_pair( true, greaterEqual );
+    }
 }
 
 template<
