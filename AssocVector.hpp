@@ -105,6 +105,42 @@ namespace util
     //
     // constructRange
     //
+    //
+    // destroyRange
+    //
+    namespace detail
+    {
+        template< bool _HasTrivialDestructor >
+        struct ConstructRangeImpl
+        {
+        };
+
+        template<>
+        struct ConstructRangeImpl< true >
+        {
+            template< typename _Ptr >
+            static
+            void create( _Ptr, _Ptr )
+            {
+            }
+        };
+
+        template<>
+        struct ConstructRangeImpl< false >
+        {
+            template< typename _Ptr >
+            static
+            void create( _Ptr begin, _Ptr const end )
+            {
+                typedef typename std::iterator_traits< _Ptr >::value_type T;
+
+                for( /*empty*/ ; begin != end ; ++ begin ){
+                    new ( begin ) T();
+                }
+            }
+        };
+    }
+
     template< typename _Ptr >
     inline
     void constructRange( _Ptr begin, _Ptr const end )
@@ -113,9 +149,7 @@ namespace util
 
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
-        for( /*empty*/ ; begin != end ; ++ begin ){
-            new ( begin ) T();
-        }
+        detail::ConstructRangeImpl< __has_trivial_constructor( T ) >::create( begin, end );
     }
 }
 
