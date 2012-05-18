@@ -1569,12 +1569,105 @@ bool isEqual(
     return std::equal( av.begin(), av.end(), map.begin() );
 }
 
+struct S1
+{
+    S1 & operator=( S1 const & other )
+    {
+        i = other.i;
+
+        return * this;
+    }
+    
+    bool operator==( S1 const & other )const
+    {
+        return i == other.i;
+    }
+
+    int i;
+};
+
+struct S2
+{
+    S2()
+    {
+        b = 0;
+        s = 0;
+        i = 0;
+        u = 0;
+        c = 0;
+        f = 0;
+        d = 0;
+        v = 0;
+    }
+
+    S2 & operator=( S2 const & other )
+    {
+        b = other.b;
+        s = other.s;
+        i = other.i;
+        u = other.u;
+        c = other.c;
+        f = other.f;
+        d = other.d;
+        v = other.v;
+
+        return * this;
+    }
+    
+    bool operator==( S2 const & other )const
+    {
+        return
+               b == other.b
+            && s == other.s
+            && i == other.i
+            && u == other.u
+            && c == other.c
+            && f == other.f
+            && d == other.d
+            && v == other.v;
+    }
+
+    bool b;
+    short s;
+    int i;
+    unsigned u;
+    char c;
+    float f;
+    double d;
+    void * v;
+};
+
+struct S3
+{
+    S3()
+    {
+        for( int i = 0 ; i < 10 ; ++ i ){
+            array.push_back( rand() );
+        }
+    }
+
+    S3 & operator=( S3 const & other )
+    {
+        array = other.array;
+
+        return * this;
+    }
+
+    bool operator==( S3 const & other )const
+    {
+        return array == other.array;
+    }
+    
+    std::vector< int > array;
+};
+
+template< typename _T >
 void black_box_test()
 {
-    typedef AssocVector< int, int > AV;
+    typedef AssocVector< int, _T > AV;
     AV av;
 
-    typedef std::map< int, int > MAP;
+    typedef std::map< int, _T > MAP;
     MAP map;
 
     assert( isEqual( av, map ) );
@@ -1588,10 +1681,10 @@ void black_box_test()
             case 0:
                 {
                     int const key = rand();
-                    int const value = rand();
+                    _T const value = _T();
 
-                    av.insert( AV::value_type( key, value ) );
-                    map.insert( AV::value_type( key, value ) );
+                    av.insert( typename AV::value_type( key, value ) );
+                    map.insert( typename AV::value_type( key, value ) );
 
                     assert( isEqual( av, map ) );
                 }
@@ -1602,8 +1695,8 @@ void black_box_test()
                 {
                     int const key = rand();
 
-                    AV::iterator foundAV = av.find( key );
-                    MAP::iterator foundMap = map.find( key );
+                    typename AV::iterator foundAV = av.find( key );
+                    typename MAP::iterator foundMap = map.find( key );
 
                     assert(
                            ( foundAV == av.end() && foundMap == map.end() )
@@ -1629,8 +1722,8 @@ void black_box_test()
                 {
                     int const key = rand();
 
-                    AV::iterator foundAV = av.find( key );
-                    MAP::iterator foundMap = map.find( key );
+                    typename AV::iterator foundAV = av.find( key );
+                    typename MAP::iterator foundMap = map.find( key );
 
                     if( foundAV == av.end() && foundMap == map.end() )
                     {
@@ -1650,10 +1743,10 @@ void black_box_test()
             case 4:
                 {
                     int const key = rand();
-                    int const value = rand();
+                    _T const value = _T();
 
-                    AV::iterator foundAV = av.find( key );
-                    MAP::iterator foundMap = map.find( key );
+                    typename AV::iterator foundAV = av.find( key );
+                    typename MAP::iterator foundMap = map.find( key );
 
                     av[ key ] = value;
                     map[ key ] = value;
@@ -1669,7 +1762,9 @@ void black_box_test()
 
 int main()
 {
-    black_box_test();
+    black_box_test< S1 >();
+    black_box_test< S2 >();
+    black_box_test< S3 >();
 
     test_CmpByFirst_1();
     test_CmpByFirst_2();
