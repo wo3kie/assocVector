@@ -6,6 +6,9 @@
 
 #include "AssocVector.hpp"
 
+#define AV_ASSERT( expression )\
+    assert( expression )
+    
 namespace std
 {
 
@@ -20,6 +23,30 @@ std::ostream & operator<<( std::ostream & out, std::pair< _T1, _T2 > const & pai
 
 }
 
+namespace util
+{
+
+template< typename _Iterator >
+void dump( _Iterator begin, _Iterator end, std::ostream & out = std::cout )
+{
+    out << "[";
+
+    if( begin != end )
+    {
+        _Iterator current = begin;
+
+        out << * current;
+
+        for( ++ current ; current != end ; ++ current ){
+            out << "," << *current ;
+        }
+    }
+    
+    out << "]";
+}
+
+}
+
 //
 // test_CmpByFirst
 //
@@ -30,9 +57,9 @@ void test_CmpByFirst_1()
     Pii p1( 1, 11 );
     Pii p2( 1, 22 );
 
-    assert( ( util::CmpByFirst< Pii, std::equal_to< int > >()( p1, p2 ) ) );
+    AV_ASSERT( ( util::CmpByFirst< Pii, std::equal_to< int > >()( p1, p2 ) ) );
 
-    assert( ( util::CmpByFirst< Pii, std::equal_to< int > >()( p1, 1 ) ) );
+    AV_ASSERT( ( util::CmpByFirst< Pii, std::equal_to< int > >()( p1, 1 ) ) );
 }
 
 void test_CmpByFirst_2()
@@ -42,10 +69,10 @@ void test_CmpByFirst_2()
         Pii p1( 1, 22 );
         Pii p2( 2, 11 );
 
-        assert( ( util::CmpByFirst< Pii, std::less< int > >()( p1, p2 ) ) );
-        assert( ( util::CmpByFirst< Pii, std::less< int > >()( p1, 2 ) ) );
+        AV_ASSERT( ( util::CmpByFirst< Pii, std::less< int > >()( p1, p2 ) ) );
+        AV_ASSERT( ( util::CmpByFirst< Pii, std::less< int > >()( p1, 2 ) ) );
 
-        assert( ( util::CmpByFirst< Pii, std::greater< int > >()( p1, p2 ) == false ) );
+        AV_ASSERT( ( util::CmpByFirst< Pii, std::greater< int > >()( p1, p2 ) == false ) );
 }
 
 void test_CmpByFirst_3()
@@ -55,10 +82,10 @@ void test_CmpByFirst_3()
     Pii p1( 2, 11 );
     Pii p2( 1, 22 );
 
-    assert( ( util::CmpByFirst< Pii, std::greater< int > >()( p1, p2 ) ) );
-    assert( ( util::CmpByFirst< Pii, std::greater< int > >()( p1, 1 ) ) );
+    AV_ASSERT( ( util::CmpByFirst< Pii, std::greater< int > >()( p1, p2 ) ) );
+    AV_ASSERT( ( util::CmpByFirst< Pii, std::greater< int > >()( p1, 1 ) ) );
 
-    assert( ( util::CmpByFirst< Pii, std::less< int > >()( p1, p2 ) == false ) );
+    AV_ASSERT( ( util::CmpByFirst< Pii, std::less< int > >()( p1, p2 ) == false ) );
 }
 
 //
@@ -66,11 +93,11 @@ void test_CmpByFirst_3()
 //
 void test_isBetween()
 {
-    assert( ( util::isBetween( 1, 0, 3 ) == false ) );
-    assert( ( util::isBetween( 1, 1, 3 ) ) );
-    assert( ( util::isBetween( 1, 2, 3 ) ) );
-    assert( ( util::isBetween( 1, 3, 3 ) ) );
-    assert( ( util::isBetween( 1, 4, 3 ) == false ) );
+    AV_ASSERT( ( util::isBetween( 1, 0, 3 ) == false ) );
+    AV_ASSERT( ( util::isBetween( 1, 1, 3 ) ) );
+    AV_ASSERT( ( util::isBetween( 1, 2, 3 ) ) );
+    AV_ASSERT( ( util::isBetween( 1, 3, 3 ) ) );
+    AV_ASSERT( ( util::isBetween( 1, 4, 3 ) == false ) );
 }
 
 namespace detail
@@ -94,28 +121,6 @@ namespace detail
 }
 
 //
-// test_constructRange_destroyRange
-//
-void test_constructRange_destroyRange()
-{
-    int const numberOfObjects = 10;
-
-    std::allocator< detail::For_ConstructRange_DestroyRange_Tests > allocator;
-    assert( detail::For_ConstructRange_DestroyRange_Tests::counter == 0 );
-
-    detail::For_ConstructRange_DestroyRange_Tests * memory = allocator.allocate( numberOfObjects );
-    assert( detail::For_ConstructRange_DestroyRange_Tests::counter == 0 );
-
-    util::constructRange( memory, memory + numberOfObjects );
-    assert( detail::For_ConstructRange_DestroyRange_Tests::counter == 10 );
-
-    util::destroyRange( memory, memory + numberOfObjects );
-    assert( detail::For_ConstructRange_DestroyRange_Tests::counter == 0 );
-
-    allocator.deallocate( memory, numberOfObjects );
-}
-
-//
 // test_copyRange
 //
 void test_copyRange_empty_array()
@@ -125,7 +130,7 @@ void test_copyRange_empty_array()
 
     util::copyRange( array.begin(), array.end(), array2.begin() );
 
-    assert( array2.empty() );
+    AV_ASSERT( array2.empty() );
 }
 
 void test_copyRange_self_copy()
@@ -148,7 +153,7 @@ void test_copyRange_self_copy()
     expected.push_back( 5 );
     expected.push_back( 6 );
 
-    assert( array == expected );
+    AV_ASSERT( array == expected );
 }
 
 void test_copyRange_between_different_containers()
@@ -165,7 +170,7 @@ void test_copyRange_between_different_containers()
 
     util::copyRange( array.begin(), array.end(), array2.begin() );
 
-    assert( array == array2 );
+    AV_ASSERT( array == array2 );
 }
 
 void test_copyRange_overlap_less_then_half()
@@ -188,7 +193,7 @@ void test_copyRange_overlap_less_then_half()
     expected.push_back( 2 );
     expected.push_back( 3 );
 
-    assert( array == expected );
+    AV_ASSERT( array == expected );
 }
 void test_copyRange_overlap_more_than_half()
 {
@@ -210,7 +215,7 @@ void test_copyRange_overlap_more_than_half()
     expected.push_back( 3 );
     expected.push_back( 4 );
 
-    assert( array == expected );
+    AV_ASSERT( array == expected );
 }
 
 void test_copyRange_overlap_copy_to_begining()
@@ -233,7 +238,7 @@ void test_copyRange_overlap_copy_to_begining()
     expected.push_back( 5 );
     expected.push_back( 6 );
 
-    assert( array == expected );
+    AV_ASSERT( array == expected );
 }
 
 //
@@ -262,16 +267,16 @@ void test_merge_1()
 
         array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size() == 4 );
-        assert( a1.capacity() == 10 );
+        AV_ASSERT( a1.size() == 4 );
+        AV_ASSERT( a1.capacity() == 10 );
 
-        assert( a2.size() == 4 );
-        assert( a2.capacity() == 10 );
+        AV_ASSERT( a2.size() == 4 );
+        AV_ASSERT( a2.capacity() == 10 );
 
-        assert( a1[0] == 1 );
-        assert( a1[1] == 2 );
-        assert( a1[2] == 3 );
-        assert( a1[3] == 4 );
+        AV_ASSERT( a1[0] == 1 );
+        AV_ASSERT( a1[1] == 2 );
+        AV_ASSERT( a1[2] == 3 );
+        AV_ASSERT( a1[3] == 4 );
 
         delete [] a1.getData();
         delete [] a2.getData();
@@ -296,16 +301,16 @@ void test_merge_1()
 
         array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size() == 4 );
-        assert( a1.capacity() == 10 );
+        AV_ASSERT( a1.size() == 4 );
+        AV_ASSERT( a1.capacity() == 10 );
 
-        assert( a2.size() == 0 );
-        assert( a2.capacity() == 10 );
+        AV_ASSERT( a2.size() == 0 );
+        AV_ASSERT( a2.capacity() == 10 );
 
-        assert( a1[0] == 1 );
-        assert( a1[1] == 2 );
-        assert( a1[2] == 3 );
-        assert( a1[3] == 4 );
+        AV_ASSERT( a1[0] == 1 );
+        AV_ASSERT( a1[1] == 2 );
+        AV_ASSERT( a1[2] == 3 );
+        AV_ASSERT( a1[3] == 4 );
 
         delete [] a1.getData();
         delete [] a2.getData();
@@ -338,22 +343,22 @@ void test_merge_1()
 
         array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size() == 10 );
-        assert( a1.capacity() == 10 );
+        AV_ASSERT( a1.size() == 10 );
+        AV_ASSERT( a1.capacity() == 10 );
 
-        assert( a2.size() == 4 );
-        assert( a2.capacity() == 10 );
+        AV_ASSERT( a2.size() == 4 );
+        AV_ASSERT( a2.capacity() == 10 );
 
-        assert( a1[0] == 1 );
-        assert( a1[1] == 2 );
-        assert( a1[2] == 3 );
-        assert( a1[3] == 4 );
-        assert( a1[4] == 5 );
-        assert( a1[5] == 6 );
-        assert( a1[6] == 7 );
-        assert( a1[7] == 8 );
-        assert( a1[8] == 9 );
-        assert( a1[9] == 10 );
+        AV_ASSERT( a1[0] == 1 );
+        AV_ASSERT( a1[1] == 2 );
+        AV_ASSERT( a1[2] == 3 );
+        AV_ASSERT( a1[3] == 4 );
+        AV_ASSERT( a1[4] == 5 );
+        AV_ASSERT( a1[5] == 6 );
+        AV_ASSERT( a1[6] == 7 );
+        AV_ASSERT( a1[7] == 8 );
+        AV_ASSERT( a1[8] == 9 );
+        AV_ASSERT( a1[9] == 10 );
 
         delete [] a1.getData();
         delete [] a2.getData();
@@ -386,22 +391,22 @@ void test_merge_1()
 
         array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size() == 10 );
-        assert( a1.capacity() == 10 );
+        AV_ASSERT( a1.size() == 10 );
+        AV_ASSERT( a1.capacity() == 10 );
 
-        assert( a2.size() == 4 );
-        assert( a2.capacity() == 10 );
+        AV_ASSERT( a2.size() == 4 );
+        AV_ASSERT( a2.capacity() == 10 );
 
-        assert( a1[0] == 1 );
-        assert( a1[1] == 2 );
-        assert( a1[2] == 3 );
-        assert( a1[3] == 4 );
-        assert( a1[4] == 5 );
-        assert( a1[5] == 6 );
-        assert( a1[6] == 7 );
-        assert( a1[7] == 8 );
-        assert( a1[8] == 9 );
-        assert( a1[9] == 11 );
+        AV_ASSERT( a1[0] == 1 );
+        AV_ASSERT( a1[1] == 2 );
+        AV_ASSERT( a1[2] == 3 );
+        AV_ASSERT( a1[3] == 4 );
+        AV_ASSERT( a1[4] == 5 );
+        AV_ASSERT( a1[5] == 6 );
+        AV_ASSERT( a1[6] == 7 );
+        AV_ASSERT( a1[7] == 8 );
+        AV_ASSERT( a1[8] == 9 );
+        AV_ASSERT( a1[9] == 11 );
 
         delete [] a1.getData();
         delete [] a2.getData();
@@ -434,22 +439,22 @@ void test_merge_1()
 
         array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size() == 10 );
-        assert( a1.capacity() == 10 );
+        AV_ASSERT( a1.size() == 10 );
+        AV_ASSERT( a1.capacity() == 10 );
 
-        assert( a2.size() == 4 );
-        assert( a2.capacity() == 10 );
+        AV_ASSERT( a2.size() == 4 );
+        AV_ASSERT( a2.capacity() == 10 );
 
-        assert( a1[0] == 1 );
-        assert( a1[1] == 2 );
-        assert( a1[2] == 3 );
-        assert( a1[3] == 4 );
-        assert( a1[4] == 5 );
-        assert( a1[5] == 6 );
-        assert( a1[6] == 7 );
-        assert( a1[7] == 8 );
-        assert( a1[8] == 9 );
-        assert( a1[9] == 10 );
+        AV_ASSERT( a1[0] == 1 );
+        AV_ASSERT( a1[1] == 2 );
+        AV_ASSERT( a1[2] == 3 );
+        AV_ASSERT( a1[3] == 4 );
+        AV_ASSERT( a1[4] == 5 );
+        AV_ASSERT( a1[5] == 6 );
+        AV_ASSERT( a1[6] == 7 );
+        AV_ASSERT( a1[7] == 8 );
+        AV_ASSERT( a1[8] == 9 );
+        AV_ASSERT( a1[9] == 10 );
 
         delete [] a1.getData();
         delete [] a2.getData();
@@ -482,22 +487,22 @@ void test_merge_1()
 
         array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size() == 10 );
-        assert( a1.capacity() == 10 );
+        AV_ASSERT( a1.size() == 10 );
+        AV_ASSERT( a1.capacity() == 10 );
 
-        assert( a2.size() == 4 );
-        assert( a2.capacity() == 10 );
+        AV_ASSERT( a2.size() == 4 );
+        AV_ASSERT( a2.capacity() == 10 );
 
-        assert( a1[0] == 1 );
-        assert( a1[1] == 2 );
-        assert( a1[2] == 3 );
-        assert( a1[3] == 4 );
-        assert( a1[4] == 5 );
-        assert( a1[5] == 6 );
-        assert( a1[6] == 7 );
-        assert( a1[7] == 8 );
-        assert( a1[8] == 9 );
-        assert( a1[9] == 10 );
+        AV_ASSERT( a1[0] == 1 );
+        AV_ASSERT( a1[1] == 2 );
+        AV_ASSERT( a1[2] == 3 );
+        AV_ASSERT( a1[3] == 4 );
+        AV_ASSERT( a1[4] == 5 );
+        AV_ASSERT( a1[5] == 6 );
+        AV_ASSERT( a1[6] == 7 );
+        AV_ASSERT( a1[7] == 8 );
+        AV_ASSERT( a1[8] == 9 );
+        AV_ASSERT( a1[9] == 10 );
 
         delete [] a1.getData();
         delete [] a2.getData();
@@ -530,22 +535,22 @@ void test_merge_1()
 
         array::merge( a1, a2, std::less< int >() );
 
-        assert( a1.size() == 10 );
-        assert( a1.capacity() == 10 );
+        AV_ASSERT( a1.size() == 10 );
+        AV_ASSERT( a1.capacity() == 10 );
 
-        assert( a2.size() == 4 );
-        assert( a2.capacity() == 10 );
+        AV_ASSERT( a2.size() == 4 );
+        AV_ASSERT( a2.capacity() == 10 );
 
-        assert( a1[0] == 1 );
-        assert( a1[1] == 2 );
-        assert( a1[2] == 3 );
-        assert( a1[3] == 4 );
-        assert( a1[4] == 5 );
-        assert( a1[5] == 6 );
-        assert( a1[6] == 7 );
-        assert( a1[7] == 8 );
-        assert( a1[8] == 9 );
-        assert( a1[9] == 10 );
+        AV_ASSERT( a1[0] == 1 );
+        AV_ASSERT( a1[1] == 2 );
+        AV_ASSERT( a1[2] == 3 );
+        AV_ASSERT( a1[3] == 4 );
+        AV_ASSERT( a1[4] == 5 );
+        AV_ASSERT( a1[5] == 6 );
+        AV_ASSERT( a1[6] == 7 );
+        AV_ASSERT( a1[7] == 8 );
+        AV_ASSERT( a1[8] == 9 );
+        AV_ASSERT( a1[9] == 10 );
 
         delete [] a1.getData();
         delete [] a2.getData();
@@ -578,20 +583,20 @@ void test_merge_2()
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity() == 10 );
-    assert( storage.size() == 8 );
+    AV_ASSERT( storage.capacity() == 10 );
+    AV_ASSERT( storage.size() == 8 );
 
-    assert( buffer.size() == 3 );
-    assert( buffer.capacity() == 3 );
+    AV_ASSERT( buffer.size() == 3 );
+    AV_ASSERT( buffer.capacity() == 3 );
 
-    assert( storage[0].first == 3 );
-    assert( storage[1].first == 4 );
-    assert( storage[2].first == 5 );
-    assert( storage[3].first == 10 );
-    assert( storage[4].first == 11 );
-    assert( storage[5].first == 12 );
-    assert( storage[6].first == 13 );
-    assert( storage[7].first == 14 );
+    AV_ASSERT( storage[0].first == 3 );
+    AV_ASSERT( storage[1].first == 4 );
+    AV_ASSERT( storage[2].first == 5 );
+    AV_ASSERT( storage[3].first == 10 );
+    AV_ASSERT( storage[4].first == 11 );
+    AV_ASSERT( storage[5].first == 12 );
+    AV_ASSERT( storage[6].first == 13 );
+    AV_ASSERT( storage[7].first == 14 );
 
     delete [] storage.getData();
     delete [] buffer.getData();
@@ -623,20 +628,20 @@ void test_merge_3()
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity() == 10 );
-    assert( storage.size() == 8 );
+    AV_ASSERT( storage.capacity() == 10 );
+    AV_ASSERT( storage.size() == 8 );
 
-    assert( buffer.size() == 3 );
-    assert( buffer.capacity() == 15 );
+    AV_ASSERT( buffer.size() == 3 );
+    AV_ASSERT( buffer.capacity() == 15 );
 
-    assert( storage[0].first == 10 );
-    assert( storage[1].first == 11 );
-    assert( storage[2].first == 12 );
-    assert( storage[3].first == 13 );
-    assert( storage[4].first == 14 );
-    assert( storage[5].first == 23 );
-    assert( storage[6].first == 24 );
-    assert( storage[7].first == 25 );
+    AV_ASSERT( storage[0].first == 10 );
+    AV_ASSERT( storage[1].first == 11 );
+    AV_ASSERT( storage[2].first == 12 );
+    AV_ASSERT( storage[3].first == 13 );
+    AV_ASSERT( storage[4].first == 14 );
+    AV_ASSERT( storage[5].first == 23 );
+    AV_ASSERT( storage[6].first == 24 );
+    AV_ASSERT( storage[7].first == 25 );
 
     delete [] storage.getData();
     delete [] buffer.getData();
@@ -668,20 +673,20 @@ void test_merge_4()
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity() == 10 );
-    assert( storage.size() == 8 );
+    AV_ASSERT( storage.capacity() == 10 );
+    AV_ASSERT( storage.size() == 8 );
 
-    assert( buffer.size() == 3 );
-    assert( buffer.capacity() == 10 );
+    AV_ASSERT( buffer.size() == 3 );
+    AV_ASSERT( buffer.capacity() == 10 );
 
-    assert( storage[0].first == 10 );
-    assert( storage[1].first == 12 );
-    assert( storage[2].first == 13 );
-    assert( storage[3].first == 14 );
-    assert( storage[4].first == 15 );
-    assert( storage[5].first == 16 );
-    assert( storage[6].first == 17 );
-    assert( storage[7].first == 18 );
+    AV_ASSERT( storage[0].first == 10 );
+    AV_ASSERT( storage[1].first == 12 );
+    AV_ASSERT( storage[2].first == 13 );
+    AV_ASSERT( storage[3].first == 14 );
+    AV_ASSERT( storage[4].first == 15 );
+    AV_ASSERT( storage[5].first == 16 );
+    AV_ASSERT( storage[6].first == 17 );
+    AV_ASSERT( storage[7].first == 18 );
 
     delete [] storage.getData();
     delete [] buffer.getData();
@@ -708,17 +713,17 @@ void test_merge_5()
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity() == 10 );
-    assert( storage.size() == 5 );
+    AV_ASSERT( storage.capacity() == 10 );
+    AV_ASSERT( storage.size() == 5 );
 
-    assert( buffer.size() == 0 );
-    assert( buffer.capacity() == 3 );
+    AV_ASSERT( buffer.size() == 0 );
+    AV_ASSERT( buffer.capacity() == 3 );
 
-    assert( storage[0].first == 10 );
-    assert( storage[1].first == 12 );
-    assert( storage[2].first == 14 );
-    assert( storage[3].first == 16 );
-    assert( storage[4].first == 18 );
+    AV_ASSERT( storage[0].first == 10 );
+    AV_ASSERT( storage[1].first == 12 );
+    AV_ASSERT( storage[2].first == 14 );
+    AV_ASSERT( storage[3].first == 16 );
+    AV_ASSERT( storage[4].first == 18 );
 
     delete [] storage.getData();
     delete [] buffer.getData();
@@ -745,15 +750,15 @@ void test_merge_6()
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity() == 10 );
-    assert( storage.size() == 3 );
+    AV_ASSERT( storage.capacity() == 10 );
+    AV_ASSERT( storage.size() == 3 );
 
-    assert( buffer.size() == 3 );
-    assert( buffer.capacity() == 20 );
+    AV_ASSERT( buffer.size() == 3 );
+    AV_ASSERT( buffer.capacity() == 20 );
 
-    assert( storage[0].first == 13 );
-    assert( storage[1].first == 15 );
-    assert( storage[2].first == 17 );
+    AV_ASSERT( storage[0].first == 13 );
+    AV_ASSERT( storage[1].first == 15 );
+    AV_ASSERT( storage[2].first == 17 );
 
     delete [] storage.getData();
     delete [] buffer.getData();
@@ -775,11 +780,11 @@ void test_merge_7()
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
-    assert( storage.capacity() == 10 );
-    assert( storage.size() == 0 );
+    AV_ASSERT( storage.capacity() == 10 );
+    AV_ASSERT( storage.size() == 0 );
 
-    assert( buffer.size() == 0 );
-    assert( buffer.capacity() == 3 );
+    AV_ASSERT( buffer.size() == 0 );
+    AV_ASSERT( buffer.capacity() == 3 );
 
     delete [] storage.getData();
     delete [] buffer.getData();
@@ -801,11 +806,11 @@ void test_push_back()
     av.insert( AssocVector::value_type( "4", 4 ) );
     av.insert( AssocVector::value_type( "5", 5 ) );
 
-    assert( av[ "1" ] == 1 );
-    assert( av[ "2" ] == 2 );
-    assert( av[ "3" ] == 3 );
-    assert( av[ "4" ] == 4 );
-    assert( av[ "5" ] == 5 );
+    AV_ASSERT( av[ "1" ] == 1 );
+    AV_ASSERT( av[ "2" ] == 2 );
+    AV_ASSERT( av[ "3" ] == 3 );
+    AV_ASSERT( av[ "4" ] == 4 );
+    AV_ASSERT( av[ "5" ] == 5 );
 }
 
 //
@@ -843,11 +848,11 @@ void test_insert_in_random_order()
 
     av.insert( AssocVector::value_type( 19, 0 ) );
 
-    assert( av.size() == 20 );
+    AV_ASSERT( av.size() == 20 );
 
     for( int i = 0 ; i < av.size() ; ++ i ){
-        assert( av.find( i ) != av.end() );
-        assert( av.find( i )->first == i );
+        AV_ASSERT( av.find( i ) != av.end() );
+        AV_ASSERT( av.find( i )->first == i );
     }
 }
 
@@ -866,8 +871,8 @@ void test_insert_in_increasing_order()
     }
 
     for( std::size_t i = 0 ; i < counter ; ++ i ){
-        assert( av.find( i ) != av.end() );
-        assert( av.find( i )->first == i );
+        AV_ASSERT( av.find( i ) != av.end() );
+        AV_ASSERT( av.find( i )->first == i );
     }
 }
 
@@ -886,8 +891,8 @@ void test_insert_in_decreasing_order()
     }
 
     for( std::size_t i = counter ; i > 0 ; -- i ){
-        assert( av.find( i ) != av.end() );
-        assert( av.find( i )->first == i );
+        AV_ASSERT( av.find( i ) != av.end() );
+        AV_ASSERT( av.find( i )->first == i );
     }
 }
 
@@ -908,15 +913,15 @@ void test_insert_erase_insert_1()
 
     av.erase( 3 );
 
-    assert( av.insert( AssocVector::value_type( 3, 33 ) ) == true );
+    AV_ASSERT( av.insert( AssocVector::value_type( 3, 33 ) ) == true );
 
-    assert( av.size() == 5 );
+    AV_ASSERT( av.size() == 5 );
 
-    assert( av[ 1 ] == 1 );
-    assert( av[ 2 ] == 2 );
-    assert( av[ 3 ] == 33 );
-    assert( av[ 4 ] == 4 );
-    assert( av[ 5 ] == 5 );
+    AV_ASSERT( av[ 1 ] == 1 );
+    AV_ASSERT( av[ 2 ] == 2 );
+    AV_ASSERT( av[ 3 ] == 33 );
+    AV_ASSERT( av[ 4 ] == 4 );
+    AV_ASSERT( av[ 5 ] == 5 );
 }
 
 //
@@ -936,15 +941,15 @@ void test_insert_erase_insert_2()
 
     av.erase( 5 );
 
-    assert( av.insert( AssocVector::value_type( 5, 55 ) ) == true );
+    AV_ASSERT( av.insert( AssocVector::value_type( 5, 55 ) ) == true );
 
-    assert( av.size() == 5 );
+    AV_ASSERT( av.size() == 5 );
 
-    assert( av[ 1 ] == 1 );
-    assert( av[ 2 ] == 2 );
-    assert( av[ 3 ] == 3 );
-    assert( av[ 4 ] == 4 );
-    assert( av[ 5 ] == 55 );
+    AV_ASSERT( av[ 1 ] == 1 );
+    AV_ASSERT( av[ 2 ] == 2 );
+    AV_ASSERT( av[ 3 ] == 3 );
+    AV_ASSERT( av[ 4 ] == 4 );
+    AV_ASSERT( av[ 5 ] == 55 );
 }
 
 //
@@ -966,13 +971,13 @@ void test_insert_erase_insert_3()
 
     av[ 3 ] = 33;
 
-    assert( av.size() == 5 );
+    AV_ASSERT( av.size() == 5 );
 
-    assert( av[ 1 ] == 1 );
-    assert( av[ 2 ] == 2 );
-    assert( av[ 3 ] == 33 );
-    assert( av[ 4 ] == 4 );
-    assert( av[ 5 ] == 5 );
+    AV_ASSERT( av[ 1 ] == 1 );
+    AV_ASSERT( av[ 2 ] == 2 );
+    AV_ASSERT( av[ 3 ] == 33 );
+    AV_ASSERT( av[ 4 ] == 4 );
+    AV_ASSERT( av[ 5 ] == 5 );
 }
 
 //
@@ -994,13 +999,13 @@ void test_insert_erase_insert_4()
 
     av[ 5 ] = 55;
 
-    assert( av.size() == 5 );
+    AV_ASSERT( av.size() == 5 );
 
-    assert( av[ 1 ] == 1 );
-    assert( av[ 2 ] == 2 );
-    assert( av[ 3 ] == 3 );
-    assert( av[ 4 ] == 4 );
-    assert( av[ 5 ] == 55 );
+    AV_ASSERT( av[ 1 ] == 1 );
+    AV_ASSERT( av[ 2 ] == 2 );
+    AV_ASSERT( av[ 3 ] == 3 );
+    AV_ASSERT( av[ 4 ] == 4 );
+    AV_ASSERT( av[ 5 ] == 55 );
 }
 
 //
@@ -1013,12 +1018,12 @@ void test_find_1()
 
     AssocVector av;
 
-    assert( av.find( 2 ) == av.end() );
+    AV_ASSERT( av.find( 2 ) == av.end() );
 
     av.insert( AssocVector::value_type( 2, 3 ) );
 
-    assert( av.find( 2 ) != av.end() );
-    assert( av.find( 2 )->second == 3 );
+    AV_ASSERT( av.find( 2 ) != av.end() );
+    AV_ASSERT( av.find( 2 )->second == 3 );
 }
 
 void test_find_2()
@@ -1033,16 +1038,16 @@ void test_find_2()
     }
 
     for( int i = 0 ; i < 32 ; ++ i ){
-        assert( av.find( i ) == av.end() );
+        AV_ASSERT( av.find( i ) == av.end() );
     }
 
     for( int i = 32 ; i < 32 + 64 ; ++ i ){
-        assert( av.find( i ) != av.end() );
-        assert( av.find( i )->second == i * i );
+        AV_ASSERT( av.find( i ) != av.end() );
+        AV_ASSERT( av.find( i )->second == i * i );
     }
 
     for( int i = 32 + 64 ; i < 32 + 64 + 32; ++ i ){
-        assert( av.find( i ) == av.end() );
+        AV_ASSERT( av.find( i ) == av.end() );
     }
 }
 
@@ -1057,10 +1062,10 @@ void test_count()
     av.insert( AssocVector::value_type( 1, 1 ) );
     av.insert( AssocVector::value_type( 3, 2 ) );
 
-    assert( av.count( 1 ) == 1 );
-    assert( av.count( 2 ) == 0 );
-    assert( av.count( 3 ) == 1 );
-    assert( av.count( 4 ) == 0 );
+    AV_ASSERT( av.count( 1 ) == 1 );
+    AV_ASSERT( av.count( 2 ) == 0 );
+    AV_ASSERT( av.count( 3 ) == 1 );
+    AV_ASSERT( av.count( 4 ) == 0 );
 }
 
 //
@@ -1077,23 +1082,23 @@ void test_erase_1()
         av.insert( AssocVector::value_type( i, i ) );
     }
 
-    assert( av.size() == counter );
+    AV_ASSERT( av.size() == counter );
 
     for( std::size_t i = 0 ; i < counter ; i += 2 ){
         av.erase( i );
     }
 
-    assert( av.size() == counter / 2 );
+    AV_ASSERT( av.size() == counter / 2 );
 
     for( std::size_t i = 0 ; i < counter ; i += 2 ){
-        assert( av.find( i ) == av.end() );
+        AV_ASSERT( av.find( i ) == av.end() );
     }
 
     for( std::size_t i = 1 ; i < counter ; i += 2 ){
         av.erase( i );
     }
 
-    assert( av.empty() );
+    AV_ASSERT( av.empty() );
 }
 
 void test_erase_2()
@@ -1108,12 +1113,12 @@ void test_erase_2()
     }
 
     for( int i = 0 ; i < counter ; ++ i ){
-        assert( av.find( i ) != av.end() );
+        AV_ASSERT( av.find( i ) != av.end() );
         av.erase( av.find( i ) );
-        assert( av.size() == counter - i - 1 );
+        AV_ASSERT( av.size() == counter - i - 1 );
     }
 
-    assert( av.empty() );
+    AV_ASSERT( av.empty() );
 }
 
 //
@@ -1124,21 +1129,21 @@ void test_operator_index_1()
     typedef AssocVector< int, int > AssocVector;
     AssocVector av;
 
-    assert( av.empty() );
+    AV_ASSERT( av.empty() );
 
     av[ 1 ] = 1;
-    assert( av.size() == 1 );
-    assert( av.find( 1 ) != av.end() );
-    assert( av.find( 1 )->second == 1 );
+    AV_ASSERT( av.size() == 1 );
+    AV_ASSERT( av.find( 1 ) != av.end() );
+    AV_ASSERT( av.find( 1 )->second == 1 );
 
     av[ 1 ] = 11;
-    assert( av[ 1 ] == 11 );
+    AV_ASSERT( av[ 1 ] == 11 );
 
     av[ 3 ] = 33;
-    assert( av[ 3 ] == 33 );
+    AV_ASSERT( av[ 3 ] == 33 );
 
     av[ 2 ] = 22;
-    assert( av[ 2 ] == 22 );
+    AV_ASSERT( av[ 2 ] == 22 );
 }
 
 void test_operator_index_2()
@@ -1153,7 +1158,7 @@ void test_operator_index_2()
 
     for( int i = 0 ; i < counter ; ++ i ){
         av[ randomValues[ i ] ] = i;
-        assert( av[ randomValues[ i ] ] == i );
+        AV_ASSERT( av[ randomValues[ i ] ] == i );
     }
 }
 
@@ -1209,7 +1214,7 @@ void test_copy_constructor()
     assocVector1[ "e" ] = 5;
 
     AssocVector assocVector2( assocVector1 );
-    assert( assocVector1 == assocVector2 );
+    AV_ASSERT( assocVector1 == assocVector2 );
 }
 
 //
@@ -1230,7 +1235,7 @@ void test_assign_operator()
     AssocVector assocVector2;
     assocVector2 = assocVector1;
 
-    assert( assocVector1 == assocVector2 );
+    AV_ASSERT( assocVector1 == assocVector2 );
 }
 
 //
@@ -1250,11 +1255,11 @@ void test_clear()
 
     assocVector.erase( "a" );
 
-    assert( assocVector.size() == 4 );
+    AV_ASSERT( assocVector.size() == 4 );
 
     assocVector.clear();
 
-    assert( assocVector.empty() );
+    AV_ASSERT( assocVector.empty() );
 }
 
 //
@@ -1269,10 +1274,10 @@ void test_iterator_to_const_iterator_conversion()
     AssocVector av;
 
     iterator i = av.find( 10 );
-    assert( i == av.end() );
+    AV_ASSERT( i == av.end() );
 
     const_iterator ci = av.find( 10 );
-    assert( ci == av.end() );
+    AV_ASSERT( ci == av.end() );
 }
 
 //
@@ -1298,7 +1303,7 @@ void test_iterators_equal()
         assocVector1024.insert( AssocVector::value_type( randomValues[i], i ) );
     }
 
-    assert(
+    AV_ASSERT(
         (
             std::equal(
                   assocVector8.begin()
@@ -1333,7 +1338,7 @@ void test_reverse_iterators_equal()
         assocVector1024.insert( AssocVector::value_type( randomValues[ i ], i ) );
     }
 
-    assert(
+    AV_ASSERT(
         (
             std::equal(
                   assocVector8.rbegin()
@@ -1355,19 +1360,19 @@ void test_iterators_distance()
 
     AssocVector av;
 
-    assert( av.begin() == av.end() );
-    assert( ( std::distance( av.begin(), av.end() ) == 0 ) );
+    AV_ASSERT( av.begin() == av.end() );
+    AV_ASSERT( ( std::distance( av.begin(), av.end() ) == 0 ) );
 
     av.insert( AssocVector::value_type( 1, 1 ) );
 
-    assert( av.begin() != av.end() );
-    assert( ( std::distance( av.begin(), av.end() ) == 1 ) );
+    AV_ASSERT( av.begin() != av.end() );
+    AV_ASSERT( ( std::distance( av.begin(), av.end() ) == 1 ) );
 
     av.insert( AssocVector::value_type( 2, 2 ) );
-    assert( ( std::distance( av.begin(), av.end() ) == 2 ) );
+    AV_ASSERT( ( std::distance( av.begin(), av.end() ) == 2 ) );
 
     av.insert( AssocVector::value_type( 3, 3 ) );
-    assert( ( std::distance( av.begin(), av.end() ) == 3 ) );
+    AV_ASSERT( ( std::distance( av.begin(), av.end() ) == 3 ) );
 }
 
 //
@@ -1380,19 +1385,19 @@ void test_reverse_iterators_distance()
 
     AssocVector av;
 
-    assert( av.rbegin() == av.rend() );
-    assert( ( std::distance( av.rbegin(), av.rend() ) == 0 ) );
+    AV_ASSERT( av.rbegin() == av.rend() );
+    AV_ASSERT( ( std::distance( av.rbegin(), av.rend() ) == 0 ) );
 
     av.insert( AssocVector::value_type( 1, 1 ) );
 
-    assert( av.rbegin() != av.rend() );
-    assert( ( std::distance( av.rbegin(), av.rend() ) == 1 ) );
+    AV_ASSERT( av.rbegin() != av.rend() );
+    AV_ASSERT( ( std::distance( av.rbegin(), av.rend() ) == 1 ) );
 
     av.insert( AssocVector::value_type( 2, 2 ) );
-    assert( ( std::distance( av.rbegin(), av.rend() ) == 2 ) );
+    AV_ASSERT( ( std::distance( av.rbegin(), av.rend() ) == 2 ) );
 
     av.insert( AssocVector::value_type( 3, 3 ) );
-    assert( ( std::distance( av.rbegin(), av.rend() ) == 3 ) );
+    AV_ASSERT( ( std::distance( av.rbegin(), av.rend() ) == 3 ) );
 }
 
 //
@@ -1405,7 +1410,7 @@ void test_iterators_begin_equals_end_in_empty_container()
 
     AssocVector av;
 
-    assert( av.begin() == av.end() );
+    AV_ASSERT( av.begin() == av.end() );
 }
 
 //
@@ -1418,7 +1423,7 @@ void test_reverse_iterators_begin_equal_end_in_empty_storage()
 
     AssocVector av;
 
-    assert( av.rbegin() == av.rend() );
+    AV_ASSERT( av.rbegin() == av.rend() );
 }
 
 //
@@ -1443,7 +1448,7 @@ void test_iterators_increment_decrement()
     for( /*empty*/ ; current != end ; ++ current );
     for( /*empty*/ ; current != begin ; -- current );
 
-    assert( current == begin );
+    AV_ASSERT( current == begin );
 }
 
 //
@@ -1463,19 +1468,19 @@ void test_iterator_1()
     Iterator current = av.begin();
     Iterator end = av.end();
 
-    assert( current->first == 0 );
+    AV_ASSERT( current->first == 0 );
     ++current;
-    assert( current->first == 1 );
+    AV_ASSERT( current->first == 1 );
     ++current;
-    assert( current->first == 2 );
+    AV_ASSERT( current->first == 2 );
     ++current;
-    assert( current->first == 3 );
+    AV_ASSERT( current->first == 3 );
     ++current;
-    assert( current->first == 4 );
+    AV_ASSERT( current->first == 4 );
     ++current;
-    assert( current->first == 5 );
+    AV_ASSERT( current->first == 5 );
     ++current;
-    assert( current->first == 6 );
+    AV_ASSERT( current->first == 6 );
 }
 
 //
@@ -1493,15 +1498,15 @@ void test_iterators_iterate_not_empty_storage_empty_cache()
         av.insert( AssocVector::value_type(  i, 0 ) );
     }
 
-    assert( av.size() == 1024 );
-    assert( av.bufferSize() == 0 );
-    assert( av.storageSize() == 1024 );
+    AV_ASSERT( av.size() == 1024 );
+    AV_ASSERT( av.bufferSize() == 0 );
+    AV_ASSERT( av.storageSize() == 1024 );
 
     Iterator current = av.begin();
     Iterator const end = av.end();
 
     for( int i = 0 ; current != end ; ++ current, ++i ){
-        assert( current->first == i );
+        AV_ASSERT( current->first == i );
     }
 }
 
@@ -1523,65 +1528,65 @@ void test_erase_iterator()
 
         AVII::iterator current = av.begin();
 
-        assert( ( * current ).first == 1 && ( * current ).second == 11 );
+        AV_ASSERT( ( * current ).first == 1 && ( * current ).second == 11 );
 
         ++ current;
-        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
 
         ++ current;
-        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
 
         ++ current;
-        assert( ( * current ).first == 4 && ( * current ).second == 44 );
+        AV_ASSERT( ( * current ).first == 4 && ( * current ).second == 44 );
 
         ++ current;
-        assert( current == av.end() );
+        AV_ASSERT( current == av.end() );
     }
     {
         av.erase( 4 );
 
         AVII::iterator current = av.begin();
 
-        assert( ( * current ).first == 1 && ( * current ).second == 11 );
+        AV_ASSERT( ( * current ).first == 1 && ( * current ).second == 11 );
 
         ++ current;
-        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
 
         ++ current;
-        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
 
         ++ current;
-        assert( current == av.end() );
+        AV_ASSERT( current == av.end() );
     }
     {
         av.erase( 1 );
 
         AVII::iterator current = av.begin();
 
-        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
 
         ++ current;
-        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
 
         ++ current;
-        assert( current == av.end() );
+        AV_ASSERT( current == av.end() );
     }
     {
         av.erase( 2 );
 
         AVII::iterator current = av.begin();
 
-        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
 
         ++ current;
-        assert( current == av.end() );
+        AV_ASSERT( current == av.end() );
     }
     {
         av.erase( 3 );
 
         AVII::iterator current = av.begin();
 
-        assert( current == av.end() );
+        AV_ASSERT( current == av.end() );
     }
 }
 
@@ -1603,65 +1608,65 @@ void test_erase_reverse_iterator()
 
         AVII::reverse_iterator current = av.rbegin();
 
-        assert( ( * current ).first == 4 && ( * current ).second == 44 );
+        AV_ASSERT( ( * current ).first == 4 && ( * current ).second == 44 );
 
         ++ current;
-        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
 
         ++ current;
-        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
 
         ++ current;
-        assert( ( * current ).first == 1 && ( * current ).second == 11 );
+        AV_ASSERT( ( * current ).first == 1 && ( * current ).second == 11 );
 
         ++ current;
-        assert( current == av.rend() );
+        AV_ASSERT( current == av.rend() );
     }
     {
         av.erase( 4 );
 
         AVII::reverse_iterator current = av.rbegin();
 
-        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
 
         ++ current;
-        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
 
         ++ current;
-        assert( ( * current ).first == 1 && ( * current ).second == 11 );
+        AV_ASSERT( ( * current ).first == 1 && ( * current ).second == 11 );
 
         ++ current;
-        assert( current == av.rend() );
+        AV_ASSERT( current == av.rend() );
     }
     {
         av.erase( 1 );
 
         AVII::reverse_iterator current = av.rbegin();
 
-        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
 
         ++ current;
-        assert( ( * current ).first == 2 && ( * current ).second == 22 );
+        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
 
         ++ current;
-        assert( current == av.rend() );
+        AV_ASSERT( current == av.rend() );
     }
     {
         av.erase( 2 );
 
         AVII::reverse_iterator current = av.rbegin();
 
-        assert( ( * current ).first == 3 && ( * current ).second == 33 );
+        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
 
         ++ current;
-        assert( current == av.rend() );
+        AV_ASSERT( current == av.rend() );
     }
     {
         av.erase( 3 );
 
         AVII::reverse_iterator current = av.rbegin();
 
-        assert( current == av.rend() );
+        AV_ASSERT( current == av.rend() );
     }
 }
 
@@ -1674,12 +1679,14 @@ bool isEqual(
     , std::map< _T1, _T2 > const & map
 )
 {
-    if( av.size() != map.size() ){
+    if( av.size() != map.size() )
+    {
         return false;
     }
 
     return std::equal( av.begin(), av.end(), map.begin() );
 }
+
 
 struct S1
 {
@@ -1773,6 +1780,12 @@ struct S3
     std::vector< int > array;
 };
 
+std::ostream & operator<<( std::ostream & out, S3 const & s3 ){
+    util::dump( s3.array.begin(), s3.array.end(), out );
+    
+    return out;
+}
+
 template< typename _T >
 void black_box_test()
 {
@@ -1782,9 +1795,9 @@ void black_box_test()
     typedef std::map< int, _T > MAP;
     MAP map;
 
-    assert( isEqual( av, map ) );
+    AV_ASSERT( isEqual( av, map ) );
 
-    for( int i = 0 ; i < 1024 ; ++ i )
+    for( int i = 0 ; i < 1024 * 8 ; ++ i )
     {
         int const operation = rand() % 5;
 
@@ -1792,47 +1805,47 @@ void black_box_test()
         {
             case 0:
                 {
-                    int const key = rand();
+                    int const key = rand() % 512;
                     _T const value = _T();
 
                     av.insert( typename AV::value_type( key, value ) );
-                    map.insert( typename AV::value_type( key, value ) );
+                    map.insert( typename MAP::value_type( key, value ) );
 
-                    assert( isEqual( av, map ) );
+                    AV_ASSERT( isEqual( av, map ) );
                 }
 
                 break;
 
             case 1:
                 {
-                    int const key = rand();
+                    int const key = rand() % 512;
 
                     typename AV::iterator foundAV = av.find( key );
                     typename MAP::iterator foundMap = map.find( key );
 
-                    assert(
+                    AV_ASSERT(
                            ( foundAV == av.end() && foundMap == map.end() )
                         || ( * foundAV == * foundMap )
                     );
 
-                    assert( isEqual( av, map ) );
+                    AV_ASSERT( isEqual( av, map ) );
                 }
 
                 break;
 
             case 2:
                 {
-                    int const key = rand();
+                    int const key = rand() % 512;
 
                     av.erase( key );
                     map.erase( key );
 
-                    assert( isEqual( av, map ) );
+                    AV_ASSERT( isEqual( av, map ) );
                 }
 
             case 3:
                 {
-                    int const key = rand();
+                    int const key = rand() % 512;
 
                     typename AV::iterator foundAV = av.find( key );
                     typename MAP::iterator foundMap = map.find( key );
@@ -1847,27 +1860,24 @@ void black_box_test()
                         map.erase( foundMap );
                     }
 
-                    assert( isEqual( av, map ) );
+                    AV_ASSERT( isEqual( av, map ) );
                 }
 
                 break;
 
             case 4:
                 {
-                    int const key = rand();
+                    int const key = rand() % 512;
                     _T const value = _T();
 
-                    typename AV::iterator foundAV = av.find( key );
-                    typename MAP::iterator foundMap = map.find( key );
 
                     av[ key ] = value;
                     map[ key ] = value;
 
-                    assert( isEqual( av, map ) );
+                    AV_ASSERT( isEqual( av, map ) );
                 }
 
                 break;
-
         }
     }
 }
@@ -1883,8 +1893,6 @@ int main()
     test_CmpByFirst_3();
 
     test_isBetween();
-
-    test_constructRange_destroyRange();
 
     test_copyRange_empty_array();
     test_copyRange_self_copy();

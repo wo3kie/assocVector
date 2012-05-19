@@ -101,56 +101,6 @@ namespace util
 
         detail::DestroyRangeImpl< __has_trivial_destructor( T ) >::destroy( begin, end );
     }
-
-    //
-    // constructRange
-    //
-    //
-    // destroyRange
-    //
-    namespace detail
-    {
-        template< bool _HasTrivialDestructor >
-        struct ConstructRangeImpl
-        {
-        };
-
-        template<>
-        struct ConstructRangeImpl< true >
-        {
-            template< typename _Ptr >
-            static
-            void create( _Ptr, _Ptr )
-            {
-            }
-        };
-
-        template<>
-        struct ConstructRangeImpl< false >
-        {
-            template< typename _Ptr >
-            static
-            void create( _Ptr begin, _Ptr const end )
-            {
-                typedef typename std::iterator_traits< _Ptr >::value_type T;
-
-                for( /*empty*/ ; begin != end ; ++ begin ){
-                    new ( begin ) T();
-                }
-            }
-        };
-    }
-
-    template< typename _Ptr >
-    inline
-    void constructRange( _Ptr begin, _Ptr const end )
-    {
-        PRECONDITION( begin <= end );
-
-        typedef typename std::iterator_traits< _Ptr >::value_type T;
-
-        detail::ConstructRangeImpl< __has_trivial_constructor( T ) >::create( begin, end );
-    }
 }
 
 namespace util
@@ -352,7 +302,7 @@ namespace array
     inline
     Array< _T > create(
             std::size_t capacity
-          , _Alloc allocator = std::allocator< _T >()
+          , _Alloc allocator
     )
     {
         Array< _T > result;
@@ -363,8 +313,6 @@ namespace array
 
         result.setSize( 0 );
         result.setCapacity( capacity );
-
-        util::constructRange( result.getData(), result.getData() + capacity );
 
         return result;
     }
@@ -387,7 +335,7 @@ namespace array
 
         dest = create< _T >( origin.capacity(), allocator );
 
-        util::copyRange( origin.begin(), origin.end(), dest.begin() );
+        std::uninitialized_copy( origin.begin(), origin.end(), dest.begin() );
 
         dest.setSize( origin.size() );
         dest.setCapacity( origin.capacity() );
@@ -436,7 +384,7 @@ namespace array
 
         Array< _T > newArray = array::create< _T >( capacity, allocator );
 
-        util::copyRange( array.begin(), array.end(), newArray.begin() );
+        std::uninitialized_copy( array.begin(), array.end(), newArray.begin() );
         array::destroy( array, allocator );
 
         array.setSize( size );
@@ -488,6 +436,8 @@ namespace array
     {
         PRECONDITION( array.size() + 1 <= array.capacity() );
 
+        new ( static_cast< void * >( & * array.end() ) ) _T();
+        
         if( pos != array.end() ){
             util::copyRange( pos, array.end(), pos + 1 );
         }
@@ -509,6 +459,8 @@ namespace array
     {
         PRECONDITION( array.size() + 1 <= array.capacity() );
 
+        new ( static_cast< void * >( & * array.end() ) ) _T();
+        
         typename Array< _T >::iterator const found
             = std::lower_bound(
                   array.begin()
@@ -543,6 +495,8 @@ namespace array
 
         util::copyRange( pos + 1, array.end(), pos );
         array.setSize( array.size() - 1 );
+        
+        array.end() -> ~_T();
     }
 
     template< typename _T >
@@ -637,6 +591,8 @@ namespace array
             }
         }
 
+        util::destroyRange( whereInsertInStorage, storage.end() );
+        
         newStorage.setSize( storage.size() - erased.size() );
     }
 
@@ -662,6 +618,8 @@ namespace array
         Iterator currentInBuffer = buffer.begin() + buffer.size() - 1;
         Iterator const endInBuffer = buffer.begin() - 1;
 
+        std::size_t numberOfItemsToCreateByPlacementNew = buffer.size();
+        
         while( currentInBuffer != endInBuffer )
         {
             if(
@@ -669,14 +627,32 @@ namespace array
                 || cmp( * currentInStorage, * currentInBuffer )
             )
             {
-                * whereInsertInStorage = * currentInBuffer;
-
+                if( numberOfItemsToCreateByPlacementNew != 0 )
+                {
+                    new ( static_cast< void * >( & * whereInsertInStorage ) ) _T( * currentInBuffer );
+                    
+                    numberOfItemsToCreateByPlacementNew -= 1;
+                }
+                else
+                {
+                    * whereInsertInStorage = * currentInBuffer;
+                }
+                
                 -- currentInBuffer;
                 -- whereInsertInStorage;
             }
             else
             {
-                * whereInsertInStorage = * currentInStorage;
+                if( numberOfItemsToCreateByPlacementNew != 0 )
+                {
+                    new ( static_cast< void * >( & * whereInsertInStorage ) ) _T( * currentInStorage );
+                    
+                    numberOfItemsToCreateByPlacementNew -= 1;
+                }
+                else
+                {
+                    * whereInsertInStorage = * currentInStorage;
+                }
 
                 -- currentInStorage;
                 -- whereInsertInStorage;
@@ -685,6 +661,54 @@ namespace array
 
         storage.setSize( storage.size() + buffer.size() );
     }
+}
+
+namespace util
+{
+
+template<
+      typename _Iterator1
+    , typename _Iterator2
+    , typename _IteratorOutput
+    , typename _Cmp
+>
+_IteratorOutput merge_into_uninitialized(
+      _Iterator1 begin1
+    , _Iterator1 end1
+    , _Iterator2 begin2
+    , _Iterator2 end2
+    , _IteratorOutput output
+    , _Cmp cmp = _Cmp()
+)
+{
+    while( begin1 != end1 && begin2 != end2 )
+    {
+        if( cmp( * begin1, * begin2 ) )
+        {
+            new ( static_cast< void * >( & * output ) )
+                typename std::iterator_traits< _IteratorOutput >::value_type( * begin1 );
+            
+            ++ output;
+            ++ begin1;
+        }
+        else{
+            new ( static_cast< void * >( & * output ) )
+                typename std::iterator_traits< _IteratorOutput >::value_type( * begin2 );
+            
+            ++ output;
+            ++ begin2;
+        }
+    }
+
+    if( begin1 == end1 ){
+        return std::uninitialized_copy( begin2, end2, output );
+    }
+    
+    if( begin2 == end2 ){
+        return std::uninitialized_copy( begin1, end1, output );
+    }
+}
+
 }
 
 namespace detail
@@ -1454,9 +1478,7 @@ template<
 >
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::~AssocVector()
 {
-    array::destroy( _storage, getAllocator( _storage ) );
-    array::destroy( _buffer, getAllocator( _buffer ) );
-    array::destroy( _erased, getAllocator( _erased ) );
+    clear();
 }
 
 template<
@@ -1725,7 +1747,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::pushBack( _Key const & k, _Mapped co
     }
 
     {//push back
-        _storage[ _storage.size() ] = value_type_mutable( k, m );
+        new ( _storage.end() ) value_type_mutable( k, m );
+        
         _storage.setSize( _storage.size() + 1 );
     }
 }
@@ -1930,7 +1953,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
     {//erase from back
         if( foundInStorage + 1 == _storage.end() )
         {
-            foundInStorage -> ~value_type_mutable();
             _storage.setSize( _storage.size() - 1 );
 
             return;
@@ -1979,7 +2001,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
     {//erase from back
         if( posBase + 1 == _storage.end() )
         {
-            posBase -> ~value_type_mutable();
             _storage.setSize( _storage.size() - 1 );
 
             return;
@@ -2053,7 +2074,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserveStorageAndMergeWithBuffer(
     _Storage newStorage = array::create< value_type_mutable >( storageCapacity, getAllocator( _storage ) );
     _Storage newBuffer = array::create< value_type_mutable >( bufferCapacity, getAllocator( _buffer ) );
 
-    std::merge(
+    util::merge_into_uninitialized(
           _storage.begin()
         , _storage.end()
         , _buffer.begin()
