@@ -1479,6 +1479,10 @@ template<
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::~AssocVector()
 {
     clear();
+    
+    getAllocator( _storage ).deallocate( _storage.data(), _storage.getCapacity() );
+    getAllocator( _buffer ).deallocate( _buffer.data(), _buffer.getCapacity() );
+    getAllocator( _erased ).deallocate( _erased.data(), _erased.getCapacity() );
 }
 
 template<
