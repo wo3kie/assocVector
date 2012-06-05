@@ -8,7 +8,7 @@
 
 #define AV_ASSERT( expression )\
     assert( expression )
-    
+
 namespace std
 {
 
@@ -41,7 +41,7 @@ void dump( _Iterator begin, _Iterator end, std::ostream & out = std::cout )
             out << "," << *current ;
         }
     }
-    
+
     out << "]";
 }
 
@@ -239,6 +239,73 @@ void test_copyRange_overlap_copy_to_begining()
     expected.push_back( 6 );
 
     AV_ASSERT( array == expected );
+}
+
+//
+// test_last_less_equal
+//
+void test_last_less_equal()
+{
+    {
+        std::vector< int > v;
+
+        assert( util::last_less_equal( v.begin(), v.end(), 1, std::less< int >() ) == v.end() );
+    }
+
+    {
+        std::vector< int > v;
+        v.push_back( 1 );
+        v.push_back( 3 );
+        v.push_back( 5 );
+        v.push_back( 7 );
+        v.push_back( 9 );
+
+        {
+            int i = 1;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == i );
+
+            i = 3;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == i );
+
+            i = 5;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == i );
+
+            i = 7;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == i );
+
+            i = 9;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == i );
+        }
+        {
+            int i = 0;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == v.end() );
+
+            i = 2;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == (i-1) );
+
+            i = 4;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == (i-1) );
+
+            i = 6;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == (i-1) );
+
+            i = 8;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == (i-1) );
+
+            i = 10;
+            assert( util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) != v.end() );
+            assert( * util::last_less_equal( v.begin(), v.end(), i, std::less< int >() ) == (i-1) );
+        }
+    }
 }
 
 //
@@ -1466,7 +1533,6 @@ void test_iterator_1()
     }
 
     Iterator current = av.begin();
-    Iterator end = av.end();
 
     AV_ASSERT( current->first == 0 );
     ++current;
@@ -1481,6 +1547,73 @@ void test_iterator_1()
     AV_ASSERT( current->first == 5 );
     ++current;
     AV_ASSERT( current->first == 6 );
+    ++current;
+    AV_ASSERT( current == av.end() );
+}
+
+//
+// test_reverse_iterator_1
+//
+void test_reverse_iterator_1()
+{
+    typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::reverse_iterator RIterator;
+
+    AssocVector av;
+
+    for( int i = 0 ; i < 7 ; ++ i ){
+        av.insert( AssocVector::value_type( i, 0 ) );
+    }
+
+    RIterator current = av.rbegin();
+
+    AV_ASSERT( current->first == 6 );
+    ++current;
+    AV_ASSERT( current->first == 5 );
+    ++current;
+    AV_ASSERT( current->first == 4 );
+    ++current;
+    AV_ASSERT( current->first == 3 );
+    ++current;
+    AV_ASSERT( current->first == 2 );
+    ++current;
+    AV_ASSERT( current->first == 1 );
+    ++current;
+    AV_ASSERT( current->first == 0 );
+    ++ current;
+    AV_ASSERT( current == av.rend() );
+}
+
+//
+// test_reverse_iterator_2
+//
+void test_reverse_iterator_2()
+{
+    typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::reverse_iterator RIterator;
+
+    AssocVector av;
+
+    for( int i = 0 ; i < 7 ; ++ i ){
+        av.insert( AssocVector::value_type( i, 0 ) );
+    }
+
+    av.erase( 1 );
+    av.erase( 3 );
+
+    RIterator current = av.rbegin();
+
+    AV_ASSERT( current->first == 6 );
+    ++current;
+    AV_ASSERT( current->first == 5 );
+    ++current;
+    AV_ASSERT( current->first == 4 );
+    ++current;
+    AV_ASSERT( current->first == 2 );
+    ++current;
+    AV_ASSERT( current->first == 0 );
+    ++ current;
+    AV_ASSERT( current == av.rend() );
 }
 
 //
@@ -1684,9 +1817,13 @@ bool isEqual(
         return false;
     }
 
-    return std::equal( av.begin(), av.end(), map.begin() );
-}
+    bool const result1 = std::equal( av.begin(), av.end(), map.begin() );
+    bool const result2 = std::equal( av.rbegin(), av.rend(), map.rbegin() );
 
+    assert( result1 == result2 );
+
+    return result1;
+}
 
 struct S1
 {
@@ -1782,7 +1919,7 @@ struct S3
 
 std::ostream & operator<<( std::ostream & out, S3 const & s3 ){
     util::dump( s3.array.begin(), s3.array.end(), out );
-    
+
     return out;
 }
 
@@ -1901,6 +2038,8 @@ int main()
     test_copyRange_overlap_more_than_half();
     test_copyRange_overlap_copy_to_begining();
 
+    test_last_less_equal();
+
     test_merge_1();
     test_merge_2();
     test_merge_3();
@@ -1954,6 +2093,8 @@ int main()
     test_iterators_increment_decrement();
 
     test_iterator_1();
+    test_reverse_iterator_1();
+    test_reverse_iterator_2();
 
     test_iterators_iterate_not_empty_storage_empty_cache();
 

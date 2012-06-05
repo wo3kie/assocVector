@@ -1,7 +1,5 @@
 //#define AV_UNIT_TESTS
 
-#define AV_TEST_BOOST_RANDOM
-
 #define AV_BREAK_IF_TIMEOUT( _timeout_ ) \
     { \
         if( ( counter & ( 512 - 1 ) ) == 0 ) \
@@ -22,6 +20,8 @@
     #define AV_TEST_STD_MAP
     #define AV_TEST_BOOST_HASH
 
+    #define AV_TEST_BOOST_RANDOM
+    
     unsigned const REPS = 1000000;
 
     unsigned const AV_TIMEOUT = 60;

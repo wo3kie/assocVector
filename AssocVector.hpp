@@ -119,7 +119,7 @@ namespace util
         , _OutputPtr begin2
     )
     {
-        assert( begin <= end );
+        PRECONDITION( begin <= end );
 
         if( begin < begin2 ){
             std::copy_backward( begin, end, begin2 + ( end - begin ) );
@@ -143,6 +143,10 @@ template<
 >
 _Iterator last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp cmp )
 {
+    if( first == last ){
+        return last;
+    }
+
     _Iterator greaterEqual
         = std::lower_bound(
               first
@@ -151,25 +155,41 @@ _Iterator last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp c
             , cmp
         );
 
-    if( greaterEqual == last ){
-        return last;
+    if( greaterEqual != last )
+    {
+        // lower_bound returns first greater_than/equal_to but we need last less_than
+
+        bool const isEqual
+            = cmp( * greaterEqual, t ) == false
+            && cmp( t, * greaterEqual ) == false;
+
+        if( isEqual )
+        {
+            // that is OK, request item was found
+            return greaterEqual;
+        }
     }
 
-    // lower_bound returns first greater_than/equal_to but we need last less_than
-    bool const isEqual = cmp( * greaterEqual, t ) == false;
+    if( greaterEqual == first )
+    {
+      // requested item does not exist in container
 
-    if( isEqual ){
-        // that is OK, request item was found
-        return greaterEqual;
+      // 6 8 10 13 17 19 20 21 22 24 end
+      // ^ lower_bound( 1 ):
+      // requested:                  ^
+
+      return last;
     }
+    else
+    {
+        // we need to go one item backward
 
-    // we need to go one item backward
+        // 6 8 10 13 17 19 20 21 22 24
+        // lower_bound( 23 ):       ^
+        // requested:            ^
 
-    // 6 8 10 13 17 19 20 21 22 24
-    // lower_bound( 23 ):       ^
-    // requested:            ^
-
-    return -- greaterEqual;
+        return -- greaterEqual;
+    }
 }
 
 }
@@ -437,7 +457,7 @@ namespace array
         PRECONDITION( array.size() + 1 <= array.capacity() );
 
         new ( static_cast< void * >( & * array.end() ) ) _T();
-        
+
         if( pos != array.end() ){
             util::copyRange( pos, array.end(), pos + 1 );
         }
@@ -460,7 +480,7 @@ namespace array
         PRECONDITION( array.size() + 1 <= array.capacity() );
 
         new ( static_cast< void * >( & * array.end() ) ) _T();
-        
+
         typename Array< _T >::iterator const found
             = std::lower_bound(
                   array.begin()
@@ -495,7 +515,7 @@ namespace array
 
         util::copyRange( pos + 1, array.end(), pos );
         array.setSize( array.size() - 1 );
-        
+
         array.end() -> ~_T();
     }
 
@@ -592,7 +612,7 @@ namespace array
         }
 
         util::destroyRange( whereInsertInStorage, storage.end() );
-        
+
         newStorage.setSize( storage.size() - erased.size() );
     }
 
@@ -619,7 +639,7 @@ namespace array
         Iterator const endInBuffer = buffer.begin() - 1;
 
         std::size_t numberOfItemsToCreateByPlacementNew = buffer.size();
-        
+
         while( currentInBuffer != endInBuffer )
         {
             if(
@@ -630,14 +650,14 @@ namespace array
                 if( numberOfItemsToCreateByPlacementNew != 0 )
                 {
                     new ( static_cast< void * >( & * whereInsertInStorage ) ) _T( * currentInBuffer );
-                    
+
                     numberOfItemsToCreateByPlacementNew -= 1;
                 }
                 else
                 {
                     * whereInsertInStorage = * currentInBuffer;
                 }
-                
+
                 -- currentInBuffer;
                 -- whereInsertInStorage;
             }
@@ -646,7 +666,7 @@ namespace array
                 if( numberOfItemsToCreateByPlacementNew != 0 )
                 {
                     new ( static_cast< void * >( & * whereInsertInStorage ) ) _T( * currentInStorage );
-                    
+
                     numberOfItemsToCreateByPlacementNew -= 1;
                 }
                 else
@@ -672,7 +692,8 @@ template<
     , typename _IteratorOutput
     , typename _Cmp
 >
-_IteratorOutput merge_into_uninitialized(
+_IteratorOutput
+merge_into_uninitialized(
       _Iterator1 begin1
     , _Iterator1 end1
     , _Iterator2 begin2
@@ -687,14 +708,14 @@ _IteratorOutput merge_into_uninitialized(
         {
             new ( static_cast< void * >( & * output ) )
                 typename std::iterator_traits< _IteratorOutput >::value_type( * begin1 );
-            
+
             ++ output;
             ++ begin1;
         }
         else{
             new ( static_cast< void * >( & * output ) )
                 typename std::iterator_traits< _IteratorOutput >::value_type( * begin2 );
-            
+
             ++ output;
             ++ begin2;
         }
@@ -703,10 +724,12 @@ _IteratorOutput merge_into_uninitialized(
     if( begin1 == end1 ){
         return std::uninitialized_copy( begin2, end2, output );
     }
-    
+
     if( begin2 == end2 ){
         return std::uninitialized_copy( begin1, end1, output );
     }
+
+    return output;
 }
 
 }
@@ -1046,7 +1069,7 @@ namespace detail
                 );
 
             if( _currentInErased == _container->erased().end() ){
-                -- _currentInErased;
+                _currentInErased = _container->erased().begin() - 1;
             }
 
             _current = calculateCurrentReverse();
@@ -1167,7 +1190,7 @@ namespace detail
            while(
                    _currentInErased != ( _container->erased().begin() - 1 )
                 && _currentInStorage != ( _container->storage().begin() - 1 )
-                && _currentInStorage == *_currentInErased
+                && _currentInStorage == * _currentInErased
             )
             {
                 -- _currentInStorage;
@@ -1479,7 +1502,7 @@ template<
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::~AssocVector()
 {
     clear();
-    
+
     getAllocator( _storage ).deallocate( _storage.data(), _storage.getCapacity() );
     getAllocator( _buffer ).deallocate( _buffer.data(), _buffer.getCapacity() );
     getAllocator( _erased ).deallocate( _erased.data(), _erased.getCapacity() );
@@ -1686,7 +1709,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
 
     {//find or insert to buffer
         if( foundInStorage == _storage.end() ){
-            return findOrInsertToBuffer( k, m ).first;;
+            return findOrInsertToBuffer( k, m ).first;
         }
     }
 
@@ -1752,7 +1775,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::pushBack( _Key const & k, _Mapped co
 
     {//push back
         new ( _storage.end() ) value_type_mutable( k, m );
-        
+
         _storage.setSize( _storage.size() + 1 );
     }
 }
