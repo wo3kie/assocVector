@@ -1323,7 +1323,7 @@ public:
     //
     // erase
     //
-    void erase( key_type const & k );
+    std::size_t erase( key_type const & k );
     void erase( iterator pos );
 
 
@@ -1959,7 +1959,7 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-void
+std::size_t
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
 {
     typename _Storage::iterator const foundInStorage = find( _storage, k );
@@ -1969,11 +1969,16 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
         {
             typename _Storage::iterator const foundInBuffer = find( _buffer, k );
 
-            if( foundInBuffer != _buffer.end() ){
-                array::erase( _buffer, foundInBuffer );
+            if( foundInBuffer == _buffer.end() )
+            {
+                return 0;
             }
+            else
+            {
+                array::erase( _buffer, foundInBuffer );
 
-            return;
+                return 1;
+            }
         }
     }
 
@@ -1982,20 +1987,23 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
         {
             _storage.setSize( _storage.size() - 1 );
 
-            return;
+            return 1;
         }
     }
 
     {//erase from _storage
-        array::insertSorted(
-              _erased
-            , typename _Storage::const_iterator( foundInStorage )
-            , std::less< typename _Storage::const_iterator >()
-        );
+        bool const result
+            = array::insertSorted(
+                _erased
+                , typename _Storage::const_iterator( foundInStorage )
+                , std::less< typename _Storage::const_iterator >()
+            );
 
         if( _erased.full() ){
             mergeStorageWithErased();
         }
+
+        return result;
     }
 }
 

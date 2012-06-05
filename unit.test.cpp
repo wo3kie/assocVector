@@ -978,7 +978,7 @@ void test_insert_erase_insert_1()
     av[ 4 ] = 4;
     av[ 5 ] = 5;
 
-    av.erase( 3 );
+    AV_ASSERT( av.erase( 3 ) == 1 );
 
     AV_ASSERT( av.insert( AssocVector::value_type( 3, 33 ) ) == true );
 
@@ -1006,7 +1006,7 @@ void test_insert_erase_insert_2()
     av[ 4 ] = 4;
     av[ 5 ] = 5;
 
-    av.erase( 5 );
+    AV_ASSERT( av.erase( 5 ) == 1 );
 
     AV_ASSERT( av.insert( AssocVector::value_type( 5, 55 ) ) == true );
 
@@ -1034,7 +1034,7 @@ void test_insert_erase_insert_3()
     av[ 4 ] = 4;
     av[ 5 ] = 5;
 
-    av.erase( 3 );
+    AV_ASSERT( av.erase( 3 ) == 1 );
 
     av[ 3 ] = 33;
 
@@ -1062,7 +1062,7 @@ void test_insert_erase_insert_4()
     av[ 4 ] = 4;
     av[ 5 ] = 5;
 
-    av.erase( 5 );
+    AV_ASSERT( av.erase( 5 ) == 1 );
 
     av[ 5 ] = 55;
 
@@ -1136,7 +1136,7 @@ void test_count()
 }
 
 //
-// test_erase
+// test_erase_1
 //
 void test_erase_1()
 {
@@ -1152,7 +1152,7 @@ void test_erase_1()
     AV_ASSERT( av.size() == counter );
 
     for( std::size_t i = 0 ; i < counter ; i += 2 ){
-        av.erase( i );
+        AV_ASSERT( av.erase( i ) == 1 );
     }
 
     AV_ASSERT( av.size() == counter / 2 );
@@ -1162,12 +1162,15 @@ void test_erase_1()
     }
 
     for( std::size_t i = 1 ; i < counter ; i += 2 ){
-        av.erase( i );
+        AV_ASSERT( av.erase( i ) == 1 );
     }
 
     AV_ASSERT( av.empty() );
 }
 
+//
+// test_erase_2
+//
 void test_erase_2()
 {
     typedef AssocVector< int, int > AssocVector;
@@ -1187,6 +1190,25 @@ void test_erase_2()
 
     AV_ASSERT( av.empty() );
 }
+
+//
+// test_erase_3
+//
+void test_erase_3()
+{
+    typedef AssocVector< int, int > AssocVector;
+    AssocVector av;
+
+    av.insert( AssocVector::value_type( 1, 1 ) );
+
+    AV_ASSERT( av.erase( 1 ) == 1 );
+    AV_ASSERT( av.erase( 1 ) == 0 );
+
+    av.insert( AssocVector::value_type( 1, 1 ) );
+
+    AV_ASSERT( av.erase( 1 ) == 1 );
+    AV_ASSERT( av.erase( 1 ) == 0 );
+ }
 
 //
 // test_operator_index
@@ -1320,7 +1342,7 @@ void test_clear()
     assocVector[ "d" ] = 4;
     assocVector[ "e" ] = 5;
 
-    assocVector.erase( "a" );
+    AV_ASSERT( assocVector.erase( "a" ) == 1 );
 
     AV_ASSERT( assocVector.size() == 4 );
 
@@ -1598,8 +1620,8 @@ void test_reverse_iterator_2()
         av.insert( AssocVector::value_type( i, 0 ) );
     }
 
-    av.erase( 1 );
-    av.erase( 3 );
+    AV_ASSERT( av.erase( 1 ) == 1 );
+    AV_ASSERT( av.erase( 3 ) == 1 );
 
     RIterator current = av.rbegin();
 
@@ -1657,7 +1679,7 @@ void test_erase_iterator()
     av.merge();
 
     {
-        av.erase( 5 );
+        AV_ASSERT( av.erase( 5 ) == 0 );
 
         AVII::iterator current = av.begin();
 
@@ -1676,7 +1698,7 @@ void test_erase_iterator()
         AV_ASSERT( current == av.end() );
     }
     {
-        av.erase( 4 );
+        AV_ASSERT( av.erase( 4 ) == 1 );
 
         AVII::iterator current = av.begin();
 
@@ -1692,7 +1714,7 @@ void test_erase_iterator()
         AV_ASSERT( current == av.end() );
     }
     {
-        av.erase( 1 );
+        AV_ASSERT( av.erase( 1 ) == 1 );
 
         AVII::iterator current = av.begin();
 
@@ -1705,7 +1727,7 @@ void test_erase_iterator()
         AV_ASSERT( current == av.end() );
     }
     {
-        av.erase( 2 );
+        AV_ASSERT( av.erase( 2 ) == 1 );
 
         AVII::iterator current = av.begin();
 
@@ -1715,7 +1737,7 @@ void test_erase_iterator()
         AV_ASSERT( current == av.end() );
     }
     {
-        av.erase( 3 );
+        AV_ASSERT( av.erase( 3 ) == 1 );
 
         AVII::iterator current = av.begin();
 
@@ -1737,7 +1759,7 @@ void test_erase_reverse_iterator()
     av.merge();
 
     {
-        av.erase( 5 );
+        AV_ASSERT( av.erase( 5 ) == 0 );
 
         AVII::reverse_iterator current = av.rbegin();
 
@@ -1756,7 +1778,7 @@ void test_erase_reverse_iterator()
         AV_ASSERT( current == av.rend() );
     }
     {
-        av.erase( 4 );
+        AV_ASSERT( av.erase( 4 ) == 1 );
 
         AVII::reverse_iterator current = av.rbegin();
 
@@ -1772,7 +1794,7 @@ void test_erase_reverse_iterator()
         AV_ASSERT( current == av.rend() );
     }
     {
-        av.erase( 1 );
+        AV_ASSERT( av.erase( 1 ) == 1 );
 
         AVII::reverse_iterator current = av.rbegin();
 
@@ -1785,7 +1807,7 @@ void test_erase_reverse_iterator()
         AV_ASSERT( current == av.rend() );
     }
     {
-        av.erase( 2 );
+        AV_ASSERT( av.erase( 2 ) == 1 );
 
         AVII::reverse_iterator current = av.rbegin();
 
@@ -1795,7 +1817,7 @@ void test_erase_reverse_iterator()
         AV_ASSERT( current == av.rend() );
     }
     {
-        av.erase( 3 );
+        AV_ASSERT( av.erase( 3 ) == 1 );
 
         AVII::reverse_iterator current = av.rbegin();
 
@@ -1974,8 +1996,7 @@ void black_box_test()
                 {
                     int const key = rand() % 512;
 
-                    av.erase( key );
-                    map.erase( key );
+                    AV_ASSERT( av.erase( key ) == map.erase( key ) );
 
                     AV_ASSERT( isEqual( av, map ) );
                 }
@@ -2006,7 +2027,6 @@ void black_box_test()
                 {
                     int const key = rand() % 512;
                     _T const value = _T();
-
 
                     av[ key ] = value;
                     map[ key ] = value;
@@ -2065,6 +2085,7 @@ int main()
 
     test_erase_1();
     test_erase_2();
+    test_erase_3();
 
     test_erase_iterator();
     test_erase_reverse_iterator();

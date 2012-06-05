@@ -21,7 +21,7 @@
     #define AV_TEST_BOOST_HASH
 
     #define AV_TEST_BOOST_RANDOM
-    
+
     unsigned const REPS = 1000000;
 
     unsigned const AV_TIMEOUT = 60;
