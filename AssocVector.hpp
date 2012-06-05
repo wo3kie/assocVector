@@ -1351,7 +1351,7 @@ private:
     //
     void pushBack( key_type const & k, mapped_type const & m );
 
-    std::pair< bool, typename _Storage::iterator >
+    std::pair< typename _Storage::iterator, bool >
     findOrInsertToBuffer( key_type const & k, mapped_type const & m );
 
     //
@@ -1709,7 +1709,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
 
     {//find or insert to buffer
         if( foundInStorage == _storage.end() ){
-            return findOrInsertToBuffer( k, m ).first;
+            return findOrInsertToBuffer( k, m ).second;
         }
     }
 
@@ -1915,7 +1915,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
 
     {//find or insert to buffer
         if( foundInStorage == _storage.end() ){
-            return findOrInsertToBuffer( k, mapped_type() ).second->second;
+            return findOrInsertToBuffer( k, mapped_type() ).first->second;
         }
     }
 
@@ -2176,7 +2176,7 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-std::pair< bool, typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator >
+std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator, bool >
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
       _Key const & k
     , _Mapped const & m
@@ -2195,7 +2195,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
         bool const isEqual = _cmp( k, greaterEqual->first ) == false;
 
         if( isEqual ){
-            return std::make_pair( false, greaterEqual );
+            return std::make_pair( greaterEqual, false );
         }
     }
 
@@ -2207,13 +2207,13 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
 
         array::insert( _buffer, _buffer.begin(), value_type_mutable( k, m ) );
 
-        return std::make_pair( true, _buffer.begin() );
+        return std::make_pair( _buffer.begin(), true );
     }
     else
     {
         array::insert( _buffer, greaterEqual, value_type_mutable( k, m ) );
 
-        return std::make_pair( true, greaterEqual );
+        return std::make_pair( greaterEqual, true );
     }
 }
 
