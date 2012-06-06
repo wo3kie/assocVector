@@ -1319,6 +1319,11 @@ public:
     //
     std::pair< iterator, bool > insert( value_type const & value );
 
+    //
+    // _insert, faster, non STL compatible version on find
+    //
+    bool _insert( value_type const & value );
+
     template< typename _Iterator >
     inline void insert( _Iterator begin, _Iterator end );
 
@@ -1328,6 +1333,14 @@ public:
     iterator find( key_type const & k );
     const_iterator find( key_type const & k )const;
 
+    //
+    // _find - faster, non STL compatible version of find
+    //
+    bool _find( key_type const & k )const;
+
+    //
+    // count
+    //
     inline std::size_t count( key_type const & k )const;
 
     //
@@ -1822,6 +1835,68 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_insert( value_type const & value )
+{
+    _Key const & k = value.first;
+    _Mapped const & m = value.second;
+
+    {//push back to storage
+        if( _storage.empty() || _cmp( _storage.back().first, k ) )
+        {
+            pushBack( k, m );
+            return true;
+        }
+    }
+
+    typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
+          _storage.begin()
+        , _storage.end()
+        , value_type_mutable( k, mapped_type() )
+        , value_comp()
+    );
+
+    bool const notPresentInStorage
+        = greaterEqualInStorage == _storage.end()
+        || key_comp()( k, greaterEqualInStorage->first );
+
+    {//find or insert to buffer
+        if( notPresentInStorage ){
+            return findOrInsertToBuffer( k, m ).second;
+        }
+    }
+
+    {// check if not erased
+        typename _Erased::iterator const foundInErased = array::findInSorted(
+              _erased.begin()
+            , _erased.end()
+            , greaterEqualInStorage
+            , std::less< typename _Storage::const_iterator >()
+        );
+
+        {// item is in storage and is not marked as erased
+            if( foundInErased == _erased.end() )
+            {
+                return false;
+            }
+        }
+
+        {// item is in storage but is marked as erased
+            array::erase( _erased, foundInErased );
+
+            greaterEqualInStorage->second = m;
+
+            return true;
+        }
+    }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
 template<
     typename _Iterator
 >
@@ -1937,6 +2012,39 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
             , foundInBuffer
             , 0
         );
+    }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )const
+{
+    typename _Storage::const_iterator const foundInStorage = find( _storage, k );
+
+    {// item is in storage, check in erased
+        if( foundInStorage != _storage.end() )
+        {
+            if( isErased( foundInStorage ) ){
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    {// check in buffer
+        typename _Storage::const_iterator const foundInBuffer = find( _buffer, k );
+
+        if( foundInBuffer == _buffer.end() ){
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -2072,7 +2180,7 @@ template<
 >
 std::size_t
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::count( key_type const & k )const{
-    return find( k ) == end() ? 0 : 1;
+    return _find( k ) ? 1 : 0;
 }
 
 template<
