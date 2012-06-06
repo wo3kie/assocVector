@@ -45,6 +45,28 @@ void dump( _Iterator begin, _Iterator end, std::ostream & out = std::cout )
     out << "]";
 }
 
+template<
+      typename _T1
+    , typename _T2
+>
+bool isEqual(
+      AssocVector< _T1, _T2 > const & av
+    , std::map< _T1, _T2 > const & map
+)
+{
+    if( av.size() != map.size() )
+    {
+        return false;
+    }
+
+    bool const result1 = std::equal( av.begin(), av.end(), map.begin() );
+    bool const result2 = std::equal( av.rbegin(), av.rend(), map.rbegin() );
+
+    assert( result1 == result2 );
+
+    return result1;
+}
+
 }
 
 //
@@ -886,34 +908,131 @@ void test_push_back()
 void test_insert_in_random_order()
 {
     typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::iterator Iterator;
+
     AssocVector av;
+    std::pair< Iterator, bool > p;
 
-    av.insert( AssocVector::value_type( 10, 0 ) );
-    av.insert( AssocVector::value_type( 9, 0 ) );
-    av.insert( AssocVector::value_type( 8, 0 ) );
+    p = av.insert( AssocVector::value_type( 10, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 10 );
+    AV_ASSERT( p.second == true );
 
-    av.insert( AssocVector::value_type( 16, 0 ) );
-    av.insert( AssocVector::value_type( 17, 0 ) );
-    av.insert( AssocVector::value_type( 18, 0 ) );
+    p = av.insert( AssocVector::value_type( 9, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 9 );
+    AV_ASSERT( p.second == true );
 
-    av.insert( AssocVector::value_type( 7, 0 ) );
-    av.insert( AssocVector::value_type( 6, 0 ) );
-    av.insert( AssocVector::value_type( 5, 0 ) );
-    av.insert( AssocVector::value_type( 4, 0 ) );
+    p = av.insert( AssocVector::value_type( 8, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 8 );
+    AV_ASSERT( p.second == true );
 
-    av.insert( AssocVector::value_type( 11, 0 ) );
-    av.insert( AssocVector::value_type( 12, 0 ) );
-    av.insert( AssocVector::value_type( 13, 0 ) );
+    p = av.insert( AssocVector::value_type( 16, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 16 );
+    AV_ASSERT( p.second == true );
 
-    av.insert( AssocVector::value_type( 3, 0 ) );
-    av.insert( AssocVector::value_type( 2, 0 ) );
-    av.insert( AssocVector::value_type( 1, 0 ) );
-    av.insert( AssocVector::value_type( 0, 0 ) );
+    p = av.insert( AssocVector::value_type( 17, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 17 );
+    AV_ASSERT( p.second == true );
 
-    av.insert( AssocVector::value_type( 14, 0 ) );
-    av.insert( AssocVector::value_type( 15, 0 ) );
+    {
+        p = av.insert( AssocVector::value_type( 17, 0 ) );
+        AV_ASSERT( p.first != av.end() );
+        AV_ASSERT( p.first->first == 17 );
+        AV_ASSERT( p.second == false );
+    }
 
-    av.insert( AssocVector::value_type( 19, 0 ) );
+    p = av.insert( AssocVector::value_type( 18, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 18 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 7, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 7 );
+    AV_ASSERT( p.second == true );
+
+    {
+        p = av.insert( AssocVector::value_type( 7, 0 ) );
+        AV_ASSERT( p.first != av.end() );
+        AV_ASSERT( p.first->first == 7 );
+        AV_ASSERT( p.second == false );
+    }
+
+    p = av.insert( AssocVector::value_type( 6, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 6 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 5, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 5 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 4, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 4 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 11, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 11 );
+    AV_ASSERT( p.second == true );
+
+    {
+        p = av.insert( AssocVector::value_type( 11, 0 ) );
+        AV_ASSERT( p.first != av.end() );
+        AV_ASSERT( p.first->first == 11 );
+        AV_ASSERT( p.second == false );
+    }
+
+    p = av.insert( AssocVector::value_type( 12, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 12 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 13, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 13 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 3, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 3 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 2, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 2 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 1, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 1 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 0, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 0 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 14, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 14 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 15, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 15 );
+    AV_ASSERT( p.second == true );
+
+    p = av.insert( AssocVector::value_type( 19, 0 ) );
+    AV_ASSERT( p.first != av.end() );
+    AV_ASSERT( p.first->first == 19 );
+    AV_ASSERT( p.second == true );
 
     AV_ASSERT( av.size() == 20 );
 
@@ -931,10 +1050,17 @@ void test_insert_in_increasing_order()
     std::size_t const counter = 10;
 
     typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::iterator Iterator;
+
     AssocVector av;
+    std::pair< Iterator, bool > p;
 
     for( std::size_t i = 0 ; i < counter ; ++ i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
+        p = av.insert( AssocVector::value_type( i, 0 ) );
+
+        AV_ASSERT( p.first != av.end() );
+        AV_ASSERT( p.first->first == i );
+        AV_ASSERT( p.second == true );
     }
 
     for( std::size_t i = 0 ; i < counter ; ++ i ){
@@ -951,16 +1077,255 @@ void test_insert_in_decreasing_order()
     std::size_t const counter = 10;
 
     typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::iterator Iterator;
+
     AssocVector av;
+    std::pair< Iterator, bool > p;
 
     for( std::size_t i = counter ; i > 0 ; -- i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
+        p = av.insert( AssocVector::value_type( i, 0 ) );
+
+        AV_ASSERT( p.first != av.end() );
+        AV_ASSERT( p.first->first == i );
+        AV_ASSERT( p.second == true );
     }
 
     for( std::size_t i = counter ; i > 0 ; -- i ){
         AV_ASSERT( av.find( i ) != av.end() );
         AV_ASSERT( av.find( i )->first == i );
     }
+}
+
+//
+// test_insert_check_iterator_1
+//
+void test_insert_check_iterator_1()
+{
+    typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::iterator AVIterator;
+
+    typedef std::map< int, int > Map;
+    typedef Map::iterator MapIterator;
+
+    AssocVector av;
+    Map map;
+
+    for( int i = 1 ; i < 32 ; i += 2 )
+    {
+        av.insert( AssocVector::value_type( i, i ) );
+        map.insert( Map::value_type( i, i ) );
+    }
+
+    AV_ASSERT( util::isEqual( av, map ) );
+
+    {// insert at the beginnig
+        AVIterator const avInserted = av.insert( AssocVector::value_type( 0, 0 ) ).first;
+        MapIterator const mapInserted = map.insert( Map::value_type( 0, 0 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+    }
+
+    {// insert at the end
+        AVIterator const avInserted = av.insert( AssocVector::value_type( 33, 33 ) ).first;
+        MapIterator const mapInserted = map.insert( Map::value_type( 33, 33 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+    }
+
+    {// insert in middle
+        AVIterator const avInserted = av.insert( AssocVector::value_type( 1, 1 ) ).first;
+        MapIterator const mapInserted = map.insert( Map::value_type( 1, 1 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+    }
+
+    {//insert in middle
+        AVIterator const avInserted = av.insert( AssocVector::value_type( 11, 11 ) ).first;
+        MapIterator const mapInserted = map.insert( Map::value_type( 11, 11 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+    }
+
+    {//insert in middle
+        AVIterator const avInserted = av.insert( AssocVector::value_type( 21, 21 ) ).first;
+        MapIterator const mapInserted = map.insert( Map::value_type( 21, 21 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+    }
+}
+
+//
+// test_insert_check_iterator_2
+//
+void test_insert_check_iterator_2()
+{
+    typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::iterator AVIterator;
+
+    typedef std::map< int, int > Map;
+    typedef Map::iterator MapIterator;
+
+    AssocVector av;
+    Map map;
+
+    {// fill storage (push_back) (1,3,5,...,31)
+        for( int i = 1 ; i < 32 ; i += 2 )
+        {
+            av.insert( AssocVector::value_type( i, i ) );
+            map.insert( Map::value_type( i, i ) );
+        }
+    }
+
+    {// fill buffer (0,2,4)
+        for( int i = 0 ; i < 5 ; i += 2 )
+        {
+            av.insert( AssocVector::value_type( i, i ) );
+            map.insert( Map::value_type( i, i ) );
+        }
+    }
+
+    {// overflow buffer and enforce merge
+        AVIterator avInserted = av.insert( AssocVector::value_type( 6, 6 ) ).first;
+        MapIterator mapInserted = map.insert( Map::value_type( 6, 6 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+
+        avInserted = av.insert( AssocVector::value_type( 8, 8 ) ).first;
+        mapInserted = map.insert( Map::value_type( 8, 8 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+
+        avInserted = av.insert( AssocVector::value_type( 10, 10 ) ).first;
+        mapInserted = map.insert( Map::value_type( 10, 10 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+
+        avInserted = av.insert( AssocVector::value_type( 12, 12 ) ).first;
+        mapInserted = map.insert( Map::value_type( 12, 12 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+    }
+
+    {// erase item and put it back again
+        av.erase( 12 );
+        map.erase( 12 );
+
+        AVIterator const avInserted = av.insert( AssocVector::value_type( 12, 12 ) ).first;
+        MapIterator const mapInserted = map.insert( Map::value_type( 12, 12 ) ).first;
+
+        AV_ASSERT(
+               std::distance( av.begin(), avInserted )
+            == std::distance( map.begin(), mapInserted )
+        );
+
+        AV_ASSERT(
+               std::distance( avInserted, av.end() )
+            == std::distance( mapInserted,map.end() )
+        );
+
+        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
+        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
+    }
+
 }
 
 //
@@ -980,7 +1345,7 @@ void test_insert_erase_insert_1()
 
     AV_ASSERT( av.erase( 3 ) == 1 );
 
-    AV_ASSERT( av.insert( AssocVector::value_type( 3, 33 ) ) == true );
+    AV_ASSERT( av.insert( AssocVector::value_type( 3, 33 ) ).second == true );
 
     AV_ASSERT( av.size() == 5 );
 
@@ -1008,7 +1373,7 @@ void test_insert_erase_insert_2()
 
     AV_ASSERT( av.erase( 5 ) == 1 );
 
-    AV_ASSERT( av.insert( AssocVector::value_type( 5, 55 ) ) == true );
+    AV_ASSERT( av.insert( AssocVector::value_type( 5, 55 ) ).second == true );
 
     AV_ASSERT( av.size() == 5 );
 
@@ -1076,7 +1441,7 @@ void test_insert_erase_insert_4()
 }
 
 //
-// test_find
+// test_find_1
 //
 void test_find_1()
 {
@@ -1093,6 +1458,9 @@ void test_find_1()
     AV_ASSERT( av.find( 2 )->second == 3 );
 }
 
+//
+// test_find_2
+//
 void test_find_2()
 {
     typedef AssocVector< int, int > AssocVector;
@@ -1825,28 +2193,6 @@ void test_erase_reverse_iterator()
     }
 }
 
-template<
-      typename _T1
-    , typename _T2
->
-bool isEqual(
-      AssocVector< _T1, _T2 > const & av
-    , std::map< _T1, _T2 > const & map
-)
-{
-    if( av.size() != map.size() )
-    {
-        return false;
-    }
-
-    bool const result1 = std::equal( av.begin(), av.end(), map.begin() );
-    bool const result2 = std::equal( av.rbegin(), av.rend(), map.rbegin() );
-
-    assert( result1 == result2 );
-
-    return result1;
-}
-
 struct S1
 {
     S1 & operator=( S1 const & other )
@@ -1954,7 +2300,7 @@ void black_box_test()
     typedef std::map< int, _T > MAP;
     MAP map;
 
-    AV_ASSERT( isEqual( av, map ) );
+    AV_ASSERT( util::isEqual( av, map ) );
 
     for( int i = 0 ; i < 1024 * 8 ; ++ i )
     {
@@ -1970,7 +2316,7 @@ void black_box_test()
                     av.insert( typename AV::value_type( key, value ) );
                     map.insert( typename MAP::value_type( key, value ) );
 
-                    AV_ASSERT( isEqual( av, map ) );
+                    AV_ASSERT( util::isEqual( av, map ) );
                 }
 
                 break;
@@ -1987,7 +2333,7 @@ void black_box_test()
                         || ( * foundAV == * foundMap )
                     );
 
-                    AV_ASSERT( isEqual( av, map ) );
+                    AV_ASSERT( util::isEqual( av, map ) );
                 }
 
                 break;
@@ -1998,7 +2344,7 @@ void black_box_test()
 
                     AV_ASSERT( av.erase( key ) == map.erase( key ) );
 
-                    AV_ASSERT( isEqual( av, map ) );
+                    AV_ASSERT( util::isEqual( av, map ) );
                 }
 
             case 3:
@@ -2018,7 +2364,7 @@ void black_box_test()
                         map.erase( foundMap );
                     }
 
-                    AV_ASSERT( isEqual( av, map ) );
+                    AV_ASSERT( util::isEqual( av, map ) );
                 }
 
                 break;
@@ -2031,7 +2377,7 @@ void black_box_test()
                     av[ key ] = value;
                     map[ key ] = value;
 
-                    AV_ASSERT( isEqual( av, map ) );
+                    AV_ASSERT( util::isEqual( av, map ) );
                 }
 
                 break;
@@ -2073,6 +2419,8 @@ int main()
     test_insert_in_random_order();
     test_insert_in_increasing_order();
     test_insert_in_decreasing_order();
+    test_insert_check_iterator_1();
+    test_insert_check_iterator_2();
 
     test_insert_erase_insert_1();
     test_insert_erase_insert_2();

@@ -147,13 +147,12 @@ _Iterator last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp c
         return last;
     }
 
-    _Iterator greaterEqual
-        = std::lower_bound(
-              first
-            , last
-            , t
-            , cmp
-        );
+    _Iterator greaterEqual  = std::lower_bound(
+          first
+        , last
+        , t
+        , cmp
+    );
 
     if( greaterEqual != last )
     {
@@ -425,13 +424,12 @@ namespace array
         , _Cmp cmp
     )
     {
-        _Iterator const found
-            = std::lower_bound(
-                  begin
-                , end
-                , t
-                , cmp
-            );
+        _Iterator const found = std::lower_bound(
+              begin
+            , end
+            , t
+            , cmp
+        );
 
         if( found == end ){
             return end;
@@ -481,13 +479,12 @@ namespace array
 
         new ( static_cast< void * >( & * array.end() ) ) _T();
 
-        typename Array< _T >::iterator const found
-            = std::lower_bound(
-                  array.begin()
-                , array.end()
-                , t
-                , cmp
-            );
+        typename Array< _T >::iterator const found = std::lower_bound(
+              array.begin()
+            , array.end()
+            , t
+            , cmp
+        );
 
         if( found != array.end() )
         {
@@ -805,6 +802,7 @@ namespace detail
 
             , _currentInStorage( other.getCurrentInStorage() )
             , _currentInBuffer( other.getCurrentInBuffer() )
+            , _currentInErased( other.getCurrentInErased() )
 
             , _current( other.getCurrent() )
         {
@@ -814,21 +812,24 @@ namespace detail
               _Container const * container
             , pointer_mutable currentInStorage
             , pointer_mutable currentInBuffer
+            , pointer_mutable current = 0
         )
             : _container( container )
 
             , _currentInStorage( currentInStorage )
             , _currentInBuffer( currentInBuffer )
         {
-            _currentInErased
-                = std::lower_bound(
-                      _container->erased().begin()
-                    , _container->erased().end()
-                    , _currentInStorage
-                    , std::less< typename _Container::_Storage::const_iterator >()
-                );
+            _currentInErased = std::lower_bound(
+                  _container->erased().begin()
+                , _container->erased().end()
+                , _currentInStorage
+                , std::less< typename _Container::_Storage::const_iterator >()
+            );
 
-            _current = calculateCurrent();
+            _current
+                = current == 0
+                ? calculateCurrent()
+                : current;
         }
 
         AssocVectorIterator &
@@ -838,6 +839,7 @@ namespace detail
 
             _currentInStorage =  other._currentInStorage;
             _currentInBuffer = other._currentInBuffer;
+            _currentInErased = other._currentInErased;
 
             _current = other._current;
 
@@ -948,6 +950,7 @@ namespace detail
 
         pointer_mutable getCurrentInStorage()const{ return _currentInStorage; }
         pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
+        typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
 
         pointer_mutable getCurrent()const{ return _current; }
 
@@ -1045,6 +1048,7 @@ namespace detail
 
             , _currentInStorage( other.getCurrentInStorage() )
             , _currentInBuffer( other.getCurrentInBuffer() )
+            , _currentInErased( other.getCurrentInErased() )
 
             , _current( other.getCurrent() )
         {
@@ -1054,14 +1058,14 @@ namespace detail
               _Container const * container
             , pointer_mutable currentInStorage
             , pointer_mutable currentInBuffer
+            , pointer_mutable current = 0
         )
             : _container( container )
 
             , _currentInStorage( currentInStorage )
             , _currentInBuffer( currentInBuffer )
         {
-            _currentInErased
-                = util::last_less_equal(
+            _currentInErased  = util::last_less_equal(
                       _container->erased().begin()
                     , _container->erased().end()
                     , _currentInStorage
@@ -1072,7 +1076,7 @@ namespace detail
                 _currentInErased = _container->erased().begin() - 1;
             }
 
-            _current = calculateCurrentReverse();
+            _current = current == 0 ? calculateCurrentReverse() : current;
         }
 
         AssocVectorReverseIterator & operator=( AssocVectorReverseIterator const & other )
@@ -1081,6 +1085,7 @@ namespace detail
 
             _currentInStorage =  other._currentInStorage;
             _currentInBuffer = other._currentInBuffer;
+            _currentInErased = other._currentInErased;
 
             _current = other._current;
 
@@ -1180,6 +1185,7 @@ namespace detail
 
         pointer_mutable getCurrentInStorage()const{ return _currentInStorage; }
         pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
+        typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
 
         pointer_mutable getCurrent()const{ return _current; }
 
@@ -1302,7 +1308,7 @@ public:
     //
     // insert
     //
-    bool insert( value_type const & value );
+    std::pair< iterator, bool > insert( value_type const & value );
 
     template< typename _Iterator >
     inline void insert( _Iterator begin, _Iterator end );
@@ -1693,46 +1699,111 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-bool
+std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::iterator, bool >
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
 {
     _Key const & k = value.first;
     _Mapped const & m = value.second;
 
     {//push back to storage
-        if( _storage.empty() || _cmp( _storage.back().first, k ) ){
-            return pushBack( k, m ), true;
+        if( _storage.empty() || _cmp( _storage.back().first, k ) )
+        {
+            pushBack( k, m );
+
+            return std::make_pair(
+                  iterator( this, _storage.end() - 1, _buffer.end(), _storage.end() - 1 )
+                , true
+            );
         }
     }
 
-    typename _Storage::iterator const foundInStorage = find( _storage, k );
+    typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
+          _storage.begin()
+        , _storage.end()
+        , value_type_mutable( k, mapped_type() )
+        , value_comp()
+    );
+
+    bool const notPresentInStorage
+        = greaterEqualInStorage == _storage.end()
+        || key_comp()( k, greaterEqualInStorage->first );
 
     {//find or insert to buffer
-        if( foundInStorage == _storage.end() ){
-            return findOrInsertToBuffer( k, m ).second;
+        if( notPresentInStorage )
+        {
+            typename _Storage::iterator const storageEnd1 = _storage.end();
+            std::pair< typename _Storage::iterator, bool > const pair = findOrInsertToBuffer( k, m );
+            typename _Storage::iterator const storageEnd2 = _storage.end();
+
+            typename _Storage::iterator greaterEqualInStorage2 = 0;
+
+            {// check if 'findOrInsertToBuffer' did reallocation
+                if( storageEnd1 == storageEnd2 )
+                {// no reallocation, 'greaterEqualInStorage' is still valid
+                    greaterEqualInStorage2 = greaterEqualInStorage;
+                }
+                else
+                {// reallocation done, search for 'greaterEqualInStorage' again
+                    greaterEqualInStorage2 = std::lower_bound(
+                          _storage.begin()
+                        , _storage.end()
+                        , value_type_mutable( k, mapped_type() )
+                        , value_comp()
+                    );
+                }
+            }
+
+            POSTCONDITION( greaterEqualInStorage2 != 0 );
+
+            return std::make_pair(
+                  iterator( this, greaterEqualInStorage2, pair.first, pair.first )
+                , pair.second
+            );
         }
     }
 
-    typename _Erased::iterator const foundInErased
-        = array::findInSorted(
+    {// check if not erased
+        typename _Erased::iterator const foundInErased = array::findInSorted(
               _erased.begin()
             , _erased.end()
-            , foundInStorage
+            , greaterEqualInStorage
             , std::less< typename _Storage::const_iterator >()
         );
 
-    {// item is already in storage
-        if( foundInErased == _erased.end() ){
-            return false;
+        {// item is in storage and is not marked as erased
+            if( foundInErased == _erased.end() )
+            {
+                typename _Storage::iterator lessEqualInBuffer = util::last_less_equal(
+                      _buffer.begin()
+                    , _buffer.end()
+                    , value_type_mutable( k, mapped_type() )
+                    , value_comp()
+                );
+
+                return std::make_pair(
+                      iterator( this, greaterEqualInStorage, lessEqualInBuffer, greaterEqualInStorage )
+                    , false
+                );
+            }
         }
-    }
 
-    {// item is in storage but is also marked as erased
-        array::erase( _erased, foundInErased );
+        {// item is in storage but is marked as erased
+            array::erase( _erased, foundInErased );
 
-        foundInStorage->second = m;
+            greaterEqualInStorage->second = m;
 
-        return true;
+            typename _Storage::iterator lessEqualInBuffer = util::last_less_equal(
+                  _buffer.begin()
+                , _buffer.end()
+                , value_type_mutable( k, mapped_type() )
+                , value_comp()
+            );
+
+            return std::make_pair(
+                  iterator( this, greaterEqualInStorage, lessEqualInBuffer, greaterEqualInStorage )
+                , true
+            );
+        }
     }
 }
 
@@ -1791,13 +1862,12 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::isErased(
     typename AssocVector::_Storage::const_iterator iterator
 )const
 {
-    typename _Erased::const_iterator const foundInErased
-        = array::findInSorted(
-              _erased.begin()
-            , _erased.end()
-            , iterator
-            , std::less< typename _Storage::const_iterator >()
-        );
+    typename _Erased::const_iterator const foundInErased = array::findInSorted(
+          _erased.begin()
+        , _erased.end()
+        , iterator
+        , std::less< typename _Storage::const_iterator >()
+    );
 
     return foundInErased != _erased.end();
 }
@@ -1919,13 +1989,12 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
         }
     }
 
-    typename _Erased::iterator const foundInErased
-        = array::findInSorted(
-              _erased.begin()
-            , _erased.end()
-            , foundInStorage
-            , std::less< typename _Storage::const_iterator >()
-        );
+    typename _Erased::iterator const foundInErased = array::findInSorted(
+          _erased.begin()
+        , _erased.end()
+        , foundInStorage
+        , std::less< typename _Storage::const_iterator >()
+    );
 
     {// item is already in storage
         if( foundInErased == _erased.end() ){
@@ -1992,12 +2061,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
     }
 
     {//erase from _storage
-        bool const result
-            = array::insertSorted(
-                _erased
-                , typename _Storage::const_iterator( foundInStorage )
-                , std::less< typename _Storage::const_iterator >()
-            );
+        bool const result = array::insertSorted(
+            _erased
+            , typename _Storage::const_iterator( foundInStorage )
+            , std::less< typename _Storage::const_iterator >()
+        );
 
         if( _erased.full() ){
             mergeStorageWithErased();
@@ -2018,8 +2086,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
 {
     // iterator::base converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
     // revert real iterator type: pair< T1 const, T2 > * -> pair< T1, T2 > *
-    value_type_mutable * const posBase
-        = reinterpret_cast< value_type_mutable * >( pos.base() );
+    value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.base() );
 
     {//erase from _buffer
         if( util::isBetween( _buffer.begin(), posBase, _buffer.end() ) ){
@@ -2103,8 +2170,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserveStorageAndMergeWithBuffer(
 {
     PRECONDITION( _erased.empty() )
 
-    std::size_t const bufferCapacity
-        = calculateNewBufferCapacity( storageCapacity );
+    std::size_t const bufferCapacity = calculateNewBufferCapacity( storageCapacity );
 
     _Storage newStorage = array::create< value_type_mutable >( storageCapacity, getAllocator( _storage ) );
     _Storage newBuffer = array::create< value_type_mutable >( bufferCapacity, getAllocator( _buffer ) );
