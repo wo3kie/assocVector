@@ -1487,6 +1487,59 @@ void test_find_2()
 }
 
 //
+// test_find_check_iterator
+//
+void test_find_check_iterator()
+{
+    typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::iterator AVIterator;
+
+    typedef std::map< int, int > Map;
+    typedef Map::iterator MapIterator;
+
+    AssocVector av;
+    Map map;
+
+    for( int i = 32 ; i > 0 ; -- i ){
+        av.insert( AssocVector::value_type( i, i ) );
+        map.insert( Map::value_type( i, i ) );
+    }
+
+    {
+        AVIterator const avIterator = av.find( 1 );
+        MapIterator const mapIterator = map.find( 1 );
+
+        AV_ASSERT( std::distance( av.begin(), avIterator ) == std::distance( map.begin(), mapIterator ) );
+        AV_ASSERT( std::distance( avIterator, av.end() ) == std::distance( mapIterator, map.end() ) );
+
+        AV_ASSERT( std::equal( av.begin(), avIterator, map.begin() ) );
+        AV_ASSERT( std::equal( avIterator, av.end(), mapIterator ) );
+    }
+
+    {
+        AVIterator const avIterator = av.find( 16 );
+        MapIterator const mapIterator = map.find( 16 );
+
+        AV_ASSERT( std::distance( av.begin(), avIterator ) == std::distance( map.begin(), mapIterator ) );
+        AV_ASSERT( std::distance( avIterator, av.end() ) == std::distance( mapIterator, map.end() ) );
+
+        AV_ASSERT( std::equal( av.begin(), avIterator, map.begin() ) );
+        AV_ASSERT( std::equal( avIterator, av.end(), mapIterator ) );
+    }
+
+    {
+        AVIterator const avIterator = av.find( 32 );
+        MapIterator const mapIterator = map.find( 32 );
+
+        AV_ASSERT( std::distance( av.begin(), avIterator ) == std::distance( map.begin(), mapIterator ) );
+        AV_ASSERT( std::distance( avIterator, av.end() ) == std::distance( mapIterator, map.end() ) );
+
+        AV_ASSERT( std::equal( av.begin(), avIterator, map.begin() ) );
+        AV_ASSERT( std::equal( avIterator, av.end(), mapIterator ) );
+    }
+}
+
+//
 // test_count
 //
 void test_count()
@@ -2429,6 +2482,8 @@ int main()
 
     test_find_1();
     test_find_2();
+    test_find_check_iterator();
+
     test_count();
 
     test_erase_1();
@@ -2471,4 +2526,3 @@ int main()
 
     return 0;
 }
-
