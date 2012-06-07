@@ -119,8 +119,6 @@ namespace util
         , _OutputPtr begin2
     )
     {
-        PRECONDITION( begin <= end );
-
         if( begin < begin2 ){
             std::copy_backward( begin, end, begin2 + ( end - begin ) );
         }
@@ -324,12 +322,15 @@ namespace array
           , _Alloc allocator
     )
     {
+        PRECONDITION( capacity <= allocator.max_size() );
+    
         Array< _T > result;
 
-        result.setData( static_cast< _T * >( allocator.allocate( capacity ) ) );
-
-        POSTCONDITION( result.getData() != 0 );
-
+        void * const rawMemory = allocator.allocate( capacity );
+        
+        POSTCONDITION( rawMemory != 0 );
+        
+        result.setData( static_cast< _T * >( rawMemory ) );
         result.setSize( 0 );
         result.setCapacity( capacity );
 
@@ -454,7 +455,7 @@ namespace array
     {
         PRECONDITION( array.size() + 1 <= array.capacity() );
 
-        new ( static_cast< void * >( & * array.end() ) ) _T();
+        new ( static_cast< void * >( array.end() ) ) _T();
 
         if( pos != array.end() ){
             util::copyRange( pos, array.end(), pos + 1 );
@@ -477,7 +478,7 @@ namespace array
     {
         PRECONDITION( array.size() + 1 <= array.capacity() );
 
-        new ( static_cast< void * >( & * array.end() ) ) _T();
+        new ( static_cast< void * >( array.end() ) ) _T();
 
         typename Array< _T >::iterator const found = std::lower_bound(
               array.begin()
@@ -646,7 +647,7 @@ namespace array
             {
                 if( numberOfItemsToCreateByPlacementNew != 0 )
                 {
-                    new ( static_cast< void * >( & * whereInsertInStorage ) ) _T( * currentInBuffer );
+                    new ( static_cast< void * >( whereInsertInStorage ) ) _T( * currentInBuffer );
 
                     numberOfItemsToCreateByPlacementNew -= 1;
                 }
@@ -662,7 +663,7 @@ namespace array
             {
                 if( numberOfItemsToCreateByPlacementNew != 0 )
                 {
-                    new ( static_cast< void * >( & * whereInsertInStorage ) ) _T( * currentInStorage );
+                    new ( static_cast< void * >( whereInsertInStorage ) ) _T( * currentInStorage );
 
                     numberOfItemsToCreateByPlacementNew -= 1;
                 }
@@ -703,14 +704,14 @@ merge_into_uninitialized(
     {
         if( cmp( * begin1, * begin2 ) )
         {
-            new ( static_cast< void * >( & * output ) )
+            new ( static_cast< void * >( output ) )
                 typename std::iterator_traits< _IteratorOutput >::value_type( * begin1 );
 
             ++ output;
             ++ begin1;
         }
         else{
-            new ( static_cast< void * >( & * output ) )
+            new ( static_cast< void * >( output ) )
                 typename std::iterator_traits< _IteratorOutput >::value_type( * begin2 );
 
             ++ output;
