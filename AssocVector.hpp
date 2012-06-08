@@ -1,16 +1,16 @@
 #ifndef ASSOC_VECTOR_HPP
 #define ASSOC_VECTOR_HPP
 
-// includes >>>>
+// includes.begin
 
 #include <algorithm>
 #include <cassert>
 #include <functional>
 #include <cmath>
 
-// <<<< includes
+// includes.end
 
-// configuration >>>>
+// configuration.begin
 
 #if( _MSC_VER >= 1600 )
     #define AV_CXX11X_RVALUE_REFERENCE
@@ -28,7 +28,7 @@
   #define AV_MOVE
 #endif
 
-// <<<< configuration
+// configuration.end
 
 #define PRECONDITION( condition ) assert( condition );
 #define POSTCONDITION( condition ) assert( condition );
@@ -2285,6 +2285,24 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
             {
                 array::erase( _buffer, foundInBuffer );
 
+                return 1;
+            }
+        }
+    }
+
+    {//erase from back
+        if( foundInStorage + 1 == _storage.end() )
+        {
+            getAllocator( _storage ).destroy( foundInStorage );
+
+            _storage.setSize( _storage.size() - 1 );
+
+            if( _erased.back() == foundInStorage ){
+                _erased.setSize( _erased.size() - 1 );
+
+                return 0;
+            }
+            else{
                 return 1;
             }
         }
