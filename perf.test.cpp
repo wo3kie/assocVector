@@ -1,6 +1,6 @@
 //#define AV_UNIT_TESTS
 
-// configuration >>>>
+// configuration.begin
 
 #ifdef AV_UNIT_TESTS
     unsigned const REPS = 1000;
@@ -9,8 +9,8 @@
 #else
     //#define AV_TEST_VECTOR
     #define AV_TEST_LOKI
-    #define AV_TEST_STD_MAP
-    #define AV_TEST_BOOST_HASH
+    //#define AV_TEST_STD_MAP
+    //#define AV_TEST_BOOST_HASH
 
     #define AV_TEST_BOOST_RANDOM
 
@@ -19,9 +19,9 @@
     unsigned const AV_TIMEOUT = 60;
 #endif
 
-// <<<< configuration
+// configuration.end
 
-// includes >>>>
+// includes.begin
 
 #ifdef AV_TEST_LOKI
     #include <loki/AssocVector.h>
@@ -47,7 +47,7 @@
 
 #include "AssocVector.hpp"
 
-// <<<< includes
+// includes.end
 
 #define AV_BREAK_IF_TIMEOUT( _timeout_ ) \
     { \
@@ -820,8 +820,8 @@ void _insert_increasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_insert_increasing< AssocVector< int, _T > >( REPS / i, i, "insert_increasing.AssocVector< int, " + name< _T >() + " >" );
-        test__insert_increasing< AssocVector< int, _T > >( REPS / i, i, "_insert_increasing.AssocVector< int, " + name< _T >() + " >" );
+        test_insert_increasing< AssocVector< int, _T > >( REPS / i, i, "\tinsert_increasing.AssocVector< int, " + name< _T >() + " >" );
+        test__insert_increasing< AssocVector< int, _T > >( REPS / i, i, "\t_insert_increasing.AssocVector< int, " + name< _T >() + " >" );
 
         std::cout << std::endl;
     }
@@ -835,7 +835,7 @@ void insert_decreasing()
         test_insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "insert_decreasing.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_VECTOR
-        test_insert_decreasing_push_back_reverse< std::vector< std::pair< int, _T > > >( REPS / i, i, "  insert_decreasing.std::vector< int, _T >.push_back.reverse" );
+        test_insert_decreasing_push_back_reverse< std::vector< std::pair< int, _T > > >( REPS / i, i, "\tinsert_decreasing.std::vector< int, _T >.push_back.reverse" );
 #endif
 
 #ifdef AV_TEST_LOKI
@@ -859,8 +859,8 @@ void _insert_decreasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "insert_decreasing.AssocVector< int, " + name< _T >() + " >" );
-        test__insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "_insert_decreasing.AssocVector< int, " + name< _T >() + " >" );
+        test_insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "\tinsert_decreasing.AssocVector< int, " + name< _T >() + " >" );
+        test__insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "\t_insert_decreasing.AssocVector< int, " + name< _T >() + " >" );
 
         std::cout << std::endl;
     }
@@ -879,7 +879,7 @@ void insert_random()
         test_insert_random< AssocVector< int, _T > >( REPS / i, array, "insert_random.AssocVector< int, " + name< _T >() + " >" );
 
 #ifdef AV_TEST_VECTOR
-        //test_insert_random_push_back_sort< std::vector< std::pair< int, _T > > >( REPS / i, array, "  insert_random.std::vector< int, _T >.push_back.sort" );
+        //test_insert_random_push_back_sort< std::vector< std::pair< int, _T > > >( REPS / i, array, "\tinsert_random.std::vector< int, _T >.push_back.sort" );
 #endif
 
 #ifdef AV_TEST_LOKI
@@ -908,8 +908,8 @@ void _insert_random()
         for( unsigned j = 0 ; j < i ; ++ j )
             array.push_back( rand() + rand() - rand() );
 
-        test_insert_random< AssocVector< int, _T > >( REPS / i, array, "insert_random.AssocVector< int, " + name< _T >() + " >" );
-        test__insert_random< AssocVector< int, _T > >( REPS / i, array, "_insert_random.AssocVector< int, " + name< _T >() + " >" );
+        test_insert_random< AssocVector< int, _T > >( REPS / i, array, "\tinsert_random.AssocVector< int, " + name< _T >() + " >" );
+        test__insert_random< AssocVector< int, _T > >( REPS / i, array, "\t_insert_random.AssocVector< int, " + name< _T >() + " >" );
 
         std::cout << std::endl;
     }
@@ -1017,8 +1017,8 @@ void _find()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
-        test_find< AssocVector< int, _T > >( REPS / i, i, "find.AssocVector< int, " + name< _T >() + " >" );
-        test__find< AssocVector< int, _T > >( REPS / i, i, "_find.AssocVector< int, " + name< _T >() + " >" );
+        test_find< AssocVector< int, _T > >( REPS / i, i, "\tfind.AssocVector< int, " + name< _T >() + " >" );
+        test__find< AssocVector< int, _T > >( REPS / i, i, "\t_find.AssocVector< int, " + name< _T >() + " >" );
 
 
         std::cout << std::endl;

@@ -2714,8 +2714,16 @@ void mem_leak_test()
             AV av;
 
             {// insert( value_type )
-                for( int i = 0 ; i < counter ; ++ i ){
+                for( int i = 0 ; i < counter / 2 ; ++ i ){
                     av.insert( AV::value_type( i, S3() ) );
+                }
+            }
+
+            AV_ASSERT( S3::copies == counter / 2 );
+
+            {// _insert( value_type )
+                for( int i = counter / 2 ; i < counter ; ++ i ){
+                    av._insert( AV::value_type( i, S3() ) );
                 }
             }
 
@@ -2724,6 +2732,14 @@ void mem_leak_test()
             {// find( value_type )
                 for( int i = 0 ; i < counter / 2 ; ++ i ){
                     av.find( i );
+                }
+            }
+
+            AV_ASSERT( S3::copies == counter );
+
+            {// _find( value_type )
+                for( int i = 0 ; i < counter / 2 ; ++ i ){
+                    av._find( i );
                 }
             }
 

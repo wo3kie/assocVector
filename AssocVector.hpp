@@ -2078,18 +2078,27 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
     }
 
     {// check in buffer
-        typename _Storage::iterator const foundInBuffer = find( _buffer, k );
+        typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
+              _buffer.begin()
+            , _buffer.end()
+            , k
+            , value_comp()
+        );
 
-        if( foundInBuffer == _buffer.end() ){
-            return end();
+        bool const presentInBuffer
+            = greaterEqualInBuffer != _buffer.end()
+            && key_comp()( k, greaterEqualInBuffer->first ) == false;
+
+        if( presentInBuffer ){
+            return iterator(
+                  this
+                , greaterEqualInStorage
+                , greaterEqualInBuffer
+                , 0
+            );
         }
 
-        return iterator(
-              this
-            , greaterEqualInStorage
-            , foundInBuffer
-            , 0
-        );
+        return end();
     }
 }
 
@@ -2102,12 +2111,21 @@ template<
 bool
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )const
 {
-    typename _Storage::const_iterator const foundInStorage = find( _storage, k );
+    typename _Storage::const_iterator const greaterEqualInStorage = std::lower_bound(
+          _storage.begin()
+        , _storage.end()
+        , k
+        , value_comp()
+    );
+
+    bool const presentInStorage
+        = greaterEqualInStorage != _storage.end()
+        && key_comp()( k, greaterEqualInStorage->first ) == false;
 
     {// item is in storage, check in erased
-        if( foundInStorage != _storage.end() )
+        if( presentInStorage )
         {
-            if( isErased( foundInStorage ) ){
+            if( isErased( greaterEqualInStorage ) ){
                 return false;
             }
 
@@ -2116,13 +2134,18 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )const
     }
 
     {// check in buffer
-        typename _Storage::const_iterator const foundInBuffer = find( _buffer, k );
+        typename _Storage::const_iterator const greaterEqualInBuffer = std::lower_bound(
+              _buffer.begin()
+            , _buffer.end()
+            , k
+            , value_comp()
+        );
 
-        if( foundInBuffer == _buffer.end() ){
-            return false;
-        }
+        bool const presentInBuffer
+            = greaterEqualInBuffer != _buffer.end()
+            && key_comp()( k, greaterEqualInBuffer->first ) == false;
 
-        return true;
+        return presentInBuffer;
     }
 }
 
@@ -2160,7 +2183,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )const
                 , value_comp()
             );
 
-            return const_iterator(
+            return iterator(
                   this
                 , greaterEqualInStorage
                 , greaterEqualInBuffer
@@ -2170,18 +2193,27 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )const
     }
 
     {// check in buffer
-        typename _Storage::const_iterator const foundInBuffer = find( _buffer, k );
+        typename _Storage::const_iterator const greaterEqualInBuffer = std::lower_bound(
+              _buffer.begin()
+            , _buffer.end()
+            , k
+            , value_comp()
+        );
 
-        if( foundInBuffer == _buffer.end() ){
-            return end();
+        bool const presentInBuffer
+            = greaterEqualInBuffer != _buffer.end()
+            && key_comp()( k, greaterEqualInBuffer->first ) == false;
+
+        if( presentInBuffer ){
+            return iterator(
+                  this
+                , greaterEqualInStorage
+                , greaterEqualInBuffer
+                , 0
+            );
         }
 
-        return const_iterator(
-              this
-            , greaterEqualInStorage
-            , foundInBuffer
-            , 0
-        );
+        return end();
     }
 }
 
@@ -2358,11 +2390,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
             if( _erased.back() == posBase ){
                 _erased.setSize( _erased.size() - 1 );
             }
-            
+
             return;
         }
     }
-    
+
     {//erase from _storage
         array::insertSorted(
               _erased
