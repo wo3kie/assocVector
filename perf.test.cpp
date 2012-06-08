@@ -1,31 +1,27 @@
 //#define AV_UNIT_TESTS
 
-#define AV_BREAK_IF_TIMEOUT( _timeout_ ) \
-    { \
-        if( ( counter & ( 512 - 1 ) ) == 0 ) \
-        { \
-            if( std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC) > ( _timeout_ ) ){ \
-                timeout = true; \
-            } \
-        } \
-    }
+// configuration >>>>
 
 #ifdef AV_UNIT_TESTS
     unsigned const REPS = 1000;
 
     unsigned const AV_TIMEOUT = 10;
 #else
-    #define AV_TEST_VECTOR
+    //#define AV_TEST_VECTOR
     #define AV_TEST_LOKI
     #define AV_TEST_STD_MAP
     #define AV_TEST_BOOST_HASH
 
     #define AV_TEST_BOOST_RANDOM
 
-    unsigned const REPS = 1000000;
+    unsigned const REPS = 100000;
 
     unsigned const AV_TIMEOUT = 60;
 #endif
+
+// <<<< configuration
+
+// includes >>>>
 
 #ifdef AV_TEST_LOKI
     #include <loki/AssocVector.h>
@@ -50,6 +46,18 @@
 #include <vector>
 
 #include "AssocVector.hpp"
+
+// <<<< includes
+
+#define AV_BREAK_IF_TIMEOUT( _timeout_ ) \
+    { \
+        if( ( counter & ( 512 - 1 ) ) == 0 ) \
+        { \
+            if( std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC) > ( _timeout_ ) ){ \
+                timeout = true; \
+            } \
+        } \
+    }
 
 int random()
 {
@@ -138,20 +146,79 @@ struct S3
 {
     S3()
     {
+        ++ createdObjects;
+
         for( int i = 0 ; i < 10 ; ++ i ){
             array.push_back( rand() );
         }
     }
 
+    S3( S3 const & other )
+        : array( other.array )
+    {
+        ++ createdObjects;
+        ++ copies;
+    }
+
+    ~S3()
+    {
+        ++ destroyedObjects;
+    }
+
+#ifdef AV_CXX11X_RVALUE_REFERENCE
+    S3( S3 && other )
+        : array( std::move( other.array ) )
+    {
+        ++ createdObjects;
+        ++ moves;
+    }
+#endif
+
     S3 & operator=( S3 const & other )
     {
-        array = other.array;
+        ++ copies;
+
+        S3 temp( other );
+        this->swap( temp );
 
         return * this;
     }
 
+#ifdef AV_CXX11X_RVALUE_REFERENCE
+    S3 & operator=( S3 && other )
+    {
+        ++ moves;
+
+        array = std::move( other.array );
+    }
+#endif
+
+    bool operator==( S3 const & other )const
+    {
+        return array == other.array;
+    }
+
+    void swap( S3 & other )
+    {
+        array.swap( other.array );
+    }
+
     std::vector< int > array;
+
+    static int createdObjects;
+    static int destroyedObjects;
+
+    static int copies;
+    static int moves;
 };
+
+int S3::createdObjects = 0;
+
+int S3::destroyedObjects = 0;
+
+int S3::copies = 0;
+
+int S3::moves = 0;
 
 template<>
 std::string name< S3 >(){ return "S3"; }
@@ -1065,11 +1132,19 @@ void random_operations()
 
 std::string getTestMode()
 {
+    std::string mode;
+
     #ifdef AV_UNIT_TESTS
-        return "Unit Tests";
+        mode = "Unit Tests";
     #else
-        return "Perf Tests";
+        mode = "Perf Tests";
     #endif
+
+    #ifdef AV_CXX11X_RVALUE_REFERENCE
+        mode += " C++11";
+    #endif
+
+    return mode;
 }
 
 int main()

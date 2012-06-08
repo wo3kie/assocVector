@@ -143,19 +143,19 @@ namespace detail
 }
 
 //
-// test_copyRange
+// test_moveRange
 //
-void test_copyRange_empty_array()
+void test_moveRange_empty_array()
 {
     std::vector< int > array;
     std::vector< int > array2;
 
-    util::copyRange( array.begin(), array.end(), array2.begin() );
+    util::moveRange( array.begin(), array.end(), array2.begin() );
 
     AV_ASSERT( array2.empty() );
 }
 
-void test_copyRange_self_copy()
+void test_moveRange_self_copy()
 {
     std::vector< int > array;
     array.push_back( 1 );
@@ -165,7 +165,7 @@ void test_copyRange_self_copy()
     array.push_back( 5 );
     array.push_back( 6 );
 
-    util::copyRange( array.begin(), array.end(), array.begin() );
+    util::moveRange( array.begin(), array.end(), array.begin() );
 
     std::vector< int > expected;
     expected.push_back( 1 );
@@ -178,7 +178,7 @@ void test_copyRange_self_copy()
     AV_ASSERT( array == expected );
 }
 
-void test_copyRange_between_different_containers()
+void test_moveRange_between_different_containers()
 {
     std::vector< int > array;
     array.push_back( 1 );
@@ -190,12 +190,12 @@ void test_copyRange_between_different_containers()
 
     std::vector< int > array2( 6, 0 );
 
-    util::copyRange( array.begin(), array.end(), array2.begin() );
+    util::moveRange( array.begin(), array.end(), array2.begin() );
 
     AV_ASSERT( array == array2 );
 }
 
-void test_copyRange_overlap_less_then_half()
+void test_moveRange_overlap_less_then_half()
 {
     std::vector< int > array;
     array.push_back( 1 );
@@ -205,7 +205,7 @@ void test_copyRange_overlap_less_then_half()
     array.push_back( 5 );
     array.push_back( 6 );
 
-    util::copyRange( array.begin(), array.begin() + 3, array.begin() + 3 );
+    util::moveRange( array.begin(), array.begin() + 3, array.begin() + 3 );
 
     std::vector< int > expected;
     expected.push_back( 1 );
@@ -217,7 +217,7 @@ void test_copyRange_overlap_less_then_half()
 
     AV_ASSERT( array == expected );
 }
-void test_copyRange_overlap_more_than_half()
+void test_moveRange_overlap_more_than_half()
 {
     std::vector< int > array;
     array.push_back( 1 );
@@ -227,7 +227,7 @@ void test_copyRange_overlap_more_than_half()
     array.push_back( 5 );
     array.push_back( 6 );
 
-    util::copyRange( array.begin(), array.begin() + 4, array.begin() + 2 );
+    util::moveRange( array.begin(), array.begin() + 4, array.begin() + 2 );
 
     std::vector< int > expected;
     expected.push_back( 1 );
@@ -240,7 +240,7 @@ void test_copyRange_overlap_more_than_half()
     AV_ASSERT( array == expected );
 }
 
-void test_copyRange_overlap_copy_to_begining()
+void test_moveRange_overlap_copy_to_begining()
 {
     std::vector< int > array;
     array.push_back( 1 );
@@ -250,7 +250,7 @@ void test_copyRange_overlap_copy_to_begining()
     array.push_back( 5 );
     array.push_back( 6 );
 
-    util::copyRange( array.begin() + 2, array.end(), array.begin() );
+    util::moveRange( array.begin() + 2, array.end(), array.begin() );
 
     std::vector< int > expected;
     expected.push_back( 3 );
@@ -1632,6 +1632,26 @@ void test_erase_3()
  }
 
 //
+// test_erase_from_back_already_erased
+//
+void test_erase_from_back_already_erased()
+{
+    typedef AssocVector< int, int > AssocVector;
+    AssocVector av;
+
+    av.insert( AssocVector::value_type( 4, 4 ) );
+    av.insert( AssocVector::value_type( 5, 5 ) );
+    av.insert( AssocVector::value_type( 6, 6 ) );
+
+    av.insert( AssocVector::value_type( 2, 2 ) );
+    av.insert( AssocVector::value_type( 1, 1 ) );
+
+    AV_ASSERT( av.erase( 5 ) == 1 );
+    AV_ASSERT( av.erase( 6 ) == 1 );
+    AV_ASSERT( av.erase( 5 ) == 0 );
+ }
+
+//
 // test_operator_index
 //
 void test_operator_index_1()
@@ -2318,25 +2338,79 @@ struct S3
 {
     S3()
     {
+        ++ createdObjects;
+
         for( int i = 0 ; i < 10 ; ++ i ){
             array.push_back( rand() );
         }
     }
 
+    S3( S3 const & other )
+        : array( other.array )
+    {
+        ++ createdObjects;
+        ++ copies;
+    }
+
+    ~S3()
+    {
+        ++ destroyedObjects;
+    }
+
+#ifdef AV_CXX11X_RVALUE_REFERENCE
+    S3( S3 && other )
+        : array( std::move( other.array ) )
+    {
+        ++ createdObjects;
+        ++ moves;
+    }
+#endif
+
     S3 & operator=( S3 const & other )
     {
-        array = other.array;
+        ++ copies;
+
+        S3 temp( other );
+        this->swap( temp );
 
         return * this;
     }
+
+#ifdef AV_CXX11X_RVALUE_REFERENCE
+    S3 & operator=( S3 && other )
+    {
+        ++ moves;
+
+        array = std::move( other.array );
+    }
+#endif
 
     bool operator==( S3 const & other )const
     {
         return array == other.array;
     }
 
+    void swap( S3 & other )
+    {
+        array.swap( other.array );
+    }
+
     std::vector< int > array;
+
+    static int createdObjects;
+    static int destroyedObjects;
+
+    static int copies;
+    static int moves;
 };
+
+int S3::createdObjects = 0;
+
+int S3::destroyedObjects = 0;
+
+int S3::copies = 0;
+
+int S3::moves = 0;
 
 std::ostream & operator<<( std::ostream & out, S3 const & s3 ){
     util::dump( s3.array.begin(), s3.array.end(), out );
@@ -2355,15 +2429,17 @@ void black_box_test()
 
     AV_ASSERT( util::isEqual( av, map ) );
 
-    for( int i = 0 ; i < 1024 * 8 ; ++ i )
+    for( int i = 0 ; i < 4 * 1024 ; ++ i )
     {
+        unsigned const maxKeyValue = 128;
+
         int const operation = rand() % 5;
 
         switch( operation )
         {
             case 0:
                 {
-                    int const key = rand() % 512;
+                    int const key = rand() % maxKeyValue;
                     _T const value = _T();
 
                     av.insert( typename AV::value_type( key, value ) );
@@ -2376,7 +2452,7 @@ void black_box_test()
 
             case 1:
                 {
-                    int const key = rand() % 512;
+                    int const key = rand() % maxKeyValue;
 
                     typename AV::iterator foundAV = av.find( key );
                     typename MAP::iterator foundMap = map.find( key );
@@ -2393,7 +2469,7 @@ void black_box_test()
 
             case 2:
                 {
-                    int const key = rand() % 512;
+                    int const key = rand() % maxKeyValue;
 
                     AV_ASSERT( av.erase( key ) == map.erase( key ) );
 
@@ -2402,7 +2478,7 @@ void black_box_test()
 
             case 3:
                 {
-                    int const key = rand() % 512;
+                    int const key = rand() % maxKeyValue;
 
                     typename AV::iterator foundAV = av.find( key );
                     typename MAP::iterator foundMap = map.find( key );
@@ -2424,7 +2500,7 @@ void black_box_test()
 
             case 4:
                 {
-                    int const key = rand() % 512;
+                    int const key = rand() % maxKeyValue;
                     _T const value = _T();
 
                     av[ key ] = value;
@@ -2438,8 +2514,253 @@ void black_box_test()
     }
 }
 
+template< typename _T >
+struct MyAllocator
+{
+    typedef _T value_type;
+
+    typedef _T * pointer;
+    typedef _T const * const_pointer;
+
+    typedef _T & reference;
+    typedef _T const & const_reference;
+
+    MyAllocator(){}
+
+    MyAllocator( MyAllocator const & other )
+        : _alloc( other._alloc )
+    {
+    }
+
+    template< typename __T >
+    MyAllocator( MyAllocator< __T > const & other )
+        : _alloc( other._alloc )
+    {
+    }
+
+    pointer allocate( unsigned n, const_pointer * hint = 0 )
+    {
+        totalMemory += n * sizeof( value_type );
+        notFreedMemory += n * sizeof( value_type );
+
+        return _alloc.allocate( n, hint );
+    }
+
+    void deallocate( pointer p, unsigned n )
+    {
+        notFreedMemory -= n * sizeof( value_type );
+
+        _alloc.deallocate( p, n );
+    }
+
+    void construct( pointer p, value_type const & v )
+    {
+        _alloc.construct( p, v );
+    }
+
+    void destroy( pointer p )
+    {
+        _alloc.destroy( p );
+    }
+
+    unsigned max_size()const throw()
+    {
+        return _alloc.max_size();
+    }
+
+    template< typename __T >
+    struct rebind{ typedef MyAllocator< __T > other; };
+
+// private:
+    static int totalMemory;
+    static int notFreedMemory;
+
+    std::allocator< value_type > _alloc;
+};
+
+template< typename _T >
+int MyAllocator< _T >::totalMemory = 0;
+
+template< typename _T >
+int MyAllocator< _T >::notFreedMemory = 0;
+
+void mem_leak_test()
+{
+    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    S3::createdObjects = 0;
+    S3::destroyedObjects = 0;
+
+    S3::moves = 0;
+    S3::copies = 0;
+
+    {
+        unsigned const maxKeyValue = 512;
+
+        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        AV av;
+
+        for( int i = 0 ; i < 1024 ; ++ i )
+        {
+            int const operation = rand() % 5;
+
+            switch( operation )
+            {
+                case 0:
+                    av.insert( typename AV::value_type( rand() % maxKeyValue, S3() ) );
+                    break;
+
+                case 1:
+                    av.find( rand() % maxKeyValue );
+                    break;
+
+                case 2:
+                    av.erase( rand() % maxKeyValue );
+                    break;
+
+                case 3:
+                    {
+                        typename AV::iterator foundAV = av.find( rand() % maxKeyValue );
+
+                        if( foundAV != av.end() ){
+                            av.erase( foundAV );
+                        }
+                    }
+
+                    break;
+
+                case 4:
+                    av[ rand() % maxKeyValue ] = S3();
+                    break;
+            }
+        }
+    }
+
+    {
+        //std::cout
+        //   << "\n"
+        //   << "total memory: " << Allocator::totalMemory << "\n"
+        //   << "used: " << Allocator::notFreedMemory << "\n"
+        //   << "created objects: " << S3::createdObjects << ")\n"
+        //   << "destroyed objects: " << S3::destroyedObjects << "\n"
+        //   << "copies: " << S3::copies << "\n"
+        //   << "moves: " << S3::moves << "\n";
+
+        //std::flush( std::cout );
+    }
+
+    AV_ASSERT( Allocator::notFreedMemory == 0 );
+    AV_ASSERT( S3::createdObjects == S3::destroyedObjects );
+}
+
+#ifdef AV_CXX11X_RVALUE_REFERENCE
+
+    void cxx11x_move_test_1()
+    {
+        typedef MyAllocator< std::pair< int, S3 > > Allocator;
+
+        Allocator::notFreedMemory = 0;
+        Allocator::totalMemory = 0;
+
+        S3::createdObjects = 0;
+        S3::destroyedObjects = 0;
+
+        S3::moves = 0;
+        S3::copies = 0;
+
+        {
+            unsigned const counter = 1024;
+
+            typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+            AV av1;
+
+            {// insert( value_type )
+                for( int i = 0 ; i < counter ; ++ i ){
+                    av1.insert( AV::value_type( i, S3() ) );
+                }
+            }
+
+            AV_ASSERT( S3::copies == counter );
+
+            AV av2 = AV_MOVE( av1 );
+
+            AV_ASSERT( S3::copies == counter );
+        }
+
+        AV_ASSERT( Allocator::notFreedMemory == 0 );
+        AV_ASSERT( S3::createdObjects == S3::destroyedObjects );
+    }
+
+    void cxx11x_move_test_2()
+    {
+        typedef MyAllocator< std::pair< int, S3 > > Allocator;
+
+        Allocator::notFreedMemory = 0;
+        Allocator::totalMemory = 0;
+
+        S3::createdObjects = 0;
+        S3::destroyedObjects = 0;
+
+        S3::moves = 0;
+        S3::copies = 0;
+
+        {
+            unsigned const counter = 1024;
+
+            typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+            AV av;
+
+            {// insert( value_type )
+                for( int i = 0 ; i < counter ; ++ i ){
+                    av.insert( AV::value_type( i, S3() ) );
+                }
+            }
+
+            AV_ASSERT( S3::copies == counter );
+
+            {// find( value_type )
+                for( int i = 0 ; i < counter / 2 ; ++ i ){
+                    av.find( i );
+                }
+            }
+
+            AV_ASSERT( S3::copies == counter );
+
+            {// erase( value_type )
+                for( int i = 0 ; i < counter / 2 ; ++ i ){
+                    av.erase( i );
+                }
+            }
+
+            AV_ASSERT( S3::copies == counter );
+
+            {// erase( iterator )
+                for( int i = counter / 2 ; i < counter ; ++ i ){
+                    av.erase( av.find( i ) );
+                }
+            }
+
+            AV_ASSERT( S3::copies == counter );
+        }
+
+        AV_ASSERT( Allocator::notFreedMemory == 0 );
+        AV_ASSERT( S3::createdObjects == S3::destroyedObjects );
+    }
+
+#endif
+
 int main()
 {
+#ifdef AV_CXX11X_RVALUE_REFERENCE
+    cxx11x_move_test_1();
+    cxx11x_move_test_2();
+#endif
+
+    mem_leak_test();
+
     black_box_test< S1 >();
     black_box_test< S2 >();
     black_box_test< S3 >();
@@ -2450,12 +2771,12 @@ int main()
 
     test_isBetween();
 
-    test_copyRange_empty_array();
-    test_copyRange_self_copy();
-    test_copyRange_between_different_containers();
-    test_copyRange_overlap_less_then_half();
-    test_copyRange_overlap_more_than_half();
-    test_copyRange_overlap_copy_to_begining();
+    test_moveRange_empty_array();
+    test_moveRange_self_copy();
+    test_moveRange_between_different_containers();
+    test_moveRange_overlap_less_then_half();
+    test_moveRange_overlap_more_than_half();
+    test_moveRange_overlap_copy_to_begining();
 
     test_last_less_equal();
 
@@ -2489,6 +2810,7 @@ int main()
     test_erase_1();
     test_erase_2();
     test_erase_3();
+    test_erase_from_back_already_erased();
 
     test_erase_iterator();
     test_erase_reverse_iterator();
