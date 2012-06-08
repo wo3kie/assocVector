@@ -1396,11 +1396,6 @@ public:
     void merge();
 
 private:
-    //
-    // find
-    //
-    typename _Storage::iterator find( _Storage & container, key_type const & k );
-    typename _Storage::const_iterator find( _Storage const & container, key_type const & k )const;
 
     //
     // merge
@@ -2252,7 +2247,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
         }
     }
 
-    typename _Storage::iterator const foundInStorage = find( _storage, k );
+    typename _Storage::iterator const foundInStorage
+        = array::findInSorted( _storage.begin(), _storage.end(), k, value_comp() );
 
     {//find or insert to buffer
         if( foundInStorage == _storage.end() ){
@@ -2302,12 +2298,14 @@ template<
 std::size_t
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
 {
-    typename _Storage::iterator const foundInStorage = find( _storage, k );
+    typename _Storage::iterator const foundInStorage
+        = array::findInSorted( _storage.begin(), _storage.end(), k, value_comp() );
 
     {//erase from _buffer
         if( foundInStorage == _storage.end() )
         {
-            typename _Storage::iterator const foundInBuffer = find( _buffer, k );
+            typename _Storage::iterator const foundInBuffer
+                = array::findInSorted( _buffer.begin(), _buffer.end(), k, value_comp() );
 
             if( foundInBuffer == _buffer.end() )
             {
@@ -2434,21 +2432,6 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find(
-      _Storage & container
-    , key_type const & k
-)
-{
-    return array::findInSorted( container.begin(), container.end(), k, value_comp() );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
 void
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserveStorageAndMergeWithBuffer(
     std::size_t storageCapacity
@@ -2521,21 +2504,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::mergeStorageWithErased()
     util::destroyRange( _storage.end(), end );
 
     _erased.setSize( 0 );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find(
-      _Storage const & container
-    , key_type const & k
-)const
-{
-    return array::findInSorted( container.begin(), container.end(), value_type_mutable( k, mapped_type() ), value_comp() );
 }
 
 template<
