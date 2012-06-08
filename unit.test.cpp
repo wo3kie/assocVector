@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#define AV_ENABLE_EXTENSIONS
 #include "AssocVector.hpp"
 
 #define AV_ASSERT( expression )\

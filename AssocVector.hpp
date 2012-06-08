@@ -1032,6 +1032,106 @@ namespace detail
     };
 
     //
+    // _AssocVectorIterator
+    //
+    template<
+          typename _Iterator
+        , typename _Container
+    >
+    struct _AssocVectorIterator
+    {
+    private:
+        typedef typename std::iterator_traits< _Iterator >::pointer pointer_mutable;
+
+    public:
+        typedef typename std::iterator_traits< _Iterator >::value_type  value_type;
+
+        // make key const
+        typedef std::pair<
+              typename value_type::first_type const
+            , typename value_type::second_type
+        > & reference;
+
+        // make key const
+        typedef std::pair<
+              typename value_type::first_type const
+            , typename value_type::second_type
+        > * pointer;
+
+        _AssocVectorIterator(
+            typename _Container::value_compare const & cmp = typename _Container::value_compare()
+        )
+            : _current( 0 )
+        {
+        }
+
+        template< typename _Iter >
+        _AssocVectorIterator( _AssocVectorIterator< _Iter, _Container > const & other )
+            : _current( other.getCurrent() )
+        {
+        }
+
+        _AssocVectorIterator( pointer_mutable current )
+            : _current( current )
+        {
+        }
+
+        _AssocVectorIterator &
+        operator=( _AssocVectorIterator const & other )
+        {
+            _current = other._current;
+
+            return * this;
+        }
+
+        bool operator==( _AssocVectorIterator const & other )const{
+            return _current == other.getCurrent();
+        }
+
+        bool operator!=( _AssocVectorIterator const & other )const{
+            return ! ( ( * this ) == other );
+        }
+
+        reference operator*()const{
+            PRECONDITION( _current != 0 );
+
+            return * base();
+        }
+
+        pointer operator->()const{
+            PRECONDITION( _current != 0 );
+
+            return base();
+        }
+
+        pointer base()const{
+            PRECONDITION( _current != 0 );
+
+            // make key const
+            // pair< T1, T2 > * -> pair< T1 const, T2 > *
+            //return reinterpret_cast< pointer >( _current );
+
+            return
+                reinterpret_cast< pointer >(
+                    const_cast< void * >(
+                        reinterpret_cast< void const * >( _current )
+                    )
+                );
+        }
+
+        operator bool()const
+        {
+            return _current != 0;
+        }
+
+        // public for copy constructor only : Iterator -> ConstIterator
+        pointer_mutable getCurrent()const{ return _current; }
+
+    private:
+        pointer_mutable _current;
+    };
+
+    //
     // AssocVectorReverseIterator
     //
     template<
@@ -1304,6 +1404,12 @@ public:
 
     typedef array::Array< typename _Storage::const_iterator > _Erased;
 
+    //
+    // extension, faster, non STL compatible version of iterator, working with _find end _end
+    //
+    typedef detail::_AssocVectorIterator< value_type_mutable *, AssocVector > _iterator;
+    typedef detail::_AssocVectorIterator< value_type_mutable const *, AssocVector > _const_iterator;
+
 public:
     //
     // Memory Management
@@ -1354,11 +1460,6 @@ public:
     //
     std::pair< iterator, bool > insert( value_type const & value );
 
-    //
-    // _insert, faster, non STL compatible version on find
-    //
-    bool _insert( value_type const & value );
-
     template< typename _Iterator >
     inline void insert( _Iterator begin, _Iterator end );
 
@@ -1367,11 +1468,6 @@ public:
     //
     iterator find( key_type const & k );
     const_iterator find( key_type const & k )const;
-
-    //
-    // _find - faster, non STL compatible version of find
-    //
-    bool _find( key_type const & k )const;
 
     //
     // count
@@ -1389,11 +1485,39 @@ public:
     std::size_t erase( key_type const & k );
     void erase( iterator pos );
 
-
+    //
+    // observers
+    //
     key_compare key_comp()const{ return _cmp; }
     value_compare value_comp()const{ return value_compare( _cmp ); }
 
+#ifdef AV_ENABLE_EXTENSIONS
+    public:
+#else
+    private:
+#endif
+
+    //
+    // extension, flatenize container, enforce merge of _storage with _erased and with _buffer
+    //
     void merge();
+
+    //
+    // extension, faster, non STL compatible version on insert
+    //
+    bool _insert( value_type const & value );
+
+    //
+    // extension, faster, non STL compatible version of end, works with _find
+    //
+    inline _iterator _end();
+    inline _const_iterator _end()const;
+
+    //
+    // extension, faster, non STL compatible version of find, works with _end
+    //
+    _iterator _find( key_type const & k );
+    _const_iterator _find( key_type const & k )const;
 
 private:
 
@@ -1734,6 +1858,18 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
+typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_end()
+{
+    return _iterator( 0 );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reverse_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rend()
 {
@@ -1750,6 +1886,18 @@ typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::end()const
 {
     return const_iterator( this, _storage.end(), _buffer.end(), 0 );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_end()const
+{
+    return _const_iterator( 0 );
 }
 
 template<
@@ -2066,7 +2214,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
             return iterator(
                   this
                 , greaterEqualInStorage
-                , greaterEqualInBuffer
+                , greaterEqualInBuffer // todo: lazy
                 , 0
             );
         }
@@ -2094,53 +2242,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
         }
 
         return end();
-    }
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-bool
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )const
-{
-    typename _Storage::const_iterator const greaterEqualInStorage = std::lower_bound(
-          _storage.begin()
-        , _storage.end()
-        , k
-        , value_comp()
-    );
-
-    bool const presentInStorage
-        = greaterEqualInStorage != _storage.end()
-        && key_comp()( k, greaterEqualInStorage->first ) == false;
-
-    {// item is in storage, check in erased
-        if( presentInStorage )
-        {
-            if( isErased( greaterEqualInStorage ) ){
-                return false;
-            }
-
-            return true;
-        }
-    }
-
-    {// check in buffer
-        typename _Storage::const_iterator const greaterEqualInBuffer = std::lower_bound(
-              _buffer.begin()
-            , _buffer.end()
-            , k
-            , value_comp()
-        );
-
-        bool const presentInBuffer
-            = greaterEqualInBuffer != _buffer.end()
-            && key_comp()( k, greaterEqualInBuffer->first ) == false;
-
-        return presentInBuffer;
     }
 }
 
@@ -2181,7 +2282,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )const
             return iterator(
                   this
                 , greaterEqualInStorage
-                , greaterEqualInBuffer
+                , greaterEqualInBuffer // todo: lazy
                 , 0
             );
         }
@@ -2209,6 +2310,108 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )const
         }
 
         return end();
+    }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )
+{
+    typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
+          _storage.begin()
+        , _storage.end()
+        , k
+        , value_comp()
+    );
+
+    bool const presentInStorage
+        = greaterEqualInStorage != _storage.end()
+        && key_comp()( k, greaterEqualInStorage->first ) == false;
+
+    {// item is in storage, check in erased
+        if( presentInStorage )
+        {
+            if( isErased( greaterEqualInStorage ) ){
+                return _end();
+            }
+
+            return _iterator( greaterEqualInStorage );
+        }
+    }
+
+    {// check in buffer
+        typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
+              _buffer.begin()
+            , _buffer.end()
+            , k
+            , value_comp()
+        );
+
+        bool const presentInBuffer
+            = greaterEqualInBuffer != _buffer.end()
+            && key_comp()( k, greaterEqualInBuffer->first ) == false;
+
+        if( presentInBuffer ){
+            return _iterator( greaterEqualInBuffer );
+        }
+
+        return _end();
+    }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Alloc
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )const
+{
+    typename _Storage::const_iterator const greaterEqualInStorage = std::lower_bound(
+          _storage.begin()
+        , _storage.end()
+        , k
+        , value_comp()
+    );
+
+    bool const presentInStorage
+        = greaterEqualInStorage != _storage.end()
+        && key_comp()( k, greaterEqualInStorage->first ) == false;
+
+    {// item is in storage, check in erased
+        if( presentInStorage )
+        {
+            if( isErased( greaterEqualInStorage ) ){
+                return _end();
+            }
+
+            return _const_iterator( greaterEqualInStorage );
+        }
+    }
+
+    {// check in buffer
+        typename _Storage::const_iterator const greaterEqualInBuffer = std::lower_bound(
+              _buffer.begin()
+            , _buffer.end()
+            , k
+            , value_comp()
+        );
+
+        bool const presentInBuffer
+            = greaterEqualInBuffer != _buffer.end()
+            && key_comp()( k, greaterEqualInBuffer->first ) == false;
+
+        if( presentInBuffer ){
+            return _const_iterator( greaterEqualInBuffer );
+        }
+
+        return _end();
     }
 }
 

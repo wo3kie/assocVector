@@ -12,7 +12,7 @@
     //#define AV_TEST_STD_MAP
     //#define AV_TEST_BOOST_HASH
 
-    #define AV_TEST_BOOST_RANDOM
+    //#define AV_TEST_BOOST_RANDOM
 
     unsigned const REPS = 100000;
 
@@ -45,6 +45,7 @@
 #include <string>
 #include <vector>
 
+#define AV_ENABLE_EXTENSIONS
 #include "AssocVector.hpp"
 
 // includes.end
