@@ -2351,14 +2351,18 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
     {//erase from back
         if( posBase + 1 == _storage.end() )
         {
+            getAllocator( _storage ).destroy( posBase );
+
             _storage.setSize( _storage.size() - 1 );
 
-            getAllocator( _storage ).destroy( _storage.end() );
-
+            if( _erased.back() == posBase ){
+                _erased.setSize( _erased.size() - 1 );
+            }
+            
             return;
         }
     }
-
+    
     {//erase from _storage
         array::insertSorted(
               _erased
