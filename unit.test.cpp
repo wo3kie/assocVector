@@ -338,7 +338,7 @@ void test_last_less_equal()
 }
 
 //
-// test_merge
+// test_merge_1
 //
 void test_merge_1()
 {
@@ -353,13 +353,12 @@ void test_merge_1()
         Array< int > a2;
         a2.setData( new int[ 10 ] );
         a2.setCapacity( 10 );
+        a2.setSize( 4 );
 
         a2[0] = 1;
         a2[1] = 2;
         a2[2] = 3;
         a2[3] = 4;
-
-        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -382,13 +381,12 @@ void test_merge_1()
         Array< int > a1;
         a1.setData( new int[ 10 ] );
         a1.setCapacity( 10 );
+        a1.setSize( 4 );
 
         a1[0] = 1;
         a1[1] = 2;
         a1[2] = 3;
         a1[3] = 4;
-
-        a1.setSize( 4 );
 
         Array< int > a2;
         a2.setData( new int[ 10 ] );
@@ -416,6 +414,7 @@ void test_merge_1()
         Array< int > a1;
         a1.setData( new int[ 10 ] );
         a1.setCapacity( 10 );
+        a1.setSize( 6 );
 
         a1[0] = 1;
         a1[1] = 2;
@@ -424,18 +423,15 @@ void test_merge_1()
         a1[4] = 5;
         a1[5] = 6;
 
-        a1.setSize( 6 );
-
         Array< int > a2;
         a2.setData( new int[ 10 ] );
         a2.setCapacity( 10 );
+        a2.setSize( 4 );
 
         a2[0] = 7;
         a2[1] = 8;
         a2[2] = 9;
         a2[3] = 10;
-
-        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -464,6 +460,7 @@ void test_merge_1()
         Array< int > a1;
         a1.setData( new int[ 10 ] );
         a1.setCapacity( 10 );
+        a1.setSize( 6 );
 
         a1[0] = 1;
         a1[1] = 3;
@@ -472,18 +469,15 @@ void test_merge_1()
         a1[4] = 9;
         a1[5] = 11;
 
-        a1.setSize( 6 );
-
         Array< int > a2;
         a2.setData( new int[ 10 ] );
         a2.setCapacity( 10 );
+        a2.setSize( 4 );
 
         a2[0] = 2;
         a2[1] = 4;
         a2[2] = 6;
         a2[3] = 8;
-
-        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -512,6 +506,7 @@ void test_merge_1()
         Array< int > a1;
         a1.setData( new int[ 10 ] );
         a1.setCapacity( 10 );
+        a1.setSize( 6 );
 
         a1[0] = 5;
         a1[1] = 6;
@@ -520,18 +515,15 @@ void test_merge_1()
         a1[4] = 9;
         a1[5] = 10;
 
-        a1.setSize( 6 );
-
         Array< int > a2;
         a2.setData( new int[ 10 ] );
         a2.setCapacity( 10 );
+        a2.setSize( 4 );
 
         a2[0] = 1;
         a2[1] = 2;
         a2[2] = 3;
         a2[3] = 4;
-
-        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -560,6 +552,7 @@ void test_merge_1()
         Array< int > a1;
         a1.setData( new int[ 10 ] );
         a1.setCapacity( 10 );
+        a1.setSize( 6 );
 
         a1[0] = 1;
         a1[1] = 2;
@@ -568,18 +561,15 @@ void test_merge_1()
         a1[4] = 9;
         a1[5] = 10;
 
-        a1.setSize( 6 );
-
         Array< int > a2;
         a2.setData( new int[ 10 ] );
         a2.setCapacity( 10 );
+        a2.setSize( 4 );
 
         a2[0] = 4;
         a2[1] = 5;
         a2[2] = 6;
         a2[3] = 7;
-
-        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 
@@ -608,6 +598,7 @@ void test_merge_1()
         Array< int > a1;
         a1.setData( new int[ 10 ] );
         a1.setCapacity( 10 );
+        a1.setSize( 6 );
 
         a1[0] = 2;
         a1[1] = 3;
@@ -616,18 +607,15 @@ void test_merge_1()
         a1[4] = 8;
         a1[5] = 9;
 
-        a1.setSize( 6 );
-
         Array< int > a2;
         a2.setData( new int[ 10 ] );
         a2.setCapacity( 10 );
+        a2.setSize( 4 );
 
         a2[0] = 1;
         a2[1] = 4;
         a2[2] = 7;
         a2[3] = 10;
-
-        a2.setSize( 4 );
 
         array::merge( a1, a2, std::less< int >() );
 

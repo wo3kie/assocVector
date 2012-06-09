@@ -30,7 +30,7 @@
 
 // configuration.end
 
-#define PRECONDITION( condition ) if(condition==false){int*i=0;*i=0;}assert( ( condition ) );
+#define PRECONDITION( condition ) assert( ( condition ) );
 #define POSTCONDITION( condition ) assert( ( condition ) );
 
 namespace util
