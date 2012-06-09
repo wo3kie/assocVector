@@ -2284,6 +2284,11 @@ struct S1
     int i;
 };
 
+std::ostream & operator<<( std::ostream & out, S1 const & s1 )
+{
+    return out << s1.i;
+}
+
 struct S2
 {
     S2()
@@ -2334,6 +2339,12 @@ struct S2
     double d;
     void * v;
 };
+
+std::ostream & operator<<( std::ostream & out, S2 const & s2 )
+{
+    return out << s2.b << ", " << s2.s << ", " << s2.i << ", " << s2.u << ", "
+        << s2.c << ", " << s2.f << ", " << s2.d << ", " << s2.v;
+}
 
 struct S3
 {
@@ -2419,6 +2430,9 @@ std::ostream & operator<<( std::ostream & out, S3 const & s3 ){
     return out;
 }
 
+//
+// black_box_test
+//
 template< typename _T >
 void black_box_test()
 {
@@ -2572,7 +2586,6 @@ struct MyAllocator
     template< typename __T >
     struct rebind{ typedef MyAllocator< __T > other; };
 
-// private:
     static int totalMemory;
     static int notFreedMemory;
 
@@ -2585,7 +2598,10 @@ int MyAllocator< _T >::totalMemory = 0;
 template< typename _T >
 int MyAllocator< _T >::notFreedMemory = 0;
 
-void mem_leak_test()
+//
+// mem_leak_test_1
+//
+void mem_leak_test_1()
 {
     typedef MyAllocator< std::pair< int, S3 > > Allocator;
 
@@ -2640,19 +2656,120 @@ void mem_leak_test()
         }
     }
 
+    AV_ASSERT( Allocator::notFreedMemory == 0 );
+    AV_ASSERT( S3::createdObjects == S3::destroyedObjects );
+}
+
+//
+// mem_leak_test_destructor
+//
+void mem_leak_test_destructor()
+{
+    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    S3::createdObjects = 0;
+    S3::destroyedObjects = 0;
+
     {
-        //std::cout
-        //   << "\n"
-        //   << "total memory: " << Allocator::totalMemory << "\n"
-        //   << "used: " << Allocator::notFreedMemory << "\n"
-        //   << "created objects: " << S3::createdObjects << ")\n"
-        //   << "destroyed objects: " << S3::destroyedObjects << "\n"
-        //   << "copies: " << S3::copies << "\n"
-        //   << "moves: " << S3::moves << "\n";
+        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        AV av;
 
-        //std::flush( std::cout );
+        for( int i = 0 ; i < 1024 ; ++ i ){
+            av.insert( AV::value_type( i, S3() ) );
+        }
     }
+    
+    AV_ASSERT( Allocator::notFreedMemory == 0 );
+    AV_ASSERT( S3::createdObjects == S3::destroyedObjects );
+}
 
+//
+// mem_leak_test_clear
+//
+void mem_leak_test_clear()
+{
+    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    S3::createdObjects = 0;
+    S3::destroyedObjects = 0;
+
+    int const numberOfObjects = 256;
+    
+    typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+    AV av;
+
+    for( int i = 0 ; i < numberOfObjects ; ++ i ){
+        av.insert( AV::value_type( i, S3() ) );
+    }
+    
+    av.clear();
+
+    AV_ASSERT( S3::createdObjects == S3::destroyedObjects );
+}
+
+//
+// mem_leak_test_copy_constructor
+//
+void mem_leak_test_copy_constructor()
+{
+    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    S3::createdObjects = 0;
+    S3::destroyedObjects = 0;
+
+    {
+        int const numberOfObjects = 256;
+        
+        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        AV av;
+
+        for( int i = 0 ; i < numberOfObjects ; ++ i ){
+            av.insert( AV::value_type( i, S3() ) );
+        }
+
+        AV av2( av );
+    }
+    
+    AV_ASSERT( Allocator::notFreedMemory == 0 );
+    AV_ASSERT( S3::createdObjects == S3::destroyedObjects );
+}
+
+//
+// mem_leak_test_assign_operator
+//
+void mem_leak_test_assign_operator()
+{
+    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    S3::createdObjects = 0;
+    S3::destroyedObjects = 0;
+
+    {
+        int const numberOfObjects = 256;
+        
+        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        AV av;
+        
+        for( int i = 0 ; i < numberOfObjects ; ++ i ){
+            av.insert( AV::value_type( i, S3() ) );
+        }
+
+        AV av2;
+        av2 = av;
+    }
+    
     AV_ASSERT( Allocator::notFreedMemory == 0 );
     AV_ASSERT( S3::createdObjects == S3::destroyedObjects );
 }
@@ -2776,7 +2893,11 @@ int main()
     cxx11x_move_test_2();
 #endif
 
-    mem_leak_test();
+    mem_leak_test_1();
+    mem_leak_test_destructor();
+    mem_leak_test_clear();
+    mem_leak_test_copy_constructor();
+    mem_leak_test_assign_operator();
 
     black_box_test< S1 >();
     black_box_test< S2 >();

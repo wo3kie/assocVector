@@ -30,8 +30,8 @@
 
 // configuration.end
 
-#define PRECONDITION( condition ) assert( condition );
-#define POSTCONDITION( condition ) assert( condition );
+#define PRECONDITION( condition ) assert( ( condition ) );
+#define POSTCONDITION( condition ) assert( ( condition ) );
 
 namespace util
 {
@@ -1539,7 +1539,7 @@ private:
     //
     // insert
     //
-    void pushBack( key_type const & k, mapped_type const & m );
+    bool tryToPushBack( key_type const & k, mapped_type const & m );
 
     _FindOrInsertToBufferResult
     findOrInsertToBuffer( key_type const & k, mapped_type const & m );
@@ -1737,7 +1737,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::clear()
     _storage.setSize( 0 );
     _buffer.setSize( 0 );
     _erased.setSize( 0 );
-
 }
 
 template<
@@ -1957,10 +1956,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
     _Mapped const & m = value.second;
 
     {//push back to storage
-        if( _storage.empty() || _cmp( _storage.back().first, k ) )
+        if( tryToPushBack( k, m ) )
         {
-            pushBack( k, m );
-
             return std::make_pair(
                   iterator( this, _storage.end() - 1, _buffer.end(), _storage.end() - 1 )
                 , true
@@ -2069,9 +2066,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_insert( value_type const & value )
     _Mapped const & m = value.second;
 
     {//push back to storage
-        if( _storage.empty() || _cmp( _storage.back().first, k ) )
-        {
-            pushBack( k, m );
+        if( tryToPushBack( k, m ) ){
             return true;
         }
     }
@@ -2141,15 +2136,42 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::pushBack( _Key const & k, _Mapped const & m )
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Alloc >::tryToPushBack( _Key const & k, _Mapped const & m )
 {
-    PRECONDITION(
-        (
-               _storage.size() == 0
-            || _cmp( _storage.back().first, k )
-        )
-    );
+    bool pushBackToStorage = false;
+
+    if( _storage.empty() )
+    {
+        if( _buffer.empty() ){
+            pushBackToStorage = true;
+        }
+        else
+        {
+            if( _cmp( _buffer.back().first, k ) ){
+                pushBackToStorage = true;
+            }
+        }
+    }
+    else
+    {
+        if( _buffer.empty() )
+        {
+            if( _cmp( _storage.back().first, k ) ){
+                pushBackToStorage = true;
+            }
+        }
+        else
+        {
+            if( _cmp( _storage.back().first, k ) && _cmp( _buffer.back().first,k ) ){
+                pushBackToStorage = true;
+            }
+        }
+    }
+
+    if( pushBackToStorage == false ){
+        return false;
+    }
 
     if( _storage.size() == _storage.capacity() ){
         reserve( calculateNewStorageCapacity( _storage.capacity() ) );
@@ -2160,6 +2182,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::pushBack( _Key const & k, _Mapped co
 
         _storage.setSize( _storage.size() + 1 );
     }
+
+    return true;
 }
 
 template<
@@ -2450,9 +2474,11 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reference
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
 {
+    mapped_type const & mapped_value = mapped_type();
+
     {//push back to storage
-        if( _storage.empty() || _cmp( _storage.back().first, k ) ){
-            return pushBack( k, mapped_type() ), _storage.back().second;
+        if( tryToPushBack( k, mapped_value ) ){
+            return ( _storage.end() - 1 )->second;
         }
     }
 
@@ -2461,7 +2487,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
 
     {//find or insert to buffer
         if( foundInStorage == _storage.end() ){
-            return findOrInsertToBuffer( k, mapped_type() )._iterator->second;
+            return findOrInsertToBuffer( k, mapped_value )._iterator->second;
         }
     }
 
@@ -2481,7 +2507,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
     {// item is in storage but is also marked as erased
         array::erase( _erased, foundInErased );
 
-        foundInStorage->second = mapped_type();
+        foundInStorage->second = mapped_value;
 
         return foundInStorage->second;
     }
@@ -2530,7 +2556,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
     }
 
     {//erase from back
-        if( foundInStorage + 1 == _storage.end() )
+        if( false )
         {
             getAllocator( _storage ).destroy( foundInStorage );
 
@@ -2588,7 +2614,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
     }
 
     {//erase from back
-        if( posBase + 1 == _storage.end() )
+        if( false )
         {
             getAllocator( _storage ).destroy( posBase );
 
@@ -2824,15 +2850,15 @@ template<
 >
 void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::dump()const
 {
-    std::cout << "storage" << std::endl;
+    std::cout << "storage: ";
     for( int i = 0 ; i < _storage.size() ; ++ i )
         std::cout << " (" << _storage[i].first << "," << _storage[i].second << ")";
 
-    std::cout << std::endl << "buffer" << std::endl;
+    std::cout << std::endl << "buffer: ";
     for( int i = 0 ; i < _buffer.size() ; ++ i )
         std::cout << " (" << _buffer[i].first << "," << _buffer[i].second << ")";
 
-    std::cout << std::endl << "erased" << std::endl;
+    std::cout << std::endl << "erased: ";
     for( int i = 0 ; i < _erased.size() ; ++ i )
         std::cout << " (" << (*_erased[i]).first << "," << (*_erased[i]).second << ")";
 
