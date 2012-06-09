@@ -1032,7 +1032,7 @@ namespace detail
     };
 
     //
-    // _AssocVectorIterator
+    // _AssocVectorIterator, simplified version of AssocVectorIterator, works with _find and _end
     //
     template<
           typename _Iterator
@@ -1410,6 +1410,14 @@ public:
     typedef detail::_AssocVectorIterator< value_type_mutable *, AssocVector > _iterator;
     typedef detail::_AssocVectorIterator< value_type_mutable const *, AssocVector > _const_iterator;
 
+private:
+    struct _FindOrInsertToBufferResult
+    {
+        typename _Storage::iterator _iterator;
+        bool _inserted;
+        bool _reallocated;
+    };
+
 public:
     //
     // Memory Management
@@ -1533,7 +1541,7 @@ private:
     //
     void pushBack( key_type const & k, mapped_type const & m );
 
-    std::pair< typename _Storage::iterator, bool >
+    _FindOrInsertToBufferResult
     findOrInsertToBuffer( key_type const & k, mapped_type const & m );
 
     //
@@ -1974,18 +1982,12 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
     {//find or insert to buffer
         if( notPresentInStorage )
         {
-            typename _Storage::iterator const storageEnd1 = _storage.end();
-            std::pair< typename _Storage::iterator, bool > const pair = findOrInsertToBuffer( k, m );
-            typename _Storage::iterator const storageEnd2 = _storage.end();
+            _FindOrInsertToBufferResult const result = findOrInsertToBuffer( k, m );
 
             typename _Storage::iterator greaterEqualInStorage2 = 0;
 
             {// check if 'findOrInsertToBuffer' did reallocation
-                if( storageEnd1 == storageEnd2 )
-                {// no reallocation, 'greaterEqualInStorage' is still valid
-                    greaterEqualInStorage2 = greaterEqualInStorage;
-                }
-                else
+                if( result._reallocated )
                 {// reallocation done, search for 'greaterEqualInStorage' again
                     greaterEqualInStorage2 = std::lower_bound(
                           _storage.begin()
@@ -1994,13 +1996,17 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
                         , value_comp()
                     );
                 }
+                else
+                {// no reallocation, 'greaterEqualInStorage' is still valid
+                    greaterEqualInStorage2 = greaterEqualInStorage;
+                }
             }
 
             POSTCONDITION( greaterEqualInStorage2 != 0 );
 
             return std::make_pair(
-                  iterator( this, greaterEqualInStorage2, pair.first, pair.first )
-                , pair.second
+                  iterator( this, greaterEqualInStorage2, result._iterator, result._iterator )
+                , result._inserted
             );
         }
     }
@@ -2083,7 +2089,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_insert( value_type const & value )
 
     {//find or insert to buffer
         if( notPresentInStorage ){
-            return findOrInsertToBuffer( k, m ).second;
+            return findOrInsertToBuffer( k, m )._inserted;
         }
     }
 
@@ -2455,7 +2461,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
 
     {//find or insert to buffer
         if( foundInStorage == _storage.end() ){
-            return findOrInsertToBuffer( k, mapped_type() ).first->second;
+            return findOrInsertToBuffer( k, mapped_type() )._iterator->second;
         }
     }
 
@@ -2715,7 +2721,7 @@ template<
     , typename _Cmp
     , typename _Alloc
 >
-std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_Storage::iterator, bool >
+typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_FindOrInsertToBufferResult
 AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
       _Key const & k
     , _Mapped const & m
@@ -2734,7 +2740,12 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
         bool const isEqual = _cmp( k, greaterEqual->first ) == false;
 
         if( isEqual ){
-            return std::make_pair( greaterEqual, false );
+            _FindOrInsertToBufferResult result;
+            result._iterator = greaterEqual;
+            result._inserted = false;
+            result._reallocated = false;
+
+            return result;
         }
     }
 
@@ -2746,13 +2757,23 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
 
         array::insert( _buffer, _buffer.begin(), value_type_mutable( k, m ) );
 
-        return std::make_pair( _buffer.begin(), true );
+        _FindOrInsertToBufferResult result;
+        result._iterator = _buffer.begin();
+        result._inserted = true;
+        result._reallocated = true;
+
+        return result;
     }
     else
     {
         array::insert( _buffer, greaterEqual, value_type_mutable( k, m ) );
 
-        return std::make_pair( greaterEqual, true );
+        _FindOrInsertToBufferResult result;
+        result._iterator = greaterEqual;
+        result._inserted = true;
+        result._reallocated = false;
+
+        return result;
     }
 }
 
