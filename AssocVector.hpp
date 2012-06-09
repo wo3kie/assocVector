@@ -30,7 +30,7 @@
 
 // configuration.end
 
-#define PRECONDITION( condition ) assert( ( condition ) );
+#define PRECONDITION( condition ) if(condition==false){int*i=0;*i=0;}assert( ( condition ) );
 #define POSTCONDITION( condition ) assert( ( condition ) );
 
 namespace util
@@ -331,18 +331,30 @@ namespace array
         }
 
         value_type & front(){
+            PRECONDITION( _data != 0 );
+            PRECONDITION( empty() == false );
+
             return _data[ 0 ];
         }
 
         value_type const & front()const{
+            PRECONDITION( _data != 0 );
+            PRECONDITION( empty() == false );
+
             return _data[ 0 ];
         }
 
         value_type & back(){
+            PRECONDITION( _data != 0 );
+            PRECONDITION( empty() == false );
+
             return _data[ _size - 1 ];
         }
 
         value_type const & back()const{
+            PRECONDITION( _data != 0 );
+            PRECONDITION( empty() == false );
+
             return _data[ _size - 1 ];
         }
 
@@ -367,10 +379,16 @@ namespace array
         }
 
         value_type & operator[]( std::size_t index ){
+            PRECONDITION( _data != 0 );
+            PRECONDITION( index < size() );
+
             return _data[ index ];
         }
 
         value_type const & operator[]( std::size_t index )const{
+            PRECONDITION( _data != 0 );
+            PRECONDITION( index < size() );
+
             return _data[ index ];
         }
 

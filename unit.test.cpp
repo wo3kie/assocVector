@@ -662,8 +662,9 @@ void test_merge_2()
     storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 15 ; ++ i ){
-        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
         storage.setSize( storage.size() + 1 );
+        storage[ storage.size() - 1 ] = std::pair< int, int >( i, 0 );
+
     }
 
     array::Array< std::pair< int, int > > buffer;
@@ -673,8 +674,9 @@ void test_merge_2()
     buffer.setCapacity( 3 );
 
     for( int i = 3 ; i < 6 ; ++ i ){
-        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
         buffer.setSize( buffer.size() + 1 );
+        buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
+
     }
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -707,8 +709,9 @@ void test_merge_3()
     storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 15 ; ++ i ){
-        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
         storage.setSize( storage.size() + 1 );
+        storage[ storage.size() - 1 ] = std::pair< int, int >( i, 0 );
+
     }
 
     array::Array< std::pair< int, int > > buffer;
@@ -718,8 +721,8 @@ void test_merge_3()
     buffer.setCapacity( 15 );
 
     for( int i = 23 ; i < 26 ; ++ i ){
-        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
         buffer.setSize( buffer.size() + 1 );
+        buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
     }
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -752,8 +755,8 @@ void test_merge_4()
     storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 20 ; i += 2 ){
-        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
         storage.setSize( storage.size() + 1 );
+        storage[ storage.size() - 1 ] = std::pair< int, int >( i, 0 );
     }
 
     array::Array< std::pair< int, int > > buffer;
@@ -763,8 +766,8 @@ void test_merge_4()
     buffer.setCapacity( 10 );
 
     for( int i = 13 ; i < 19 ; i += 2 ){
-        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
         buffer.setSize( buffer.size() + 1 );
+        buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
     }
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -797,8 +800,8 @@ void test_merge_5()
     storage.setCapacity( 10 );
 
     for( int i = 10 ; i < 20 ; i += 2 ){
-        storage[ storage.size() ] = std::pair< int, int >( i, 0 );
         storage.setSize( storage.size() + 1 );
+        storage[ storage.size() - 1 ] = std::pair< int, int >( i, 0 );
     }
 
     array::Array< std::pair< int, int > > buffer;
@@ -840,8 +843,8 @@ void test_merge_6()
     buffer.setCapacity( 20 );
 
     for( int i = 13 ; i < 19 ; i += 2 ){
-        buffer[ buffer.size() ] = std::pair< int, int >( i, 0 );
         buffer.setSize( buffer.size() + 1 );
+        buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
     }
 
     array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
