@@ -30,8 +30,9 @@
 
 // configuration.end
 
-#define PRECONDITION( condition ) assert( ( condition ) );
-#define POSTCONDITION( condition ) assert( ( condition ) );
+#define AV_PRECONDITION( condition ) assert( ( condition ) );
+#define AV_CHECK( condition ) assert( ( condition ) );
+#define AV_POSTCONDITION( condition ) assert( ( condition ) );
 
 namespace util
 {
@@ -66,25 +67,26 @@ namespace util
 namespace util
 {
     //
-    // isBetween
+    // is_between
     //
     template<
           typename _T1
         , typename _T2
     >
     inline
-    bool isBetween( _T1 const & begin, _T2 const & value, _T1 const & end )
+    bool
+    is_between( _T1 const & first, _T2 const & value, _T1 const & last )
     {
-        PRECONDITION( begin <= end );
+        AV_PRECONDITION( first <= last );
 
-        return ( value < begin ) == false && ( end < value ) == false;
+        return ( value < first ) == false && ( last < value ) == false;
     }
 }
 
 namespace util
 {
     //
-    // destroyRange
+    // destroy_range
     //
     namespace detail
     {
@@ -108,12 +110,12 @@ namespace util
         {
             template< typename _Ptr >
             static
-            void destroy( _Ptr begin, _Ptr const end )
+            void destroy( _Ptr first, _Ptr const last )
             {
                 typedef typename std::iterator_traits< _Ptr >::value_type T;
 
-                for( /*empty*/ ; begin != end ; ++ begin ){
-                    begin -> T::~T();
+                for( /*empty*/ ; first != last ; ++ first ){
+                    first -> T::~T();
                 }
             }
         };
@@ -121,13 +123,14 @@ namespace util
 
     template< typename _Ptr >
     inline
-    void destroyRange( _Ptr begin, _Ptr const end )
+    void
+    destroy_range( _Ptr first, _Ptr const last )
     {
-        PRECONDITION( begin <= end );
+        AV_PRECONDITION( first <= last );
 
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
-        detail::DestroyRangeImpl< __has_trivial_destructor( T ) >::destroy( begin, end );
+        detail::DestroyRangeImpl< __has_trivial_destructor( T ) >::destroy( first, last );
     }
 }
 
@@ -137,8 +140,11 @@ namespace util
           typename _InputPtr
         , typename _OutputPtr
     >
-    _OutputPtr move_forward( _InputPtr first, _InputPtr last, _OutputPtr result )
+    _OutputPtr
+    move_forward( _InputPtr first, _InputPtr last, _OutputPtr result )
     {
+        AV_PRECONDITION( first <= last );
+
         for( /*empty*/ ; first != last ; ++ result , ++ first ){
             * result = AV_MOVE( * first );
         }
@@ -150,8 +156,11 @@ namespace util
           typename _InputPtr
         , typename _OutputPtr
     >
-    _OutputPtr uninitialized_move_forward( _InputPtr first, _InputPtr last, _OutputPtr result )
+    _OutputPtr
+    uninitialized_move_forward( _InputPtr first, _InputPtr last, _OutputPtr result )
     {
+        AV_PRECONDITION( first <= last );
+
         for( /*empty*/ ; first != last ; ++result, ++first )
         {
             new ( static_cast< void * >(  result ) )
@@ -165,8 +174,11 @@ namespace util
           typename _InputPtr
         , typename _OutputPtr
     >
-    _OutputPtr move_backward( _InputPtr first, _InputPtr last, _OutputPtr result )
+    _OutputPtr
+    move_backward( _InputPtr first, _InputPtr last, _OutputPtr result )
     {
+        AV_PRECONDITION( first <= last );
+
         while( first != last ){
             *( -- result ) = AV_MOVE( * ( -- last ) );
         }
@@ -178,27 +190,30 @@ namespace util
 namespace util
 {
     //
-    // moveRange
+    // move
     //
     template<
           typename _InputPtr
         , typename _OutputPtr
     >
     inline
-    void moveRange(
-          _InputPtr begin
-        , _InputPtr end
-        , _OutputPtr begin2
+    void
+    move(
+          _InputPtr first
+        , _InputPtr last
+        , _OutputPtr first2
     )
     {
-        if( begin < begin2 ){
-            util::move_backward( begin, end, begin2 + ( end - begin ) );
+        AV_PRECONDITION( first <= last );
+
+        if( first < first2 ){
+            util::move_backward( first, last, first2 + ( last - first ) );
         }
-        else if( begin > begin2 ){
-            util::move_forward( begin, end, begin2 );
+        else if( first > first2 ){
+            util::move_forward( first, last, first2 );
         }
         else{
-            // begin == begin2 -> do nothing
+            // first == first2 -> do nothing
         }
     }
 }
@@ -211,8 +226,11 @@ template<
     , typename _T
     , typename _Cmp
 >
-_Iterator last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp cmp )
+_Iterator
+last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp cmp )
 {
+    AV_PRECONDITION( first <= last );
+
     if( first == last ){
         return last;
     }
@@ -228,9 +246,7 @@ _Iterator last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp c
     {
         // lower_bound returns first greater_than/equal_to but we need last less_than
 
-        bool const isEqual
-            = cmp( * greaterEqual, t ) == false
-            && cmp( t, * greaterEqual ) == false;
+        bool const isEqual = cmp( t, * greaterEqual ) == false;
 
         if( isEqual )
         {
@@ -331,29 +347,29 @@ namespace array
         }
 
         value_type & front(){
-            PRECONDITION( _data != 0 );
-            PRECONDITION( empty() == false );
+            AV_PRECONDITION( _data != 0 );
+            AV_PRECONDITION( empty() == false );
 
             return _data[ 0 ];
         }
 
         value_type const & front()const{
-            PRECONDITION( _data != 0 );
-            PRECONDITION( empty() == false );
+            AV_PRECONDITION( _data != 0 );
+            AV_PRECONDITION( empty() == false );
 
             return _data[ 0 ];
         }
 
         value_type & back(){
-            PRECONDITION( _data != 0 );
-            PRECONDITION( empty() == false );
+            AV_PRECONDITION( _data != 0 );
+            AV_PRECONDITION( empty() == false );
 
             return _data[ _size - 1 ];
         }
 
         value_type const & back()const{
-            PRECONDITION( _data != 0 );
-            PRECONDITION( empty() == false );
+            AV_PRECONDITION( _data != 0 );
+            AV_PRECONDITION( empty() == false );
 
             return _data[ _size - 1 ];
         }
@@ -379,15 +395,15 @@ namespace array
         }
 
         value_type & operator[]( std::size_t index ){
-            PRECONDITION( _data != 0 );
-            PRECONDITION( index < size() );
+            AV_PRECONDITION( _data != 0 );
+            AV_PRECONDITION( index < size() );
 
             return _data[ index ];
         }
 
         value_type const & operator[]( std::size_t index )const{
-            PRECONDITION( _data != 0 );
-            PRECONDITION( index < size() );
+            AV_PRECONDITION( _data != 0 );
+            AV_PRECONDITION( index < size() );
 
             return _data[ index ];
         }
@@ -404,21 +420,22 @@ namespace array
 {
     template<
           typename _T
-        , typename _Alloc
+        , typename _Allocator
     >
     inline
-    Array< _T > create(
+    Array< _T >
+    create(
             std::size_t capacity
-          , _Alloc allocator
+          , _Allocator allocator
     )
     {
-        PRECONDITION( capacity <= allocator.max_size() );
+        AV_PRECONDITION( capacity <= allocator.max_size() );
 
         Array< _T > result;
 
         void * const rawMemory = allocator.allocate( capacity );
 
-        POSTCONDITION( rawMemory != 0 );
+        AV_POSTCONDITION( rawMemory != 0 );
 
         result.setData( static_cast< _T * >( rawMemory ) );
         result.setSize( 0 );
@@ -430,30 +447,32 @@ namespace array
     template<
           typename _T
         , typename _T2
-        , typename _Alloc
+        , typename _Allocator
     >
     inline
-    void create(
-          Array< _T > & dest
-        , Array< _T2 > const & origin
-        , _Alloc allocator
+    void
+    create(
+          Array< _T > & object
+        , Array< _T2 > const & other
+        , _Allocator allocator
     )
     {
-        PRECONDITION( dest.capacity() == 0 );
-        PRECONDITION( dest.size() == 0 );
-        PRECONDITION( dest.data() == 0 );
+        AV_PRECONDITION( object.capacity() == 0 );
+        AV_PRECONDITION( object.size() == 0 );
+        AV_PRECONDITION( object.data() == 0 );
 
-        dest = create< _T >( origin.capacity(), allocator );
+        object = create< _T >( other.capacity(), allocator );
 
-        util::uninitialized_move_forward( origin.begin(), origin.end(), dest.begin() );
+        util::uninitialized_move_forward( other.begin(), other.end(), object.begin() );
 
-        dest.setSize( origin.size() );
-        dest.setCapacity( origin.capacity() );
+        object.setSize( other.size() );
+        object.setCapacity( other.capacity() );
     }
 
     template< typename _T >
     inline
-    void init( Array< _T > & array )
+    void
+    reset( Array< _T > & array )
     {
         array.setData( 0 );
         array.setSize( 0 );
@@ -462,30 +481,33 @@ namespace array
 
     template<
           typename _T
-        , typename _Alloc
+        , typename _Allocator
     >
     inline
-    void destroy(
+    void
+    destroy_deallocate(
           Array< _T > & array
-        , _Alloc allocator
+        , _Allocator allocator
     )
     {
-        util::destroyRange( array.begin(), array.end() );
+        util::destroy_range( array.begin(), array.end() );
         allocator.deallocate( array.getData(), array.capacity() );
     }
 
     template<
           typename _T
-        , typename _Alloc
+        , typename _Allocator
     >
     inline
     void
     reserve(
           Array< _T > & array
         , std::size_t capacity
-        , _Alloc allocator
+        , _Allocator allocator
     )
     {
+        AV_PRECONDITION( capacity <= allocator.max_size() );
+
         std::size_t const size = array.size();
 
         if( capacity <= array.capacity() ){
@@ -495,10 +517,10 @@ namespace array
         Array< _T > newArray = array::create< _T >( capacity, allocator );
 
         util::uninitialized_move_forward( array.begin(), array.end(), newArray.begin() );
-        array::destroy( array, allocator );
 
-        array.setSize( size );
-        array.setCapacity( capacity );
+        array::destroy_deallocate( array, allocator );
+
+        array.setCapacity( newArray.getCapacity() );
         array.setData( newArray.getData() );
     }
 
@@ -508,42 +530,46 @@ namespace array
         , typename _Cmp
     >
     _Iterator
-    findInSorted(
-          _Iterator begin
-        , _Iterator end
+    find_in_sorted(
+          _Iterator first
+        , _Iterator last
         , _T const & t
         , _Cmp cmp
     )
     {
-        _Iterator const found = std::lower_bound( begin, end, t, cmp );
+        AV_PRECONDITION( first <= last );
 
-        if( found == end ){
-            return end;
+        _Iterator const greaterEqual = std::lower_bound( first, last, t, cmp );
+
+        if( greaterEqual == last ){
+            return last;
         }
 
-        bool const isGreater = cmp( t, * found );
+        bool const isEqual = cmp( t, * greaterEqual ) == false;
 
-        if( isGreater ){
-            return end;
+        if( isEqual ){
+            return greaterEqual;
         }
 
-        return found;
+        return last;
     }
 
     template< typename _T >
     inline
-    void insert(
+    void
+    insert(
           Array< _T > & array
         , typename Array< _T >::iterator pos
         , _T const & t
     )
     {
-        PRECONDITION( array.size() + 1 <= array.capacity() );
+        AV_PRECONDITION( array.size() + 1 <= array.capacity() );
+        AV_PRECONDITION( util::is_between( array.begin(), pos, array.end() ) );
 
         new ( static_cast< void * >( array.end() ) ) _T();
 
         if( pos != array.end() ){
-            util::moveRange( pos, array.end(), pos + 1 );
+            util::move( pos, array.end(), pos + 1 );
         }
 
         * pos = t;
@@ -555,60 +581,62 @@ namespace array
           typename _T
         , typename _Cmp
     >
-    bool insertSorted(
+    bool
+    insert_in_sorted(
           Array< _T > & array
         , _T const & t
         , _Cmp cmp
     )
     {
-        PRECONDITION( array.size() + 1 <= array.capacity() );
+        AV_PRECONDITION( array.size() + 1 <= array.capacity() );
 
-        new ( static_cast< void * >( array.end() ) ) _T();
-
-        typename Array< _T >::iterator const found = std::lower_bound(
+        typename Array< _T >::iterator const greaterEqual = std::lower_bound(
               array.begin()
             , array.end()
             , t
             , cmp
         );
 
-        if( found != array.end() )
+        if( greaterEqual != array.end() )
         {
-            bool const isEqual = cmp( t, * found ) == false;
+            bool const isEqual = cmp( t, * greaterEqual ) == false;
 
             if( isEqual ){
                 return false;
             }
         }
 
-        insert( array, found, t );
+        new ( static_cast< void * >( array.end() ) ) _T();
+
+        insert( array, greaterEqual, t );
 
         return true;
     }
 
     template< typename _T >
     inline
-    void erase(
+    void
+    erase(
           Array< _T > & array
         , typename Array< _T >::iterator pos
     )
     {
-        PRECONDITION( array.begin() <= pos );
-        PRECONDITION( pos < array.end() );
+        AV_PRECONDITION( array.begin() <= pos );
+        AV_PRECONDITION( pos < array.end() );
 
-        util::moveRange( pos + 1, array.end(), pos );
+        util::move( pos + 1, array.end(), pos );
+        ( array.end() - 1 )-> ~_T();
         array.setSize( array.size() - 1 );
-
-        array.end() -> ~_T();
     }
 
     template< typename _T >
-    void mergeWithErased(
+    void
+    erase_removed(
           array::Array< _T > & storage
         , array::Array< typename array::Array< _T >::const_iterator > const & erased
     )
     {
-        PRECONDITION( storage.size() >= erased.size() );
+        AV_PRECONDITION( storage.size() >= erased.size() );
 
         if( erased.empty() ){
             return;
@@ -619,20 +647,23 @@ namespace array
         typedef typename array::Array< StorageConstIterator >::const_iterator ErasedConstIterator;
 
         StorageIterator currentInStorage = const_cast< StorageIterator >( erased.front() );
-        StorageIterator const endInStorage = const_cast< StorageIterator >( storage.end() );
+        AV_CHECK( util::is_between( storage.begin(), currentInStorage, storage.end() ) );
+
+        StorageIterator const endInStorage = storage.end();
 
         StorageIterator whereInsertInStorage = const_cast< StorageIterator >( erased.front() );
+        AV_CHECK( util::is_between( storage.begin(), whereInsertInStorage, storage.end() ) );
 
         ErasedConstIterator currentInErased = erased.begin();
-        ErasedConstIterator endInErased = erased.end();
+        ErasedConstIterator const endInErased = erased.end();
 
         while( currentInStorage != endInStorage )
         {
-            PRECONDITION( util::isBetween( storage.begin(), whereInsertInStorage, storage.end() ) );
+            AV_CHECK( util::is_between( storage.begin(), whereInsertInStorage, storage.end() ) );
 
             if(
                    currentInErased != endInErased
-                && currentInStorage == * currentInErased
+                && currentInStorage == ( * currentInErased )
             )
             {
                 ++ currentInStorage;
@@ -640,17 +671,14 @@ namespace array
             }
             else
             {
-              _T & destination = * whereInsertInStorage;
-              _T & source = * currentInStorage;
-
-              destination = AV_MOVE( source );
+              ( * whereInsertInStorage ) = AV_MOVE( * currentInStorage );
 
               ++ whereInsertInStorage;
               ++ currentInStorage;
             }
         }
 
-        POSTCONDITION( currentInErased == endInErased );
+        AV_POSTCONDITION( currentInErased == endInErased );
 
         storage.setSize( storage.size() - erased.size() );
     }
@@ -659,64 +687,66 @@ namespace array
           typename _T
         , typename _Cmp
     >
-    void merge(
+    void
+    move_merge(
           array::Array< _T > & storage
         , array::Array< _T > & buffer
         , _Cmp const & cmp = _Cmp()
     )
     {
-        PRECONDITION( storage.size() + buffer.size() <= storage.capacity() );
+        AV_PRECONDITION( storage.size() + buffer.size() <= storage.capacity() );
 
         typedef typename array::Array< _T >::iterator Iterator;
 
-        Iterator whereInsertInStorage = storage.begin() + storage.size() + buffer.size() - 1;
+        Iterator rWhereInsertInStorage = storage.begin() + storage.size() + buffer.size() - 1;
 
-        Iterator currentInStorage = storage.begin() + storage.size() - 1;
-        Iterator endInStorage = storage.begin() - 1;
+        Iterator rCurrentInStorage = storage.begin() + storage.size() - 1;
+        Iterator const rEndInStorage = storage.begin() - 1;
 
-        Iterator currentInBuffer = buffer.begin() + buffer.size() - 1;
-        Iterator const endInBuffer = buffer.begin() - 1;
+        Iterator rCurrentInBuffer = buffer.begin() + buffer.size() - 1;
+        Iterator const rEndInBuffer = buffer.begin() - 1;
 
         std::size_t numberOfItemsToCreateByPlacementNew = buffer.size();
 
-        while( currentInBuffer != endInBuffer )
+        // todo: unroll loop
+        while( rCurrentInBuffer != rEndInBuffer )
         {
             if(
-                   currentInStorage == endInStorage
-                || cmp( * currentInStorage, * currentInBuffer )
+                   rCurrentInStorage == rEndInStorage
+                || cmp( * rCurrentInStorage, * rCurrentInBuffer )
             )
             {
                 if( numberOfItemsToCreateByPlacementNew != 0 )
                 {
-                    new ( static_cast< void * >( whereInsertInStorage ) )
-                        _T( AV_MOVE( * currentInBuffer ) );
+                    new ( static_cast< void * >( rWhereInsertInStorage ) )
+                        _T( AV_MOVE( * rCurrentInBuffer ) );
 
                     numberOfItemsToCreateByPlacementNew -= 1;
                 }
                 else
                 {
-                    * whereInsertInStorage = AV_MOVE( * currentInBuffer );
+                    * rWhereInsertInStorage = AV_MOVE( * rCurrentInBuffer );
                 }
 
-                -- currentInBuffer;
-                -- whereInsertInStorage;
+                -- rCurrentInBuffer;
+                -- rWhereInsertInStorage;
             }
             else
             {
                 if( numberOfItemsToCreateByPlacementNew != 0 )
                 {
-                    new ( static_cast< void * >( whereInsertInStorage ) )
-                        _T( AV_MOVE( * currentInStorage ) );
+                    new ( static_cast< void * >( rWhereInsertInStorage ) )
+                        _T( AV_MOVE( * rCurrentInStorage ) );
 
                     numberOfItemsToCreateByPlacementNew -= 1;
                 }
                 else
                 {
-                    * whereInsertInStorage = AV_MOVE( * currentInStorage );
+                    * rWhereInsertInStorage = AV_MOVE( * rCurrentInStorage );
                 }
 
-                -- currentInStorage;
-                -- whereInsertInStorage;
+                -- rCurrentInStorage;
+                -- rWhereInsertInStorage;
             }
         }
 
@@ -735,39 +765,39 @@ template<
 >
 _IteratorOutput
 move_merge_into_uninitialized(
-      _Iterator1 begin1
-    , _Iterator1 end1
-    , _Iterator2 begin2
-    , _Iterator2 end2
+      _Iterator1 first1
+    , _Iterator1 last1
+    , _Iterator2 first2
+    , _Iterator2 last2
     , _IteratorOutput output
     , _Cmp cmp = _Cmp()
 )
 {
-    while( begin1 != end1 && begin2 != end2 )
+    while( first1 != last1 && first2 != last2 )
     {
-        if( cmp( * begin1, * begin2 ) )
+        if( cmp( * first1, * first2 ) )
         {
             new ( static_cast< void * >( output ) )
-                typename std::iterator_traits< _IteratorOutput >::value_type( AV_MOVE( * begin1 ) );
+                typename std::iterator_traits< _IteratorOutput >::value_type( AV_MOVE( * first1 ) );
 
             ++ output;
-            ++ begin1;
+            ++ first1;
         }
         else{
             new ( static_cast< void * >( output ) )
-                typename std::iterator_traits< _IteratorOutput >::value_type( AV_MOVE( * begin2 ) );
+                typename std::iterator_traits< _IteratorOutput >::value_type( AV_MOVE( * first2 ) );
 
             ++ output;
-            ++ begin2;
+            ++ first2;
         }
     }
 
-    if( begin1 == end1 ){
-        return uninitialized_move_forward( begin2, end2, output );
+    if( first1 == last1 ){
+        return uninitialized_move_forward( first2, last2, output );
     }
 
-    if( begin2 == end2 ){
-        return uninitialized_move_forward( begin1, end1, output );
+    if( first2 == last2 ){
+        return uninitialized_move_forward( first1, last1, output );
     }
 
     return output;
@@ -836,7 +866,7 @@ namespace detail
             : _container( 0 )
             , _currentInStorage( 0 )
             , _currentInBuffer( 0 )
-            , _current( 0 )
+            , _currentPosition( 0 )
         {
         }
 
@@ -848,7 +878,7 @@ namespace detail
             , _currentInBuffer( other.getCurrentInBuffer() )
             , _currentInErased( other.getCurrentInErased() )
 
-            , _current( other.getCurrent() )
+            , _currentPosition( other.getCurrent() )
         {
         }
 
@@ -872,11 +902,11 @@ namespace detail
 
             if( current == 0 )
             {
-                _current = calculateCurrent();
+                _currentPosition = calculateCurrent();
             }
             else
             {
-                _current = current;
+                _currentPosition = current;
             }
         }
 
@@ -889,7 +919,7 @@ namespace detail
             _currentInBuffer = other._currentInBuffer;
             _currentInErased = other._currentInErased;
 
-            _current = other._current;
+            _currentPosition = other._currentPosition;
 
             return * this;
         }
@@ -904,17 +934,17 @@ namespace detail
 
         AssocVectorIterator & operator++()
         {
-            if( _current == 0 ){
+            if( _currentPosition == 0 ){
                 return * this;
             }
-            else if( _current == _currentInStorage ){
+            else if( _currentPosition == _currentInStorage ){
                 ++ _currentInStorage;
             }
             else{
                 ++ _currentInBuffer;
             }
 
-            _current = calculateCurrent();
+            _currentPosition = calculateCurrent();
 
             return * this;
         }
@@ -936,14 +966,14 @@ namespace detail
             ){
                 return * this;
             }
-            else if( _current == 0 )
+            else if( _currentPosition == 0 )
             {
                 -- _currentInStorage;
                 -- _currentInBuffer;
             }
             else
             {
-                if( _current == _currentInStorage ){
+                if( _currentPosition == _currentInStorage ){
                     -- _currentInStorage;
                 }
                 else{
@@ -951,7 +981,7 @@ namespace detail
                 }
             }
 
-            _current = calculateCurrent();
+            _currentPosition = calculateCurrent();
 
             return * this;
         }
@@ -967,28 +997,28 @@ namespace detail
         }
 
         reference operator*()const{
-            PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _currentPosition != 0 );
 
             return * base();
         }
 
         pointer operator->()const{
-            PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _currentPosition != 0 );
 
             return base();
         }
 
         pointer base()const{
-            PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _currentPosition != 0 );
 
             // make key const
             // pair< T1, T2 > * -> pair< T1 const, T2 > *
-            //return reinterpret_cast< pointer >( _current );
+            //return reinterpret_cast< pointer >( _currentPosition );
 
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
-                        reinterpret_cast< void const * >( _current )
+                        reinterpret_cast< void const * >( _currentPosition )
                     )
                 );
         }
@@ -1000,7 +1030,7 @@ namespace detail
         pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
         typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
 
-        pointer_mutable getCurrent()const{ return _current; }
+        pointer_mutable getCurrent()const{ return _currentPosition; }
 
     private:
         pointer_mutable
@@ -1046,7 +1076,7 @@ namespace detail
 
         typename _Container::_Erased::const_iterator _currentInErased;
 
-        pointer_mutable _current;
+        pointer_mutable _currentPosition;
     };
 
     //
@@ -1079,31 +1109,31 @@ namespace detail
         _AssocVectorIterator(
             typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
-            : _current( 0 )
+            : _currentPosition( 0 )
         {
         }
 
         template< typename _Iter >
         _AssocVectorIterator( _AssocVectorIterator< _Iter, _Container > const & other )
-            : _current( other.getCurrent() )
+            : _currentPosition( other.getCurrent() )
         {
         }
 
         _AssocVectorIterator( pointer_mutable current )
-            : _current( current )
+            : _currentPosition( current )
         {
         }
 
         _AssocVectorIterator &
         operator=( _AssocVectorIterator const & other )
         {
-            _current = other._current;
+            _currentPosition = other._currentPosition;
 
             return * this;
         }
 
         bool operator==( _AssocVectorIterator const & other )const{
-            return _current == other.getCurrent();
+            return _currentPosition == other.getCurrent();
         }
 
         bool operator!=( _AssocVectorIterator const & other )const{
@@ -1111,42 +1141,42 @@ namespace detail
         }
 
         reference operator*()const{
-            PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _currentPosition != 0 );
 
             return * base();
         }
 
         pointer operator->()const{
-            PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _currentPosition != 0 );
 
             return base();
         }
 
         pointer base()const{
-            PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _currentPosition != 0 );
 
             // make key const
             // pair< T1, T2 > * -> pair< T1 const, T2 > *
-            //return reinterpret_cast< pointer >( _current );
+            //return reinterpret_cast< pointer >( _currentPosition );
 
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
-                        reinterpret_cast< void const * >( _current )
+                        reinterpret_cast< void const * >( _currentPosition )
                     )
                 );
         }
 
         operator bool()const
         {
-            return _current != 0;
+            return _currentPosition != 0;
         }
 
         // public for copy constructor only : Iterator -> ConstIterator
-        pointer_mutable getCurrent()const{ return _current; }
+        pointer_mutable getCurrent()const{ return _currentPosition; }
 
     private:
-        pointer_mutable _current;
+        pointer_mutable _currentPosition;
     };
 
     //
@@ -1186,7 +1216,7 @@ namespace detail
             , _currentInStorage( 0 )
             , _currentInBuffer( 0 )
 
-            , _current( 0 )
+            , _currentPosition( 0 )
         {
         }
 
@@ -1198,7 +1228,7 @@ namespace detail
             , _currentInBuffer( other.getCurrentInBuffer() )
             , _currentInErased( other.getCurrentInErased() )
 
-            , _current( other.getCurrent() )
+            , _currentPosition( other.getCurrent() )
         {
         }
 
@@ -1225,10 +1255,10 @@ namespace detail
             }
 
             if( current == 0 ){
-                _current = calculateCurrentReverse();
+                _currentPosition = calculateCurrentReverse();
             }
             else{
-                _current = current;
+                _currentPosition = current;
             }
         }
 
@@ -1240,7 +1270,7 @@ namespace detail
             _currentInBuffer = other._currentInBuffer;
             _currentInErased = other._currentInErased;
 
-            _current = other._current;
+            _currentPosition = other._currentPosition;
 
             return * this;
         }
@@ -1255,17 +1285,17 @@ namespace detail
 
         AssocVectorReverseIterator & operator++()
         {
-            if( _current == 0 ){
+            if( _currentPosition == 0 ){
                 return * this;
             }
-            else if( _current == _currentInStorage ){
+            else if( _currentPosition == _currentInStorage ){
                 -- _currentInStorage;
             }
             else{
                 -- _currentInBuffer;
             }
 
-            _current = calculateCurrentReverse();
+            _currentPosition = calculateCurrentReverse();
 
             return * this;
         }
@@ -1287,14 +1317,14 @@ namespace detail
             ){
                 return * this;
             }
-            else if( _current == 0 )
+            else if( _currentPosition == 0 )
             {
                 ++ _currentInStorage;
                 ++ _currentInBuffer;
             }
             else
             {
-                if( _current == _currentInStorage ){
+                if( _currentPosition == _currentInStorage ){
                     ++ _currentInStorage;
                 }
                 else{
@@ -1302,7 +1332,7 @@ namespace detail
                 }
             }
 
-            _current = calculateCurrentReverse();
+            _currentPosition = calculateCurrentReverse();
 
             return * this;
         }
@@ -1328,7 +1358,7 @@ namespace detail
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
-                        reinterpret_cast< void const * >( _current )
+                        reinterpret_cast< void const * >( _currentPosition )
                     )
                 );
         }
@@ -1340,7 +1370,7 @@ namespace detail
         pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
         typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
 
-        pointer_mutable getCurrent()const{ return _current; }
+        pointer_mutable getCurrent()const{ return _currentPosition; }
 
     private:
         pointer_mutable
@@ -1383,7 +1413,7 @@ namespace detail
         pointer_mutable _currentInBuffer;
         typename _Container::_Erased::const_iterator _currentInErased;
 
-        pointer_mutable _current;
+        pointer_mutable _currentPosition;
     };
 
 } // namespace detail
@@ -1392,7 +1422,7 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp = std::less< _Key >
-    , typename _Alloc = std::allocator< std::pair< _Key, _Mapped > >
+    , typename _Allocator = std::allocator< std::pair< _Key, _Mapped > >
 >
 struct AssocVector
 {
@@ -1408,7 +1438,7 @@ public:
     typedef mapped_type & reference;
 
     typedef _Cmp key_compare;
-    typedef _Alloc allocator_type;
+    typedef _Allocator allocator_type;
 
     typedef util::CmpByFirst< value_type_mutable, _Cmp > value_compare;
 
@@ -1431,21 +1461,44 @@ public:
 private:
     struct _FindOrInsertToBufferResult
     {
-        typename _Storage::iterator _iterator;
-        bool _inserted;
-        bool _reallocated;
+        typename _Storage::iterator _positionInBuffer;
+        bool _isInserted;
+        bool _isReallocated;
+    };
+
+    struct _TryToRemoveBackResult
+    {
+        bool _anyItemRemoved;
+        bool _erasedItemRemoved;
+
+    };
+
+    struct _FindImplResult
+    {
+        typename _Storage::iterator _positionInStorage;
+        typename _Storage::iterator _positionInBuffer;
+        typename _Storage::iterator _currentPosition;
+    };
+
+    struct _InsertImplResult
+    {
+        bool _isInserted;
+
+        typename _Storage::iterator _positionInStorage;
+        typename _Storage::iterator _positionInBuffer;
+        typename _Storage::iterator _currentPosition;
     };
 
 public:
     //
     // Memory Management
     //
-    explicit AssocVector( _Cmp const & cmp = _Cmp(), _Alloc const & allocator = _Alloc() );
+    explicit AssocVector( _Cmp const & cmp = _Cmp(), _Allocator const & allocator = _Allocator() );
 
-    AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Alloc > const & other );
+    AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other );
 
 #ifdef AV_CXX11X_RVALUE_REFERENCE
-    AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Alloc > && other );
+    AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other );
 #endif
 
     inline ~AssocVector();
@@ -1552,7 +1605,6 @@ private:
     //
     void mergeStorageWithBuffer();
     void mergeStorageWithErased();
-    void reserveStorageAndMergeWithBuffer( std::size_t storageCapacity );
 
     //
     // insert
@@ -1563,18 +1615,41 @@ private:
     findOrInsertToBuffer( key_type const & k, mapped_type const & m );
 
     //
+    // insertImpl, function does as little as needed but returns as much data as possible
+    //
+    _InsertImplResult
+    insertImpl( value_type const & value );
+
+    //
+    // erase
+    //
+    _TryToRemoveBackResult
+    tryToRemoveStorageBack( typename _Storage::iterator pos );
+
+    //
+    // eraseFromStorage
+    //
+    bool eraseFromStorage( typename _Storage::iterator pos );
+
+    //
     // isErased
     //
     bool isErased( typename _Storage::const_iterator iterator )const;
 
     //
+    // findImpl, function does as little as needed but returns as much data as possible
+    //
+    _FindImplResult
+    findImpl( key_type const & key );
+
+    //
     // getAllocator (method specialization)
     //
-    _Alloc getAllocator( _Storage const & ){ return _allocator; }
+    _Allocator getAllocator( _Storage const & ){ return _allocator; }
 
-    typename _Alloc::template rebind< typename _Storage::const_iterator >::other
+    typename _Allocator::template rebind< typename _Storage::const_iterator >::other
     getAllocator( _Erased const & )
-    {return typename _Alloc::template rebind< typename _Storage::const_iterator >::other( _allocator );}
+    {return typename _Allocator::template rebind< typename _Storage::const_iterator >::other( _allocator );}
 
 public: // public for unit tests only
     void dump()const;
@@ -1603,28 +1678,28 @@ private:
 
     _Cmp _cmp;
 
-    _Alloc _allocator;
+    _Allocator _allocator;
 };
 
 template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 bool operator==(
-      AssocVector< _Key, _Mapped, _Cmp, _Alloc > const & lhs
-    , AssocVector< _Key, _Mapped, _Cmp, _Alloc > const & rhs
+      AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & lhs
+    , AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & rhs
 )
 {
     if( lhs.size() != rhs.size() ){
         return false;
     }
 
-    typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator begin = lhs.begin();
-    typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator const end = lhs.end();
+    typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator begin = lhs.begin();
+    typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator const end = lhs.end();
 
-    typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator begin2 = rhs.begin();
+    typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator begin2 = rhs.begin();
 
     for( /*empty*/ ; begin != end ; ++ begin, ++ begin2 )
     {
@@ -1644,11 +1719,11 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 bool operator!=(
-      AssocVector< _Key, _Mapped, _Cmp, _Alloc > const & lhs
-    , AssocVector< _Key, _Mapped, _Cmp, _Alloc > const & rhs
+      AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & lhs
+    , AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & rhs
 ){
     return ! ( lhs == rhs );
 }
@@ -1661,18 +1736,18 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::AssocVector(
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
       _Cmp const & cmp
-    , _Alloc const & allocator
+    , _Allocator const & allocator
 )
     : _cmp( cmp )
     , _allocator( allocator )
 {
-    array::init( _storage );
-    array::init( _buffer );
-    array::init( _erased );
+    array::reset( _storage );
+    array::reset( _buffer );
+    array::reset( _erased );
 
     std::size_t const defaultSize = 2*(2*2);
 
@@ -1683,21 +1758,21 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::AssocVector(
-    AssocVector< _Key, _Mapped, _Cmp, _Alloc > const & other
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+    AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other
 )
     : _cmp( other._cmp )
     , _allocator( other._allocator )
 {
-    array::init( _storage );
+    array::reset( _storage );
     array::create< value_type_mutable >( _storage, other._storage, getAllocator( _storage ) );
 
-    array::init( _buffer );
+    array::reset( _buffer );
     array::create< value_type_mutable >( _buffer, other._buffer, getAllocator( _buffer ) );
 
-    array::init( _erased );
+    array::reset( _erased );
     array::create< typename _Storage::const_iterator >( _erased, other._erased, getAllocator( _erased ) );
 }
 
@@ -1707,10 +1782,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::AssocVector(
-    AssocVector< _Key, _Mapped, _Cmp, _Alloc > && other
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+    AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
 )
     : _storage( other._storage )
     , _buffer( other._buffer )
@@ -1718,9 +1793,9 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::AssocVector(
     , _cmp( other._cmp )
     , _allocator( other._allocator )
 {
-    array::init( other._storage );
-    array::init( other._buffer );
-    array::init( other._erased );
+    array::reset( other._storage );
+    array::reset( other._buffer );
+    array::reset( other._erased );
 }
 
 #endif
@@ -1729,9 +1804,9 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::~AssocVector()
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::~AssocVector()
 {
     clear();
 
@@ -1744,13 +1819,13 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::clear()
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::clear()
 {
-    util::destroyRange( _storage.begin(), _storage.end() );
-    util::destroyRange( _buffer.begin(), _buffer.end() );
+    util::destroy_range( _storage.begin(), _storage.end() );
+    util::destroy_range( _buffer.begin(), _buffer.end() );
 
     _storage.setSize( 0 );
     _buffer.setSize( 0 );
@@ -1761,10 +1836,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-AssocVector< _Key, _Mapped, _Cmp, _Alloc > &
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator=( AssocVector const & other )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator > &
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator=( AssocVector const & other )
 {
     AssocVector temp( other );
     temp.swap( * this );
@@ -1778,10 +1853,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-AssocVector< _Key, _Mapped, _Cmp, _Alloc > &
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator=( AssocVector && other )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator > &
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator=( AssocVector && other )
 {
     AssocVector temp( AV_MOVE( other ) );
     temp.swap( * this );
@@ -1795,36 +1870,74 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserve( std::size_t newStorageCapacity )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reserve( std::size_t newStorageCapacity )
 {
     if( newStorageCapacity <= _storage.capacity() ){
         return;
     }
 
-    if( _erased.empty() == false ){
-        mergeStorageWithErased();
+    {// _erased
+        if( _erased.empty() == false ){
+            mergeStorageWithErased();
+        }
+
+        array::reserve(
+              _erased
+            , calculateNewErasedCapacity( newStorageCapacity )
+            , getAllocator( _erased )
+        );
+
+        AV_CHECK( _erased.empty() );
     }
 
-    reserveStorageAndMergeWithBuffer( newStorageCapacity );
+    std::size_t const newBufferCapacity
+        = calculateNewBufferCapacity( newStorageCapacity );
 
-    array::reserve(
-          _erased
-        , calculateNewErasedCapacity( newStorageCapacity )
-        , getAllocator( _erased )
+    _Storage newStorage
+        = array::create< value_type_mutable >( newStorageCapacity, getAllocator( _storage ) );
+
+    _Storage newBuffer
+        = array::create< value_type_mutable >( newBufferCapacity, getAllocator( _buffer ) );
+
+    util::move_merge_into_uninitialized(
+          _storage.begin()
+        , _storage.end()
+        , _buffer.begin()
+        , _buffer.end()
+        , newStorage.begin()
+        , value_comp()
     );
+
+    {
+        std::size_t const oldSize = _storage.size();
+
+        array::destroy_deallocate( _storage, getAllocator( _storage ) );
+
+        _storage.setData( newStorage.getData() );
+        _storage.setSize( oldSize + _buffer.size() );
+        _storage.setCapacity( newStorageCapacity );
+    }
+
+    {
+        array::destroy_deallocate( _buffer, getAllocator( _buffer ) );
+
+        _buffer.setData( newBuffer.getData() );
+        _buffer.setSize( 0 );
+        _buffer.setCapacity( newBufferCapacity );
+    }
 }
 
 template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::begin()
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::begin()
 {
     return iterator( this, _storage.begin(), _buffer.begin(), 0 );
 }
@@ -1833,10 +1946,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reverse_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rbegin()
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reverse_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::rbegin()
 {
     return reverse_iterator( this, _storage.end() - 1, _buffer.end() - 1, 0 );
 }
@@ -1845,10 +1958,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::begin()const
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::begin()const
 {
     return const_iterator( this, _storage.begin(), _buffer.begin(), 0 );
 }
@@ -1857,10 +1970,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_reverse_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rbegin()const
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_reverse_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::rbegin()const
 {
     return const_reverse_iterator( this, _storage.end() - 1, _buffer.end() - 1, 0 );
 }
@@ -1869,10 +1982,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::end()
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::end()
 {
     return iterator( this, _storage.end(), _buffer.end(), 0 );
 }
@@ -1881,10 +1994,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_end()
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_end()
 {
     return _iterator( 0 );
 }
@@ -1893,10 +2006,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reverse_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rend()
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reverse_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::rend()
 {
     return reverse_iterator( this, _storage.begin() - 1, _buffer.begin() - 1, 0 );
 }
@@ -1905,10 +2018,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::end()const
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::end()const
 {
     return const_iterator( this, _storage.end(), _buffer.end(), 0 );
 }
@@ -1917,10 +2030,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_end()const
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_end()const
 {
     return _const_iterator( 0 );
 }
@@ -1929,10 +2042,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_reverse_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::rend()const
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_reverse_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::rend()const
 {
     return const_reverse_iterator( this, _storage.begin() - 1, _buffer.begin() - 1, 0 );
 }
@@ -1941,10 +2054,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 bool
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::empty()const
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::empty()const
 {
     return size() == 0;
 }
@@ -1953,10 +2066,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 std::size_t
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::size()const
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::size()const
 {
     return _storage.size() + _buffer.size() - _erased.size();
 }
@@ -1965,21 +2078,98 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::iterator, bool >
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
+std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator, bool >
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert( value_type const & value )
+{
+    _InsertImplResult const result = insertImpl( value );
+
+    if( result._positionInStorage == 0 )
+    {
+        typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
+              _storage.begin()
+            , _storage.end()
+            , value.first
+            , value_comp()
+        );
+
+        return std::make_pair(
+              iterator(
+                  this
+                , greaterEqualInStorage
+                , result._positionInBuffer
+                , result._currentPosition
+              )
+            , result._isInserted
+        );
+    }
+    else if( result._positionInBuffer == 0 )
+    {
+        typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
+              _buffer.begin()
+            , _buffer.end()
+            , value.first
+            , value_comp()
+        );
+
+        return std::make_pair(
+              iterator(
+                  this
+                , result._positionInStorage
+                , greaterEqualInBuffer
+                , result._currentPosition
+              )
+            , result._isInserted
+        );
+    }
+    else
+    {
+        return std::make_pair(
+              iterator(
+                  this
+                , result._positionInStorage
+                , result._positionInBuffer
+                , result._currentPosition
+              )
+            , result._isInserted
+        );
+    }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_insert( value_type const & value )
+{
+    return insertImpl( value )._isInserted;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_InsertImplResult
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & value )
 {
     _Key const & k = value.first;
     _Mapped const & m = value.second;
 
     {//push back to storage
-        if( tryToPushBack( k, m ) )
-        {
-            return std::make_pair(
-                  iterator( this, _storage.end() - 1, _buffer.end(), _storage.end() - 1 )
-                , true
-            );
+        if( tryToPushBack( k, m ) ){
+            _InsertImplResult result;
+            result._isInserted = true;
+            result._positionInStorage = ( _storage.end() - 1 );
+            result._positionInBuffer = 0;
+            result._currentPosition = ( _storage.end() - 1 );
+
+            return result;
         }
     }
 
@@ -1997,37 +2187,28 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
     {//find or insert to buffer
         if( notPresentInStorage )
         {
-            _FindOrInsertToBufferResult const result = findOrInsertToBuffer( k, m );
+            _FindOrInsertToBufferResult const findOrInsertToBufferResult
+                = findOrInsertToBuffer( k, m );
 
-            typename _Storage::iterator greaterEqualInStorage2 = 0;
+            _InsertImplResult result;
+            result._isInserted = findOrInsertToBufferResult._isInserted;
 
-            {// check if 'findOrInsertToBuffer' did reallocation
-                if( result._reallocated )
-                {// reallocation done, search for 'greaterEqualInStorage' again
-                    greaterEqualInStorage2 = std::lower_bound(
-                          _storage.begin()
-                        , _storage.end()
-                        , k
-                        , value_comp()
-                    );
-                }
-                else
-                {// no reallocation, 'greaterEqualInStorage' is still valid
-                    greaterEqualInStorage2 = greaterEqualInStorage;
-                }
+            if( findOrInsertToBufferResult._isReallocated ){
+                result._positionInStorage = 0;
+            }
+            else{
+                result._positionInStorage = greaterEqualInStorage;
             }
 
-            POSTCONDITION( greaterEqualInStorage2 != 0 );
+            result._positionInBuffer = findOrInsertToBufferResult._positionInBuffer;
+            result._currentPosition = findOrInsertToBufferResult._positionInBuffer;
 
-            return std::make_pair(
-                  iterator( this, greaterEqualInStorage2, result._iterator, result._iterator )
-                , result._inserted
-            );
+            return result;
         }
     }
 
     {// check if not erased
-        typename _Erased::iterator const foundInErased = array::findInSorted(
+        typename _Erased::iterator const foundInErased = array::find_in_sorted(
               _erased.begin()
             , _erased.end()
             , greaterEqualInStorage
@@ -2037,17 +2218,13 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
         {// item is in storage and is not marked as erased
             if( foundInErased == _erased.end() )
             {
-                typename _Storage::iterator lessEqualInBuffer = util::last_less_equal(
-                      _buffer.begin()
-                    , _buffer.end()
-                    , value_type_mutable( k, mapped_type() )
-                    , value_comp()
-                );
+                _InsertImplResult result;
+                result._isInserted = false;
+                result._positionInStorage = greaterEqualInStorage;
+                result._positionInBuffer = 0;
+                result._currentPosition = greaterEqualInStorage;
 
-                return std::make_pair(
-                      iterator( this, greaterEqualInStorage, lessEqualInBuffer, greaterEqualInStorage )
-                    , false
-                );
+                return result;
             }
         }
 
@@ -2056,17 +2233,13 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( value_type const & value )
 
             greaterEqualInStorage->second = m;
 
-            typename _Storage::iterator lessEqualInBuffer = util::last_less_equal(
-                  _buffer.begin()
-                , _buffer.end()
-                , value_type_mutable( k, mapped_type() )
-                , value_comp()
-            );
+            _InsertImplResult result;
+            result._isInserted = true;
+            result._positionInStorage = greaterEqualInStorage;
+            result._positionInBuffer = 0;
+            result._currentPosition = greaterEqualInStorage;
 
-            return std::make_pair(
-                  iterator( this, greaterEqualInStorage, lessEqualInBuffer, greaterEqualInStorage )
-                , true
-            );
+            return result;
         }
     }
 }
@@ -2075,73 +2248,13 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
->
-bool
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_insert( value_type const & value )
-{
-    _Key const & k = value.first;
-    _Mapped const & m = value.second;
-
-    {//push back to storage
-        if( tryToPushBack( k, m ) ){
-            return true;
-        }
-    }
-
-    typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
-          _storage.begin()
-        , _storage.end()
-        , k
-        , value_comp()
-    );
-
-    bool const notPresentInStorage
-        = greaterEqualInStorage == _storage.end()
-        || key_comp()( k, greaterEqualInStorage->first );
-
-    {//find or insert to buffer
-        if( notPresentInStorage ){
-            return findOrInsertToBuffer( k, m )._inserted;
-        }
-    }
-
-    {// check if not erased
-        typename _Erased::iterator const foundInErased = array::findInSorted(
-              _erased.begin()
-            , _erased.end()
-            , greaterEqualInStorage
-            , std::less< typename _Storage::const_iterator >()
-        );
-
-        {// item is in storage and is not marked as erased
-            if( foundInErased == _erased.end() )
-            {
-                return false;
-            }
-        }
-
-        {// item is in storage but is marked as erased
-            array::erase( _erased, foundInErased );
-
-            greaterEqualInStorage->second = m;
-
-            return true;
-        }
-    }
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 template<
     typename _Iterator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::insert( _Iterator const begin, _Iterator const end )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert( _Iterator const begin, _Iterator const end )
 {
     for( _Iterator current = begin ; current != end ; ++ current ){
         insert( * current );
@@ -2152,10 +2265,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 bool
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::tryToPushBack( _Key const & k, _Mapped const & m )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToPushBack( _Key const & k, _Mapped const & m )
 {
     bool pushBackToStorage = false;
 
@@ -2208,14 +2321,75 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryToRemoveBackResult
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToRemoveStorageBack(
+    typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
+)
+{
+    _TryToRemoveBackResult result;
+    result._anyItemRemoved = false;
+    result._erasedItemRemoved = false;
+
+    if( pos + 1 != _storage.end() ){
+        return result;
+    }
+
+    getAllocator( _storage ).destroy( pos );
+
+    _storage.setSize( _storage.size() - 1 );
+
+    result._anyItemRemoved = true;
+
+    if(
+           _erased.empty() == false
+        && _erased.back() == pos
+    ){
+        _erased.setSize( _erased.size() - 1 );
+
+        result._erasedItemRemoved = true;
+    }
+
+    return result;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
 >
 bool
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::isErased(
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::eraseFromStorage(
+    typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
+)
+{
+    bool const result = array::insert_in_sorted(
+          _erased
+        , typename _Storage::const_iterator( pos )
+        , std::less< typename _Storage::const_iterator >()
+    );
+
+    if( _erased.full() ){
+        mergeStorageWithErased();
+    }
+
+    return result;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::isErased(
     typename AssocVector::_Storage::const_iterator iterator
 )const
 {
-    typename _Erased::const_iterator const foundInErased = array::findInSorted(
+    typename _Erased::const_iterator const foundInErased = array::find_in_sorted(
           _erased.begin()
         , _erased.end()
         , iterator
@@ -2229,10 +2403,10 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_FindImplResult
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
 {
     typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
           _storage.begin()
@@ -2248,23 +2422,24 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
     {// item is in storage, check in erased
         if( presentInStorage )
         {
-            if( isErased( greaterEqualInStorage ) ){
-                return end();
+            if( isErased( greaterEqualInStorage ) )
+            {
+                _FindImplResult result;
+                result._positionInStorage = 0;
+                result._positionInBuffer = 0;
+                result._currentPosition = 0;
+
+                return result;
             }
+            else
+            {
+                _FindImplResult result;
+                result._positionInStorage = greaterEqualInStorage;
+                result._positionInBuffer = 0;
+                result._currentPosition = greaterEqualInStorage;
 
-            typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
-                  _buffer.begin()
-                , _buffer.end()
-                , k
-                , value_comp()
-            );
-
-            return iterator(
-                  this
-                , greaterEqualInStorage
-                , greaterEqualInBuffer // todo: lazy
-                , 0
-            );
+                return result;
+            }
         }
     }
 
@@ -2280,16 +2455,24 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )
             = greaterEqualInBuffer != _buffer.end()
             && key_comp()( k, greaterEqualInBuffer->first ) == false;
 
-        if( presentInBuffer ){
-            return iterator(
-                  this
-                , greaterEqualInStorage
-                , greaterEqualInBuffer
-                , 0
-            );
-        }
+        if( presentInBuffer )
+        {
+            _FindImplResult result;
+            result._positionInStorage = greaterEqualInStorage;
+            result._positionInBuffer = greaterEqualInBuffer;
+            result._currentPosition = greaterEqualInBuffer;
 
-        return end();
+            return result;
+        }
+        else
+        {
+            _FindImplResult result;
+            result._positionInStorage = 0;
+            result._positionInBuffer = 0;
+            result._currentPosition = 0;
+
+            return result;
+        }
     }
 }
 
@@ -2297,102 +2480,19 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::find( _Key const & k )const
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::find( _Key const & k )
 {
-    typename _Storage::const_iterator const greaterEqualInStorage = std::lower_bound(
-          _storage.begin()
-        , _storage.end()
-        , k
-        , value_comp()
-    );
+    _FindImplResult const result = findImpl( k );
 
-    bool const presentInStorage
-        = greaterEqualInStorage != _storage.end()
-        && key_comp()( k, greaterEqualInStorage->first ) == false;
-
-    {// item is in storage, check in erased
-        if( presentInStorage )
-        {
-            if( isErased( greaterEqualInStorage ) ){
-                return end();
-            }
-
-            typename _Storage::const_iterator const greaterEqualInBuffer = std::lower_bound(
-                  _buffer.begin()
-                , _buffer.end()
-                , k
-                , value_comp()
-            );
-
-            return iterator(
-                  this
-                , greaterEqualInStorage
-                , greaterEqualInBuffer // todo: lazy
-                , 0
-            );
-        }
-    }
-
-    {// check in buffer
-        typename _Storage::const_iterator const greaterEqualInBuffer = std::lower_bound(
-              _buffer.begin()
-            , _buffer.end()
-            , k
-            , value_comp()
-        );
-
-        bool const presentInBuffer
-            = greaterEqualInBuffer != _buffer.end()
-            && key_comp()( k, greaterEqualInBuffer->first ) == false;
-
-        if( presentInBuffer ){
-            return iterator(
-                  this
-                , greaterEqualInStorage
-                , greaterEqualInBuffer
-                , 0
-            );
-        }
-
+    if( result._currentPosition == 0 )
+    {
         return end();
     }
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )
-{
-    typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
-          _storage.begin()
-        , _storage.end()
-        , k
-        , value_comp()
-    );
-
-    bool const presentInStorage
-        = greaterEqualInStorage != _storage.end()
-        && key_comp()( k, greaterEqualInStorage->first ) == false;
-
-    {// item is in storage, check in erased
-        if( presentInStorage )
-        {
-            if( isErased( greaterEqualInStorage ) ){
-                return _end();
-            }
-
-            return _iterator( greaterEqualInStorage );
-        }
-    }
-
-    {// check in buffer
+    else if( result._positionInBuffer == 0 )
+    {
         typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
               _buffer.begin()
             , _buffer.end()
@@ -2400,66 +2500,21 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )
             , value_comp()
         );
 
-        bool const presentInBuffer
-            = greaterEqualInBuffer != _buffer.end()
-            && key_comp()( k, greaterEqualInBuffer->first ) == false;
-
-        if( presentInBuffer ){
-            return _iterator( greaterEqualInBuffer );
-        }
-
-        return _end();
-    }
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_find( _Key const & k )const
-{
-    typename _Storage::const_iterator const greaterEqualInStorage = std::lower_bound(
-          _storage.begin()
-        , _storage.end()
-        , k
-        , value_comp()
-    );
-
-    bool const presentInStorage
-        = greaterEqualInStorage != _storage.end()
-        && key_comp()( k, greaterEqualInStorage->first ) == false;
-
-    {// item is in storage, check in erased
-        if( presentInStorage )
-        {
-            if( isErased( greaterEqualInStorage ) ){
-                return _end();
-            }
-
-            return _const_iterator( greaterEqualInStorage );
-        }
-    }
-
-    {// check in buffer
-        typename _Storage::const_iterator const greaterEqualInBuffer = std::lower_bound(
-              _buffer.begin()
-            , _buffer.end()
-            , k
-            , value_comp()
+        return iterator(
+              this
+            , result._positionInStorage
+            , greaterEqualInBuffer
+            , result._currentPosition
         );
-
-        bool const presentInBuffer
-            = greaterEqualInBuffer != _buffer.end()
-            && key_comp()( k, greaterEqualInBuffer->first ) == false;
-
-        if( presentInBuffer ){
-            return _const_iterator( greaterEqualInBuffer );
-        }
-
-        return _end();
+    }
+    else
+    {
+        return iterator(
+              this
+            , result._positionInStorage
+            , result._positionInBuffer
+            , result._currentPosition
+        );
     }
 }
 
@@ -2467,10 +2522,50 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::find( _Key const & k )const
+{
+    typedef AssocVector< _Key, _Mapped, _Cmp, _Allocator > * NonConstThis;
+
+    return const_cast< NonConstThis >( this )->find( k );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_find( _Key const & k )
+{
+    return _iterator( findImpl( k )._currentPosition );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_find( _Key const & k )const
+{
+    typedef AssocVector< _Key, _Mapped, _Cmp, _Allocator > * NonConstThis;
+
+    return const_cast< NonConstThis >( this )->_find( k );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::merge()
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::merge()
 {
     if( size() > _storage.capacity() ){
         return reserve( calculateNewStorageCapacity( _storage.capacity() ) );
@@ -2487,58 +2582,22 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reference
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::operator[]( key_type const & k )
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reference
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator[]( key_type const & k )
 {
-    mapped_type const & mapped_value = mapped_type();
-
-    {//push back to storage
-        if( tryToPushBack( k, mapped_value ) ){
-            return ( _storage.end() - 1 )->second;
-        }
-    }
-
-    typename _Storage::iterator const foundInStorage
-        = array::findInSorted( _storage.begin(), _storage.end(), k, value_comp() );
-
-    {//find or insert to buffer
-        if( foundInStorage == _storage.end() ){
-            return findOrInsertToBuffer( k, mapped_value )._iterator->second;
-        }
-    }
-
-    typename _Erased::iterator const foundInErased = array::findInSorted(
-          _erased.begin()
-        , _erased.end()
-        , foundInStorage
-        , std::less< typename _Storage::const_iterator >()
-    );
-
-    {// item is already in storage
-        if( foundInErased == _erased.end() ){
-            return foundInStorage->second;
-        }
-    }
-
-    {// item is in storage but is also marked as erased
-        array::erase( _erased, foundInErased );
-
-        foundInStorage->second = mapped_value;
-
-        return foundInStorage->second;
-    }
+    return insert( value_type( k, mapped_type() ) ).first->second;
 }
 
 template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 std::size_t
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::count( key_type const & k )const{
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::count( key_type const & k )const{
     return _find( k ) ? 1 : 0;
 }
 
@@ -2546,19 +2605,19 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 std::size_t
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
 {
     typename _Storage::iterator const foundInStorage
-        = array::findInSorted( _storage.begin(), _storage.end(), k, value_comp() );
+        = array::find_in_sorted( _storage.begin(), _storage.end(), k, value_comp() );
 
     {//erase from _buffer
         if( foundInStorage == _storage.end() )
         {
             typename _Storage::iterator const foundInBuffer
-                = array::findInSorted( _buffer.begin(), _buffer.end(), k, value_comp() );
+                = array::find_in_sorted( _buffer.begin(), _buffer.end(), k, value_comp() );
 
             if( foundInBuffer == _buffer.end() )
             {
@@ -2574,15 +2633,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
     }
 
     {//erase from back
-        if( false )
+        _TryToRemoveBackResult const result = tryToRemoveStorageBack( foundInStorage );
+
+        if( result._anyItemRemoved )
         {
-            getAllocator( _storage ).destroy( foundInStorage );
-
-            _storage.setSize( _storage.size() - 1 );
-
-            if( _erased.back() == foundInStorage ){
-                _erased.setSize( _erased.size() - 1 );
-
+            if( result._erasedItemRemoved ){
                 return 0;
             }
             else{
@@ -2592,17 +2647,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( key_type const & k )
     }
 
     {//erase from _storage
-        bool const result = array::insertSorted(
-              _erased
-            , typename _Storage::const_iterator( foundInStorage )
-            , std::less< typename _Storage::const_iterator >()
-        );
-
-        if( _erased.full() ){
-            mergeStorageWithErased();
-        }
-
-        return result;
+        return eraseFromStorage( foundInStorage );
     }
 }
 
@@ -2610,52 +2655,37 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::erase( iterator pos )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
 {
     // iterator::base converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
     // revert real iterator type: pair< T1 const, T2 > * -> pair< T1, T2 > *
     value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.base() );
 
     {//erase from _buffer
-        if( util::isBetween( _buffer.begin(), posBase, _buffer.end() ) ){
+        if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) ){
             return array::erase( _buffer, posBase );
         }
     }
 
     {//item not present in container
-        if( util::isBetween( _storage.begin(), posBase, _storage.end() ) == false ){
+        if( util::is_between( _storage.begin(), posBase, _storage.end() ) == false ){
             return;
         }
     }
 
     {//erase from back
-        if( false )
-        {
-            getAllocator( _storage ).destroy( posBase );
+        _TryToRemoveBackResult const result = tryToRemoveStorageBack( posBase );
 
-            _storage.setSize( _storage.size() - 1 );
-
-            if( _erased.back() == posBase ){
-                _erased.setSize( _erased.size() - 1 );
-            }
-
+        if( result._anyItemRemoved ){
             return;
         }
     }
 
     {//erase from _storage
-        array::insertSorted(
-              _erased
-            , typename _Storage::const_iterator( posBase )
-            , std::less< typename _Storage::const_iterator >()
-        );
-
-        if( _erased.full() ){
-            mergeStorageWithErased();
-        }
+        eraseFromStorage( posBase );
     }
 }
 
@@ -2663,11 +2693,11 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::swap(
-    AssocVector< _Key, _Mapped, _Cmp, _Alloc > & other
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::swap(
+    AssocVector< _Key, _Mapped, _Cmp, _Allocator > & other
 )
 {
     std::swap( _storage, other._storage );
@@ -2683,60 +2713,14 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::reserveStorageAndMergeWithBuffer(
-    std::size_t storageCapacity
-)
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::mergeStorageWithBuffer()
 {
-    PRECONDITION( _erased.empty() )
+    array::move_merge( _storage, _buffer, value_comp() );
 
-    std::size_t const bufferCapacity = calculateNewBufferCapacity( storageCapacity );
-
-    _Storage newStorage = array::create< value_type_mutable >( storageCapacity, getAllocator( _storage ) );
-    _Storage newBuffer = array::create< value_type_mutable >( bufferCapacity, getAllocator( _buffer ) );
-
-    util::move_merge_into_uninitialized(
-          _storage.begin()
-        , _storage.end()
-        , _buffer.begin()
-        , _buffer.end()
-        , newStorage.begin()
-        , value_comp()
-    );
-
-    {
-        std::size_t const size = _storage.size();
-
-        array::destroy( _storage, getAllocator( _storage ) );
-
-        _storage.setData( newStorage.getData() );
-        _storage.setSize( size + _buffer.size() );
-        _storage.setCapacity( storageCapacity );
-    }
-
-    {
-        array::destroy( _buffer, getAllocator( _buffer ) );
-
-        _buffer.setData( newBuffer.getData() );
-        _buffer.setSize( 0 );
-        _buffer.setCapacity( bufferCapacity );
-    }
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Alloc
->
-void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::mergeStorageWithBuffer()
-{
-    array::merge( _storage, _buffer, value_comp() );
-
-    util::destroyRange( _buffer.begin(), _buffer.end() );
+    util::destroy_range( _buffer.begin(), _buffer.end() );
 
     _buffer.setSize( 0 );
 }
@@ -2745,16 +2729,16 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::mergeStorageWithErased()
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::mergeStorageWithErased()
 {
     typename _Storage::iterator const end = _storage.end();
 
-    array::mergeWithErased( _storage, _erased );
+    array::erase_removed( _storage, _erased );
 
-    util::destroyRange( _storage.end(), end );
+    util::destroy_range( _storage.end(), end );
 
     _erased.setSize( 0 );
 }
@@ -2763,15 +2747,15 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Alloc >::_FindOrInsertToBufferResult
-AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_FindOrInsertToBufferResult
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
       _Key const & k
     , _Mapped const & m
 )
 {
-    typename _Storage::iterator const greaterEqual =
+    typename _Storage::iterator const greaterEqualInBuffer =
         std::lower_bound(
               _buffer.begin()
             , _buffer.end()
@@ -2779,15 +2763,15 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
             , value_comp()
         );
 
-    if( greaterEqual != _buffer.end() )
+    if( greaterEqualInBuffer != _buffer.end() )
     {
-        bool const isEqual = _cmp( k, greaterEqual->first ) == false;
+        bool const isEqual = _cmp( k, greaterEqualInBuffer->first ) == false;
 
         if( isEqual ){
             _FindOrInsertToBufferResult result;
-            result._iterator = greaterEqual;
-            result._inserted = false;
-            result._reallocated = false;
+            result._positionInBuffer = greaterEqualInBuffer;
+            result._isInserted = false;
+            result._isReallocated = false;
 
             return result;
         }
@@ -2797,25 +2781,25 @@ AssocVector< _Key, _Mapped, _Cmp, _Alloc >::findOrInsertToBuffer(
     {
         merge();
 
-        PRECONDITION( _buffer.empty() );
+        AV_PRECONDITION( _buffer.empty() );
 
         array::insert( _buffer, _buffer.begin(), value_type_mutable( k, m ) );
 
         _FindOrInsertToBufferResult result;
-        result._iterator = _buffer.begin();
-        result._inserted = true;
-        result._reallocated = true;
+        result._positionInBuffer = _buffer.begin();
+        result._isInserted = true;
+        result._isReallocated = true;
 
         return result;
     }
     else
     {
-        array::insert( _buffer, greaterEqual, value_type_mutable( k, m ) );
+        array::insert( _buffer, greaterEqualInBuffer, value_type_mutable( k, m ) );
 
         _FindOrInsertToBufferResult result;
-        result._iterator = greaterEqual;
-        result._inserted = true;
-        result._reallocated = false;
+        result._positionInBuffer = greaterEqualInBuffer;
+        result._isInserted = true;
+        result._isReallocated = false;
 
         return result;
     }
@@ -2825,9 +2809,9 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-std::size_t AssocVector< _Key, _Mapped, _Cmp, _Alloc >::calculateNewBufferCapacity(
+std::size_t AssocVector< _Key, _Mapped, _Cmp, _Allocator >::calculateNewBufferCapacity(
     std::size_t storageSize
 )
 {
@@ -2838,9 +2822,9 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-std::size_t AssocVector< _Key, _Mapped, _Cmp, _Alloc >::calculateNewErasedCapacity(
+std::size_t AssocVector< _Key, _Mapped, _Cmp, _Allocator >::calculateNewErasedCapacity(
     std::size_t storageSize
 )
 {
@@ -2851,9 +2835,9 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-std::size_t AssocVector< _Key, _Mapped, _Cmp, _Alloc >::calculateNewStorageCapacity(
+std::size_t AssocVector< _Key, _Mapped, _Cmp, _Allocator >::calculateNewStorageCapacity(
     std::size_t storageSize
 )
 {
@@ -2864,9 +2848,9 @@ template<
       typename _Key
     , typename _Mapped
     , typename _Cmp
-    , typename _Alloc
+    , typename _Allocator
 >
-void AssocVector< _Key, _Mapped, _Cmp, _Alloc >::dump()const
+void AssocVector< _Key, _Mapped, _Cmp, _Allocator >::dump()const
 {
     std::cout << "storage: ";
     for( int i = 0 ; i < _storage.size() ; ++ i )

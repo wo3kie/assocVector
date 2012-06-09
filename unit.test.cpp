@@ -122,11 +122,11 @@ void test_CmpByFirst_3()
 //
 void test_isBetween()
 {
-    AV_ASSERT_EQUAL( util::isBetween( 1, 0, 3 ), false );
-    AV_ASSERT( ( util::isBetween( 1, 1, 3 ) ) );
-    AV_ASSERT( ( util::isBetween( 1, 2, 3 ) ) );
-    AV_ASSERT( ( util::isBetween( 1, 3, 3 ) ) );
-    AV_ASSERT_EQUAL( util::isBetween( 1, 4, 3 ), false )    ;
+    AV_ASSERT_EQUAL( util::is_between( 1, 0, 3 ), false );
+    AV_ASSERT( ( util::is_between( 1, 1, 3 ) ) );
+    AV_ASSERT( ( util::is_between( 1, 2, 3 ) ) );
+    AV_ASSERT( ( util::is_between( 1, 3, 3 ) ) );
+    AV_ASSERT_EQUAL( util::is_between( 1, 4, 3 ), false )    ;
 }
 
 namespace detail
@@ -157,7 +157,7 @@ void test_moveRange_empty_array()
     std::vector< int > array;
     std::vector< int > array2;
 
-    util::moveRange( array.begin(), array.end(), array2.begin() );
+    util::move( array.begin(), array.end(), array2.begin() );
 
     AV_ASSERT( array2.empty() );
 }
@@ -172,7 +172,7 @@ void test_moveRange_self_copy()
     array.push_back( 5 );
     array.push_back( 6 );
 
-    util::moveRange( array.begin(), array.end(), array.begin() );
+    util::move( array.begin(), array.end(), array.begin() );
 
     std::vector< int > expected;
     expected.push_back( 1 );
@@ -197,7 +197,7 @@ void test_moveRange_between_different_containers()
 
     std::vector< int > array2( 6, 0 );
 
-    util::moveRange( array.begin(), array.end(), array2.begin() );
+    util::move( array.begin(), array.end(), array2.begin() );
 
     AV_ASSERT( array == array2 );
 }
@@ -212,7 +212,7 @@ void test_moveRange_overlap_less_then_half()
     array.push_back( 5 );
     array.push_back( 6 );
 
-    util::moveRange( array.begin(), array.begin() + 3, array.begin() + 3 );
+    util::move( array.begin(), array.begin() + 3, array.begin() + 3 );
 
     std::vector< int > expected;
     expected.push_back( 1 );
@@ -234,7 +234,7 @@ void test_moveRange_overlap_more_than_half()
     array.push_back( 5 );
     array.push_back( 6 );
 
-    util::moveRange( array.begin(), array.begin() + 4, array.begin() + 2 );
+    util::move( array.begin(), array.begin() + 4, array.begin() + 2 );
 
     std::vector< int > expected;
     expected.push_back( 1 );
@@ -257,7 +257,7 @@ void test_moveRange_overlap_copy_to_begining()
     array.push_back( 5 );
     array.push_back( 6 );
 
-    util::moveRange( array.begin() + 2, array.end(), array.begin() );
+    util::move( array.begin() + 2, array.end(), array.begin() );
 
     std::vector< int > expected;
     expected.push_back( 3 );
@@ -360,7 +360,7 @@ void test_merge_1()
         a2[2] = 3;
         a2[3] = 4;
 
-        array::merge( a1, a2, std::less< int >() );
+        array::move_merge( a1, a2, std::less< int >() );
 
         AV_ASSERT_EQUAL( a1.size(), 4 );
         AV_ASSERT_EQUAL( a1.capacity(), 10 );
@@ -393,7 +393,7 @@ void test_merge_1()
         a2.setCapacity( 10 );
         a2.setSize( 0 );
 
-        array::merge( a1, a2, std::less< int >() );
+        array::move_merge( a1, a2, std::less< int >() );
 
         AV_ASSERT_EQUAL( a1.size(), 4 );
         AV_ASSERT_EQUAL( a1.capacity(), 10 );
@@ -433,7 +433,7 @@ void test_merge_1()
         a2[2] = 9;
         a2[3] = 10;
 
-        array::merge( a1, a2, std::less< int >() );
+        array::move_merge( a1, a2, std::less< int >() );
 
         AV_ASSERT_EQUAL( a1.size(), 10 );
         AV_ASSERT_EQUAL( a1.capacity(), 10 );
@@ -479,7 +479,7 @@ void test_merge_1()
         a2[2] = 6;
         a2[3] = 8;
 
-        array::merge( a1, a2, std::less< int >() );
+        array::move_merge( a1, a2, std::less< int >() );
 
         AV_ASSERT_EQUAL( a1.size(), 10 );
         AV_ASSERT_EQUAL( a1.capacity(), 10 );
@@ -525,7 +525,7 @@ void test_merge_1()
         a2[2] = 3;
         a2[3] = 4;
 
-        array::merge( a1, a2, std::less< int >() );
+        array::move_merge( a1, a2, std::less< int >() );
 
         AV_ASSERT_EQUAL( a1.size(), 10 );
         AV_ASSERT_EQUAL( a1.capacity(), 10 );
@@ -571,7 +571,7 @@ void test_merge_1()
         a2[2] = 6;
         a2[3] = 7;
 
-        array::merge( a1, a2, std::less< int >() );
+        array::move_merge( a1, a2, std::less< int >() );
 
         AV_ASSERT_EQUAL( a1.size(), 10 );
         AV_ASSERT_EQUAL( a1.capacity(), 10 );
@@ -617,7 +617,7 @@ void test_merge_1()
         a2[2] = 7;
         a2[3] = 10;
 
-        array::merge( a1, a2, std::less< int >() );
+        array::move_merge( a1, a2, std::less< int >() );
 
         AV_ASSERT_EQUAL( a1.size(), 10 );
         AV_ASSERT_EQUAL( a1.capacity(), 10 );
@@ -667,7 +667,7 @@ void test_merge_2()
 
     }
 
-    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     AV_ASSERT_EQUAL( storage.capacity(), 10 );
     AV_ASSERT_EQUAL( storage.size(), 8 );
@@ -713,7 +713,7 @@ void test_merge_3()
         buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
     }
 
-    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     AV_ASSERT_EQUAL( storage.capacity(), 10 );
     AV_ASSERT_EQUAL( storage.size(), 8 );
@@ -758,7 +758,7 @@ void test_merge_4()
         buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
     }
 
-    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     AV_ASSERT_EQUAL( storage.capacity(), 10 );
     AV_ASSERT_EQUAL( storage.size(), 8 );
@@ -798,7 +798,7 @@ void test_merge_5()
     buffer.setSize( 0 );
     buffer.setCapacity( 3 );
 
-    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     AV_ASSERT_EQUAL( storage.capacity(), 10 );
     AV_ASSERT_EQUAL( storage.size(), 5 );
@@ -835,7 +835,7 @@ void test_merge_6()
         buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
     }
 
-    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     AV_ASSERT_EQUAL( storage.capacity(), 10 );
     AV_ASSERT_EQUAL( storage.size(), 3 );
@@ -865,7 +865,7 @@ void test_merge_7()
     buffer.setSize( 0 );
     buffer.setCapacity( 3 );
 
-    array::merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
+    array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
     AV_ASSERT_EQUAL( storage.capacity(), 10 );
     AV_ASSERT_EQUAL( storage.size(), 0 );
