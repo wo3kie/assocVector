@@ -114,7 +114,10 @@ namespace util
             {
                 typedef typename std::iterator_traits< _Ptr >::value_type T;
 
-                for( /*empty*/ ; first != last ; ++ first ){
+                for( /*empty*/ ; first != last ; ++ first )
+                {
+                    AV_PRECONDITION( first != 0 );
+
                     first -> T::~T();
                 }
             }
@@ -141,15 +144,15 @@ namespace util
         , typename _OutputPtr
     >
     _OutputPtr
-    move_forward( _InputPtr first, _InputPtr last, _OutputPtr result )
+    move_forward( _InputPtr first, _InputPtr last, _OutputPtr output )
     {
         AV_PRECONDITION( first <= last );
 
-        for( /*empty*/ ; first != last ; ++ result , ++ first ){
-            * result = AV_MOVE( * first );
+        for( /*empty*/ ; first != last ; ++ output , ++ first ){
+            * output = AV_MOVE( * first );
         }
 
-        return result;
+        return output;
     }
 
     template<
@@ -157,17 +160,20 @@ namespace util
         , typename _OutputPtr
     >
     _OutputPtr
-    uninitialized_move_forward( _InputPtr first, _InputPtr last, _OutputPtr result )
+    uninitialized_move_forward( _InputPtr first, _InputPtr last, _OutputPtr output )
     {
         AV_PRECONDITION( first <= last );
 
-        for( /*empty*/ ; first != last ; ++result, ++first )
+        for( /*empty*/ ; first != last ; ++output, ++first )
         {
-            new ( static_cast< void * >(  result ) )
+            AV_PRECONDITION( first != 0 );
+            AV_PRECONDITION( output != 0 );
+
+            new ( static_cast< void * >(  output ) )
                 typename std::iterator_traits< _OutputPtr >::value_type( AV_MOVE( * first ) );
         }
 
-        return result;
+        return output;
     }
 
     template<
@@ -175,15 +181,18 @@ namespace util
         , typename _OutputPtr
     >
     _OutputPtr
-    move_backward( _InputPtr first, _InputPtr last, _OutputPtr result )
+    move_backward( _InputPtr first, _InputPtr last, _OutputPtr output )
     {
         AV_PRECONDITION( first <= last );
 
         while( first != last ){
-            *( -- result ) = AV_MOVE( * ( -- last ) );
+            -- output;
+            -- last;
+
+            * output = AV_MOVE( * last );
         }
 
-        return result;
+        return output;
     }
 }
 
@@ -331,6 +340,8 @@ namespace array
         }
 
         void setSize( std::size_t newSize ){
+            AV_PRECONDITION( _data != 0 || newSize == 0 );
+
             _size = newSize;
         }
 
@@ -343,6 +354,8 @@ namespace array
         }
 
         void setCapacity( std::size_t newCapacity ){
+            AV_PRECONDITION( _data != 0 || newCapacity == 0 );
+
             _capacity = newCapacity;
         }
 
@@ -520,8 +533,8 @@ namespace array
 
         array::destroy_deallocate( array, allocator );
 
-        array.setCapacity( newArray.getCapacity() );
         array.setData( newArray.getData() );
+        array.setCapacity( newArray.getCapacity() );
     }
 
     template<
@@ -565,6 +578,7 @@ namespace array
     {
         AV_PRECONDITION( array.size() + 1 <= array.capacity() );
         AV_PRECONDITION( util::is_between( array.begin(), pos, array.end() ) );
+        AV_PRECONDITION( array.end() != 0 );
 
         new ( static_cast< void * >( array.end() ) ) _T();
 
@@ -605,8 +619,6 @@ namespace array
                 return false;
             }
         }
-
-        new ( static_cast< void * >( array.end() ) ) _T();
 
         insert( array, greaterEqual, t );
 
@@ -758,34 +770,41 @@ namespace util
 {
 
 template<
-      typename _Iterator1
-    , typename _Iterator2
-    , typename _IteratorOutput
+      typename _InputPtr1
+    , typename _InputPtr2
+    , typename _OutputPtr
     , typename _Cmp
 >
-_IteratorOutput
+_OutputPtr
 move_merge_into_uninitialized(
-      _Iterator1 first1
-    , _Iterator1 last1
-    , _Iterator2 first2
-    , _Iterator2 last2
-    , _IteratorOutput output
+      _InputPtr1 first1
+    , _InputPtr1 last1
+    , _InputPtr2 first2
+    , _InputPtr2 last2
+    , _OutputPtr output
     , _Cmp cmp = _Cmp()
 )
 {
+    AV_PRECONDITION( first1 <= last1 );
+    AV_PRECONDITION( first2 <= last2 );
+
     while( first1 != last1 && first2 != last2 )
     {
+        AV_PRECONDITION( first1 != 0 );
+        AV_PRECONDITION( first2 != 0 );
+        AV_PRECONDITION( output != 0 );
+
         if( cmp( * first1, * first2 ) )
         {
             new ( static_cast< void * >( output ) )
-                typename std::iterator_traits< _IteratorOutput >::value_type( AV_MOVE( * first1 ) );
+                typename std::iterator_traits< _OutputPtr >::value_type( AV_MOVE( * first1 ) );
 
             ++ output;
             ++ first1;
         }
         else{
             new ( static_cast< void * >( output ) )
-                typename std::iterator_traits< _IteratorOutput >::value_type( AV_MOVE( * first2 ) );
+                typename std::iterator_traits< _OutputPtr >::value_type( AV_MOVE( * first2 ) );
 
             ++ output;
             ++ first2;
@@ -1452,6 +1471,12 @@ public:
 
     typedef array::Array< typename _Storage::const_iterator > _Erased;
 
+#ifdef AV_ENABLE_EXTENSIONS
+    public:
+#else
+    private:
+#endif
+
     //
     // extension, faster, non STL compatible version of iterator, working with _find end _end
     //
@@ -1928,6 +1953,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reserve( std::size_t newStorageC
         _buffer.setSize( 0 );
         _buffer.setCapacity( newBufferCapacity );
     }
+
+    AV_CHECK( _buffer.empty() );
 }
 
 template<
@@ -2162,7 +2189,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
     _Mapped const & m = value.second;
 
     {//push back to storage
-        if( tryToPushBack( k, m ) ){
+        if( tryToPushBack( k, m ) )
+        {
             _InsertImplResult result;
             result._isInserted = true;
             result._positionInStorage = ( _storage.end() - 1 );
@@ -2328,11 +2356,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToRemoveStorageBack(
     typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
 )
 {
-    _TryToRemoveBackResult result;
-    result._anyItemRemoved = false;
-    result._erasedItemRemoved = false;
-
     if( pos + 1 != _storage.end() ){
+        _TryToRemoveBackResult result;
+        result._anyItemRemoved = false;
+        result._erasedItemRemoved = false;
+
         return result;
     }
 
@@ -2340,16 +2368,22 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToRemoveStorageBack(
 
     _storage.setSize( _storage.size() - 1 );
 
-    result._anyItemRemoved = true;
-
     if(
            _erased.empty() == false
         && _erased.back() == pos
     ){
         _erased.setSize( _erased.size() - 1 );
 
+        _TryToRemoveBackResult result;
+        result._anyItemRemoved = true;
         result._erasedItemRemoved = true;
+
+        return result;
     }
+
+    _TryToRemoveBackResult result;
+    result._anyItemRemoved = true;
+    result._erasedItemRemoved = false;
 
     return result;
 }
@@ -2487,8 +2521,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::find( _Key const & k )
 {
     _FindImplResult const result = findImpl( k );
 
-    if( result._currentPosition == 0 )
-    {
+    if( result._currentPosition == 0 ){
         return end();
     }
     else if( result._positionInBuffer == 0 )
@@ -2619,8 +2652,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
             typename _Storage::iterator const foundInBuffer
                 = array::find_in_sorted( _buffer.begin(), _buffer.end(), k, value_comp() );
 
-            if( foundInBuffer == _buffer.end() )
-            {
+            if( foundInBuffer == _buffer.end() ){
                 return 0;
             }
             else
@@ -2767,7 +2799,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
     {
         bool const isEqual = _cmp( k, greaterEqualInBuffer->first ) == false;
 
-        if( isEqual ){
+        if( isEqual )
+        {
             _FindOrInsertToBufferResult result;
             result._positionInBuffer = greaterEqualInBuffer;
             result._isInserted = false;
@@ -2781,7 +2814,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
     {
         merge();
 
-        AV_PRECONDITION( _buffer.empty() );
+        AV_CHECK( _buffer.empty() );
 
         array::insert( _buffer, _buffer.begin(), value_type_mutable( k, m ) );
 
