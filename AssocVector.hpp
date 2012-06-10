@@ -720,7 +720,38 @@ namespace array
 
         std::size_t numberOfItemsToCreateByPlacementNew = buffer.size();
 
-        // todo: unroll loop
+        while(
+               rCurrentInBuffer != rEndInBuffer
+            && numberOfItemsToCreateByPlacementNew != 0
+        )
+        {
+            if(
+                   rCurrentInStorage == rEndInStorage
+                || cmp( * rCurrentInStorage, * rCurrentInBuffer )
+            )
+            {
+                new ( static_cast< void * >( rWhereInsertInStorage ) )
+                    _T( AV_MOVE( * rCurrentInBuffer ) );
+
+                numberOfItemsToCreateByPlacementNew -= 1;
+
+                -- rCurrentInBuffer;
+                -- rWhereInsertInStorage;
+            }
+            else
+            {
+                new ( static_cast< void * >( rWhereInsertInStorage ) )
+                    _T( AV_MOVE( * rCurrentInStorage ) );
+
+                numberOfItemsToCreateByPlacementNew -= 1;
+
+                -- rCurrentInStorage;
+                -- rWhereInsertInStorage;
+            }
+        }
+
+        AV_CHECK( numberOfItemsToCreateByPlacementNew == 0 );
+
         while( rCurrentInBuffer != rEndInBuffer )
         {
             if(
@@ -728,34 +759,14 @@ namespace array
                 || cmp( * rCurrentInStorage, * rCurrentInBuffer )
             )
             {
-                if( numberOfItemsToCreateByPlacementNew != 0 )
-                {
-                    new ( static_cast< void * >( rWhereInsertInStorage ) )
-                        _T( AV_MOVE( * rCurrentInBuffer ) );
-
-                    numberOfItemsToCreateByPlacementNew -= 1;
-                }
-                else
-                {
-                    * rWhereInsertInStorage = AV_MOVE( * rCurrentInBuffer );
-                }
+                * rWhereInsertInStorage = AV_MOVE( * rCurrentInBuffer );
 
                 -- rCurrentInBuffer;
                 -- rWhereInsertInStorage;
             }
             else
             {
-                if( numberOfItemsToCreateByPlacementNew != 0 )
-                {
-                    new ( static_cast< void * >( rWhereInsertInStorage ) )
-                        _T( AV_MOVE( * rCurrentInStorage ) );
-
-                    numberOfItemsToCreateByPlacementNew -= 1;
-                }
-                else
-                {
-                    * rWhereInsertInStorage = AV_MOVE( * rCurrentInStorage );
-                }
+                * rWhereInsertInStorage = AV_MOVE( * rCurrentInStorage );
 
                 -- rCurrentInStorage;
                 -- rWhereInsertInStorage;
