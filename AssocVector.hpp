@@ -34,6 +34,10 @@
 #define AV_CHECK( condition ) assert( ( condition ) );
 #define AV_POSTCONDITION( condition ) assert( ( condition ) );
 
+#ifndef NDEBUG
+    #define AV_DEBUG
+#endif
+
 namespace util
 {
     //
@@ -521,8 +525,6 @@ namespace array
     {
         AV_PRECONDITION( capacity <= allocator.max_size() );
 
-        std::size_t const size = array.size();
-
         if( capacity <= array.capacity() ){
             return;
         }
@@ -862,13 +864,13 @@ namespace detail
     }
 
     //
-    // AssocVectorIterator
+    // AssocVectorLazyIterator
     //
     template<
           typename _Iterator
         , typename _Container
     >
-    struct AssocVectorIterator
+    struct AssocVectorLazyIterator
     {
     private:
         typedef typename std::iterator_traits< _Iterator >::pointer pointer_mutable;
@@ -890,58 +892,68 @@ namespace detail
             , typename value_type::second_type
         > * pointer;
 
-        AssocVectorIterator(
+        AssocVectorLazyIterator(
             typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
             : _container( 0 )
+
             , _currentInStorage( 0 )
             , _currentInBuffer( 0 )
-            , _currentPosition( 0 )
+            , _currentInErased( 0 )
+
+            , _current( 0 )
         {
         }
 
         template< typename _Iter >
-        AssocVectorIterator( AssocVectorIterator< _Iter, _Container > const & other )
+        AssocVectorLazyIterator( AssocVectorLazyIterator< _Iter, _Container > const & other )
             : _container( other.getContainer() )
 
             , _currentInStorage( other.getCurrentInStorage() )
             , _currentInBuffer( other.getCurrentInBuffer() )
             , _currentInErased( other.getCurrentInErased() )
 
-            , _currentPosition( other.getCurrent() )
+            , _current( other.getCurrent() )
         {
         }
 
-        AssocVectorIterator(
+        AssocVectorLazyIterator(
               _Container const * container
             , pointer_mutable currentInStorage
             , pointer_mutable currentInBuffer
+            , typename _Container::_Erased::const_iterator currentInErased
             , pointer_mutable current
         )
             : _container( container )
 
             , _currentInStorage( currentInStorage )
             , _currentInBuffer( currentInBuffer )
-        {
-            _currentInErased = std::lower_bound(
-                  _container->erased().begin()
-                , _container->erased().end()
-                , _currentInStorage
-                , std::less< typename _Container::_Storage::const_iterator >()
-            );
+            , _currentInErased( currentInErased )
 
-            if( current == 0 )
+            , _current( current )
+        {
+            AV_PRECONDITION( container != 0 );
+            AV_PRECONDITION( validate() );
+
+            if( _currentInErased == 0 )
             {
-                _currentPosition = calculateCurrent();
+                AV_CHECK( _currentInStorage );
+
+                _currentInErased = std::lower_bound(
+                      _container->erased().begin()
+                    , _container->erased().end()
+                    , _currentInStorage
+                    , std::less< typename _Container::_Storage::const_iterator >()
+                );
             }
-            else
-            {
-                _currentPosition = current;
+
+            if( _current == 0 ){
+                _current = calculateCurrent();
             }
         }
 
-        AssocVectorIterator &
-        operator=( AssocVectorIterator const & other )
+        AssocVectorLazyIterator &
+        operator=( AssocVectorLazyIterator const & other )
         {
             _container = other._container;
 
@@ -949,61 +961,66 @@ namespace detail
             _currentInBuffer = other._currentInBuffer;
             _currentInErased = other._currentInErased;
 
-            _currentPosition = other._currentPosition;
+            _current = other._current;
 
             return * this;
         }
 
-        bool operator==( AssocVectorIterator const & other )const{
+        bool operator==( AssocVectorLazyIterator const & other )const{
             return equal( *this, other );
         }
 
-        bool operator!=( AssocVectorIterator const & other )const{
+        bool operator!=( AssocVectorLazyIterator const & other )const{
             return ! ( ( * this ) == other );
         }
 
-        AssocVectorIterator & operator++()
+        AssocVectorLazyIterator & operator++()
         {
-            if( _currentPosition == 0 ){
+            if( _current == 0 ){
                 return * this;
             }
-            else if( _currentPosition == _currentInStorage ){
+
+            resolveLazyValues();
+
+            if( _current == _currentInStorage ){
                 ++ _currentInStorage;
             }
             else{
                 ++ _currentInBuffer;
             }
 
-            _currentPosition = calculateCurrent();
+            _current = calculateCurrent();
 
             return * this;
         }
 
-        AssocVectorIterator operator++( int )
+        AssocVectorLazyIterator operator++( int )
         {
-            AssocVectorIterator result( * this );
+            AssocVectorLazyIterator result( * this );
 
             ( * this ).operator++();
 
             return result;
         }
 
-        AssocVectorIterator & operator--()
+        AssocVectorLazyIterator & operator--()
         {
+            resolveLazyValues();
+
             if(
                    _currentInStorage == _container->storage().begin()
                 && _currentInBuffer == _container->buffer().begin()
             ){
                 return * this;
             }
-            else if( _currentPosition == 0 )
+            else if( _current == 0 )
             {
                 -- _currentInStorage;
                 -- _currentInBuffer;
             }
             else
             {
-                if( _currentPosition == _currentInStorage ){
+                if( _current == _currentInStorage ){
                     -- _currentInStorage;
                 }
                 else{
@@ -1011,14 +1028,14 @@ namespace detail
                 }
             }
 
-            _currentPosition = calculateCurrent();
+            _current = calculateCurrent();
 
             return * this;
         }
 
-        AssocVectorIterator operator--( int )
+        AssocVectorLazyIterator operator--( int )
         {
-            AssocVectorIterator result( * this );
+            AssocVectorLazyIterator result( * this );
 
             ( * this ).operator--();
 
@@ -1027,28 +1044,28 @@ namespace detail
         }
 
         reference operator*()const{
-            AV_PRECONDITION( _currentPosition != 0 );
+            AV_PRECONDITION( _current != 0 );
 
             return * base();
         }
 
         pointer operator->()const{
-            AV_PRECONDITION( _currentPosition != 0 );
+            AV_PRECONDITION( _current != 0 );
 
             return base();
         }
 
         pointer base()const{
-            AV_PRECONDITION( _currentPosition != 0 );
+            AV_PRECONDITION( _current != 0 );
 
             // make key const
             // pair< T1, T2 > * -> pair< T1 const, T2 > *
-            //return reinterpret_cast< pointer >( _currentPosition );
+            //return reinterpret_cast< pointer >( _current );
 
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
-                        reinterpret_cast< void const * >( _currentPosition )
+                        reinterpret_cast< void const * >( _current )
                     )
                 );
         }
@@ -1060,13 +1077,134 @@ namespace detail
         pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
         typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
 
-        pointer_mutable getCurrent()const{ return _currentPosition; }
+        pointer_mutable getCurrent()const{ return _current; }
 
     private:
+        void
+        resolveLazyValues()
+        {
+            if( _currentInBuffer == 0 )
+            {
+                _currentInBuffer = const_cast< pointer_mutable >(
+                    std::lower_bound(
+                          _container->buffer().begin()
+                        , _container->buffer().end()
+                        , * _current
+                        , _container->value_comp()
+                    )
+                );
+            }
+            else if( _currentInStorage == 0 )
+            {
+                _currentInStorage = const_cast< pointer_mutable >(
+                    std::lower_bound(
+                          _container->storage().begin()
+                        , _container->storage().end()
+                        , * _current
+                        , _container->value_comp()
+                    )
+                );
+            }
+        }
+
+        bool
+        validate()const
+        {
+            if( _currentInStorage == 0 && _currentInBuffer == 0 && _currentInErased == 0 && _current == 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage == 0 && _currentInBuffer == 0 && _currentInErased == 0 && _current != 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage == 0 && _currentInBuffer == 0 && _currentInErased != 0 && _current == 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage == 0 && _currentInBuffer == 0 && _currentInErased != 0 && _current != 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage == 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current == 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage == 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current != 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage == 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current == 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage == 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current != 0 ){
+                // not found in storage, inserted to buffer, buffer merged to storage
+                AV_CHECK( util::is_between( _container->buffer().begin(), _currentInBuffer, _container->buffer().end() ) );
+                AV_CHECK( _currentInErased == _container->erased().end() );
+                AV_CHECK( _current == _currentInBuffer );
+
+                // _currentInStorage <- lazy in operator++/operator--
+            }
+            else
+            if( _currentInStorage != 0 && _currentInBuffer == 0 && _currentInErased == 0 && _current == 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage != 0 && _currentInBuffer == 0 && _currentInErased == 0 && _current != 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage != 0 && _currentInBuffer == 0 && _currentInErased != 0 && _current == 0 ){
+                AV_CHECK( false );
+            }
+            else
+            if( _currentInStorage != 0 && _currentInBuffer == 0 && _currentInErased != 0 && _current != 0 ){
+                // found in storage
+                AV_CHECK( util::is_between( _container->storage().begin(), _currentInStorage, _container->storage().end() ) );
+                AV_CHECK( util::is_between( _container->erased().begin(), _currentInErased, _container->erased().end() ) );
+                AV_CHECK( _current == _currentInStorage );
+
+                // _currentInBuffer <- lazy in operator++/operator--
+            }
+            else
+            if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current == 0 ){
+                AV_PRECONDITION( false );
+            }
+            else
+            if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current != 0 ){
+                // found in buffer / inserted to buffer
+                AV_CHECK( util::is_between( _container->storage().begin(), _currentInStorage, _container->storage().end() ) );
+                AV_CHECK( util::is_between( _container->buffer().begin(), _currentInBuffer, _container->buffer().end() ) );
+                AV_CHECK( _current == _currentInBuffer );
+
+                // _currentInErased <- get it right now
+            }
+            else
+            if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current == 0 ){
+                // begin iterator / end iterator
+
+                // current <- get it right now
+            }
+            else
+            if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current != 0 ){
+                // not known case, but probably not valid
+            }
+            else{
+                AV_CHECK( false );
+            }
+
+            return true;
+        }
+
         pointer_mutable
         calculateCurrent()
         {
-           while(
+            AV_CHECK( _currentInStorage );
+            AV_CHECK( _currentInBuffer );
+            AV_CHECK( _currentInErased );
+
+            while(
                    _currentInErased != _container->erased().end()
                 && _currentInStorage != _container->storage().end()
                 && _currentInStorage == *_currentInErased
@@ -1106,17 +1244,17 @@ namespace detail
 
         typename _Container::_Erased::const_iterator _currentInErased;
 
-        pointer_mutable _currentPosition;
+        pointer_mutable _current;
     };
 
     //
-    // _AssocVectorIterator, simplified version of AssocVectorIterator, works with _find and _end
+    // _AssocVectorLazyIterator, simplified version of AssocVectorLazyIterator, works with _find and _end
     //
     template<
           typename _Iterator
         , typename _Container
     >
-    struct _AssocVectorIterator
+    struct _AssocVectorLazyIterator
     {
     private:
         typedef typename std::iterator_traits< _Iterator >::pointer pointer_mutable;
@@ -1136,77 +1274,77 @@ namespace detail
             , typename value_type::second_type
         > * pointer;
 
-        _AssocVectorIterator(
+        _AssocVectorLazyIterator(
             typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
-            : _currentPosition( 0 )
+            : _current( 0 )
         {
         }
 
         template< typename _Iter >
-        _AssocVectorIterator( _AssocVectorIterator< _Iter, _Container > const & other )
-            : _currentPosition( other.getCurrent() )
+        _AssocVectorLazyIterator( _AssocVectorLazyIterator< _Iter, _Container > const & other )
+            : _current( other.getCurrent() )
         {
         }
 
-        _AssocVectorIterator( pointer_mutable current )
-            : _currentPosition( current )
+        _AssocVectorLazyIterator( pointer_mutable current )
+            : _current( current )
         {
         }
 
-        _AssocVectorIterator &
-        operator=( _AssocVectorIterator const & other )
+        _AssocVectorLazyIterator &
+        operator=( _AssocVectorLazyIterator const & other )
         {
-            _currentPosition = other._currentPosition;
+            _current = other._current;
 
             return * this;
         }
 
-        bool operator==( _AssocVectorIterator const & other )const{
-            return _currentPosition == other.getCurrent();
+        bool operator==( _AssocVectorLazyIterator const & other )const{
+            return _current == other.getCurrent();
         }
 
-        bool operator!=( _AssocVectorIterator const & other )const{
+        bool operator!=( _AssocVectorLazyIterator const & other )const{
             return ! ( ( * this ) == other );
         }
 
         reference operator*()const{
-            AV_PRECONDITION( _currentPosition != 0 );
+            AV_PRECONDITION( _current != 0 );
 
             return * base();
         }
 
         pointer operator->()const{
-            AV_PRECONDITION( _currentPosition != 0 );
+            AV_PRECONDITION( _current != 0 );
 
             return base();
         }
 
         pointer base()const{
-            AV_PRECONDITION( _currentPosition != 0 );
+            AV_PRECONDITION( _current != 0 );
 
             // make key const
             // pair< T1, T2 > * -> pair< T1 const, T2 > *
-            //return reinterpret_cast< pointer >( _currentPosition );
+            //return reinterpret_cast< pointer >( _current );
 
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
-                        reinterpret_cast< void const * >( _currentPosition )
+                        reinterpret_cast< void const * >( _current )
                     )
                 );
         }
 
         operator bool()const
         {
-            return _currentPosition != 0;
+            return _current != 0;
         }
 
         // public for copy constructor only : Iterator -> ConstIterator
-        pointer_mutable getCurrent()const{ return _currentPosition; }
+        pointer_mutable getCurrent()const{ return _current; }
 
     private:
-        pointer_mutable _currentPosition;
+        pointer_mutable _current;
     };
 
     //
@@ -1246,7 +1384,7 @@ namespace detail
             , _currentInStorage( 0 )
             , _currentInBuffer( 0 )
 
-            , _currentPosition( 0 )
+            , _current( 0 )
         {
         }
 
@@ -1258,7 +1396,7 @@ namespace detail
             , _currentInBuffer( other.getCurrentInBuffer() )
             , _currentInErased( other.getCurrentInErased() )
 
-            , _currentPosition( other.getCurrent() )
+            , _current( other.getCurrent() )
         {
         }
 
@@ -1272,6 +1410,9 @@ namespace detail
 
             , _currentInStorage( currentInStorage )
             , _currentInBuffer( currentInBuffer )
+            , _currentInErased( 0 )
+
+            , _current( 0 )
         {
             _currentInErased  = util::last_less_equal(
                       _container->erased().begin()
@@ -1285,11 +1426,14 @@ namespace detail
             }
 
             if( current == 0 ){
-                _currentPosition = calculateCurrentReverse();
+                _current = calculateCurrentReverse();
             }
             else{
-                _currentPosition = current;
+                _current = current;
             }
+
+            AV_CHECK( _currentInErased != 0 );
+            AV_CHECK( _current != 0 );
         }
 
         AssocVectorReverseIterator & operator=( AssocVectorReverseIterator const & other )
@@ -1300,7 +1444,7 @@ namespace detail
             _currentInBuffer = other._currentInBuffer;
             _currentInErased = other._currentInErased;
 
-            _currentPosition = other._currentPosition;
+            _current = other._current;
 
             return * this;
         }
@@ -1315,17 +1459,17 @@ namespace detail
 
         AssocVectorReverseIterator & operator++()
         {
-            if( _currentPosition == 0 ){
+            if( _current == 0 ){
                 return * this;
             }
-            else if( _currentPosition == _currentInStorage ){
+            else if( _current == _currentInStorage ){
                 -- _currentInStorage;
             }
             else{
                 -- _currentInBuffer;
             }
 
-            _currentPosition = calculateCurrentReverse();
+            _current = calculateCurrentReverse();
 
             return * this;
         }
@@ -1347,14 +1491,14 @@ namespace detail
             ){
                 return * this;
             }
-            else if( _currentPosition == 0 )
+            else if( _current == 0 )
             {
                 ++ _currentInStorage;
                 ++ _currentInBuffer;
             }
             else
             {
-                if( _currentPosition == _currentInStorage ){
+                if( _current == _currentInStorage ){
                     ++ _currentInStorage;
                 }
                 else{
@@ -1362,7 +1506,7 @@ namespace detail
                 }
             }
 
-            _currentPosition = calculateCurrentReverse();
+            _current = calculateCurrentReverse();
 
             return * this;
         }
@@ -1388,7 +1532,7 @@ namespace detail
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
-                        reinterpret_cast< void const * >( _currentPosition )
+                        reinterpret_cast< void const * >( _current )
                     )
                 );
         }
@@ -1400,7 +1544,7 @@ namespace detail
         pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
         typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
 
-        pointer_mutable getCurrent()const{ return _currentPosition; }
+        pointer_mutable getCurrent()const{ return _current; }
 
     private:
         pointer_mutable
@@ -1443,7 +1587,7 @@ namespace detail
         pointer_mutable _currentInBuffer;
         typename _Container::_Erased::const_iterator _currentInErased;
 
-        pointer_mutable _currentPosition;
+        pointer_mutable _current;
     };
 
 } // namespace detail
@@ -1472,8 +1616,8 @@ public:
 
     typedef util::CmpByFirst< value_type_mutable, _Cmp > value_compare;
 
-    typedef detail::AssocVectorIterator< value_type_mutable *, AssocVector > iterator;
-    typedef detail::AssocVectorIterator< value_type_mutable const *, AssocVector > const_iterator;
+    typedef detail::AssocVectorLazyIterator< value_type_mutable *, AssocVector > iterator;
+    typedef detail::AssocVectorLazyIterator< value_type_mutable const *, AssocVector > const_iterator;
 
     typedef detail::AssocVectorReverseIterator< value_type_mutable *, AssocVector > reverse_iterator;
     typedef detail::AssocVectorReverseIterator< value_type_mutable const *, AssocVector > const_reverse_iterator;
@@ -1491,13 +1635,13 @@ public:
     //
     // extension, faster, non STL compatible version of iterator, working with _find end _end
     //
-    typedef detail::_AssocVectorIterator< value_type_mutable *, AssocVector > _iterator;
-    typedef detail::_AssocVectorIterator< value_type_mutable const *, AssocVector > _const_iterator;
+    typedef detail::_AssocVectorLazyIterator< value_type_mutable *, AssocVector > _iterator;
+    typedef detail::_AssocVectorLazyIterator< value_type_mutable const *, AssocVector > _const_iterator;
 
 private:
     struct _FindOrInsertToBufferResult
     {
-        typename _Storage::iterator _positionInBuffer;
+        typename _Storage::iterator _inBuffer;
         bool _isInserted;
         bool _isReallocated;
     };
@@ -1506,23 +1650,44 @@ private:
     {
         bool _anyItemRemoved;
         bool _erasedItemRemoved;
-
     };
 
     struct _FindImplResult
     {
-        typename _Storage::iterator _positionInStorage;
-        typename _Storage::iterator _positionInBuffer;
-        typename _Storage::iterator _currentPosition;
+        typename _Storage::iterator _inStorage;
+        typename _Storage::iterator _inBuffer;
+        typename _Erased::iterator _inErased;
+        typename _Storage::iterator _current;
+
+        bool validate()const
+        {
+            return
+                   ( _current == 0 && _inStorage == 0 && _inBuffer == 0 && _inErased == 0 )
+                || _inStorage != 0;
+        }
     };
 
     struct _InsertImplResult
     {
         bool _isInserted;
 
-        typename _Storage::iterator _positionInStorage;
-        typename _Storage::iterator _positionInBuffer;
-        typename _Storage::iterator _currentPosition;
+        typename _Storage::iterator _inStorage;
+        typename _Storage::iterator _inBuffer;
+        typename _Erased::iterator _inErased;
+        typename _Storage::iterator _current;
+
+        bool validate()const
+        {
+            if( _current == 0 ){
+                return false;
+            }
+
+            if( _inStorage == 0 && ( _inBuffer == 0 || _inErased == 0 ) ){
+                return false;
+            }
+
+            return true;
+        }
     };
 
 public:
@@ -1977,7 +2142,7 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::begin()
 {
-    return iterator( this, _storage.begin(), _buffer.begin(), 0 );
+    return iterator( this, _storage.begin(), _buffer.begin(), _erased.begin(), 0 );
 }
 
 template<
@@ -2001,7 +2166,7 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::begin()const
 {
-    return const_iterator( this, _storage.begin(), _buffer.begin(), 0 );
+    return const_iterator( this, _storage.begin(), _buffer.begin(), _erased.begin(), 0 );
 }
 
 template<
@@ -2025,7 +2190,7 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::end()
 {
-    return iterator( this, _storage.end(), _buffer.end(), 0 );
+    return iterator( this, _storage.end(), _buffer.end(), _erased.end(), 0 );
 }
 
 template<
@@ -2061,7 +2226,7 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::end()const
 {
-    return const_iterator( this, _storage.end(), _buffer.end(), 0 );
+    return const_iterator( this, _storage.end(), _buffer.end(), _erased.end(), 0 );
 }
 
 template<
@@ -2123,56 +2288,16 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert( value_type const & value
 {
     _InsertImplResult const result = insertImpl( value );
 
-    if( result._positionInStorage == 0 )
-    {
-        typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
-              _storage.begin()
-            , _storage.end()
-            , value.first
-            , value_comp()
-        );
-
-        return std::make_pair(
-              iterator(
-                  this
-                , greaterEqualInStorage
-                , result._positionInBuffer
-                , result._currentPosition
-              )
-            , result._isInserted
-        );
-    }
-    else if( result._positionInBuffer == 0 )
-    {
-        typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
-              _buffer.begin()
-            , _buffer.end()
-            , value.first
-            , value_comp()
-        );
-
-        return std::make_pair(
-              iterator(
-                  this
-                , result._positionInStorage
-                , greaterEqualInBuffer
-                , result._currentPosition
-              )
-            , result._isInserted
-        );
-    }
-    else
-    {
-        return std::make_pair(
-              iterator(
-                  this
-                , result._positionInStorage
-                , result._positionInBuffer
-                , result._currentPosition
-              )
-            , result._isInserted
-        );
-    }
+    return std::make_pair(
+          iterator(
+              this
+            , result._inStorage
+            , result._inBuffer
+            , result._inErased
+            , result._current
+          )
+        , result._isInserted
+    );
 }
 
 template<
@@ -2204,9 +2329,12 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
         {
             _InsertImplResult result;
             result._isInserted = true;
-            result._positionInStorage = ( _storage.end() - 1 );
-            result._positionInBuffer = 0;
-            result._currentPosition = ( _storage.end() - 1 );
+            result._inStorage = ( _storage.end() - 1 );
+            result._inBuffer = 0;
+            result._inErased = _erased.end();
+            result._current = ( _storage.end() - 1 );
+
+            AV_POSTCONDITION( result.validate() );
 
             return result;
         }
@@ -2233,50 +2361,66 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
             result._isInserted = findOrInsertToBufferResult._isInserted;
 
             if( findOrInsertToBufferResult._isReallocated ){
-                result._positionInStorage = 0;
+                result._inStorage = 0;
+                result._inErased = _erased.end();
             }
             else{
-                result._positionInStorage = greaterEqualInStorage;
+                result._inStorage = greaterEqualInStorage;
+                result._inErased = 0;
             }
 
-            result._positionInBuffer = findOrInsertToBufferResult._positionInBuffer;
-            result._currentPosition = findOrInsertToBufferResult._positionInBuffer;
+            result._inBuffer = findOrInsertToBufferResult._inBuffer;
+            result._current = findOrInsertToBufferResult._inBuffer;
+
+            AV_POSTCONDITION( result.validate() );
 
             return result;
         }
     }
 
     {// check if not erased
-        typename _Erased::iterator const foundInErased = array::find_in_sorted(
+        typename _Erased::iterator const greaterEqualInErased = std::lower_bound(
               _erased.begin()
             , _erased.end()
             , greaterEqualInStorage
             , std::less< typename _Storage::const_iterator >()
         );
 
+        bool const itemNotMarkedAsErased
+            = greaterEqualInErased == _erased.end()
+            || std::less< typename _Storage::const_iterator >()
+                    ( greaterEqualInStorage, * greaterEqualInErased );
+
+        if( itemNotMarkedAsErased )
         {// item is in storage and is not marked as erased
-            if( foundInErased == _erased.end() )
-            {
-                _InsertImplResult result;
-                result._isInserted = false;
-                result._positionInStorage = greaterEqualInStorage;
-                result._positionInBuffer = 0;
-                result._currentPosition = greaterEqualInStorage;
+            _InsertImplResult result;
+            result._isInserted = false;
+            result._inStorage = greaterEqualInStorage;
+            result._inBuffer = 0;
+            result._inErased = greaterEqualInErased;
+            result._current = greaterEqualInStorage;
 
-                return result;
-            }
+            AV_POSTCONDITION( result.validate() );
+
+            return result;
         }
-
+        else
         {// item is in storage but is marked as erased
-            array::erase( _erased, foundInErased );
+            array::erase( _erased, greaterEqualInErased );
 
             greaterEqualInStorage->second = m;
 
             _InsertImplResult result;
             result._isInserted = true;
-            result._positionInStorage = greaterEqualInStorage;
-            result._positionInBuffer = 0;
-            result._currentPosition = greaterEqualInStorage;
+            result._inStorage = greaterEqualInStorage;
+            result._inBuffer = 0;
+
+            // greaterEqualInErased is after 'array::erase' but still valid
+            result._inErased = greaterEqualInErased;
+
+            result._current = greaterEqualInStorage;
+
+            AV_POSTCONDITION( result.validate() );
 
             return result;
         }
@@ -2467,21 +2611,39 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
     {// item is in storage, check in erased
         if( presentInStorage )
         {
-            if( isErased( greaterEqualInStorage ) )
+            typename _Erased::iterator greaterEqualInErased = std::lower_bound(
+                  _erased.begin()
+                , _erased.end()
+                , greaterEqualInStorage
+                , std::less< typename _Storage::const_iterator >()
+            );
+
+            bool const itemNotMarkedAsErased
+                = greaterEqualInErased == _erased.end()
+                || std::less< typename _Storage::const_iterator >()
+                        ( greaterEqualInStorage, * greaterEqualInErased );
+
+            if( itemNotMarkedAsErased )
             {
                 _FindImplResult result;
-                result._positionInStorage = 0;
-                result._positionInBuffer = 0;
-                result._currentPosition = 0;
+                result._inStorage = greaterEqualInStorage;
+                result._inBuffer = 0;
+                result._inErased = greaterEqualInErased;
+                result._current = greaterEqualInStorage;
+
+                AV_POSTCONDITION( result.validate() );
 
                 return result;
             }
             else
             {
                 _FindImplResult result;
-                result._positionInStorage = greaterEqualInStorage;
-                result._positionInBuffer = 0;
-                result._currentPosition = greaterEqualInStorage;
+                result._inStorage = 0;
+                result._inBuffer = 0;
+                result._inErased = 0;
+                result._current = 0;
+
+                AV_POSTCONDITION( result.validate() );
 
                 return result;
             }
@@ -2503,18 +2665,24 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
         if( presentInBuffer )
         {
             _FindImplResult result;
-            result._positionInStorage = greaterEqualInStorage;
-            result._positionInBuffer = greaterEqualInBuffer;
-            result._currentPosition = greaterEqualInBuffer;
+            result._inStorage = greaterEqualInStorage;
+            result._inBuffer = greaterEqualInBuffer;
+            result._inErased = 0;
+            result._current = greaterEqualInBuffer;
+
+            AV_POSTCONDITION( result.validate() );
 
             return result;
         }
         else
         {
             _FindImplResult result;
-            result._positionInStorage = 0;
-            result._positionInBuffer = 0;
-            result._currentPosition = 0;
+            result._inStorage = 0;
+            result._inBuffer = 0;
+            result._inErased = 0;
+            result._current = 0;
+
+            AV_POSTCONDITION( result.validate() );
 
             return result;
         }
@@ -2532,32 +2700,17 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::find( _Key const & k )
 {
     _FindImplResult const result = findImpl( k );
 
-    if( result._currentPosition == 0 ){
+    if( result._current == 0 ){
         return end();
-    }
-    else if( result._positionInBuffer == 0 )
-    {
-        typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
-              _buffer.begin()
-            , _buffer.end()
-            , k
-            , value_comp()
-        );
-
-        return iterator(
-              this
-            , result._positionInStorage
-            , greaterEqualInBuffer
-            , result._currentPosition
-        );
     }
     else
     {
         return iterator(
               this
-            , result._positionInStorage
-            , result._positionInBuffer
-            , result._currentPosition
+            , result._inStorage
+            , result._inBuffer
+            , result._inErased
+            , result._current
         );
     }
 }
@@ -2585,7 +2738,7 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_find( _Key const & k )
 {
-    return _iterator( findImpl( k )._currentPosition );
+    return _iterator( findImpl( k )._current );
 }
 
 template<
@@ -2813,7 +2966,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
         if( isEqual )
         {
             _FindOrInsertToBufferResult result;
-            result._positionInBuffer = greaterEqualInBuffer;
+            result._inBuffer = greaterEqualInBuffer;
             result._isInserted = false;
             result._isReallocated = false;
 
@@ -2830,7 +2983,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
         array::insert( _buffer, _buffer.begin(), value_type_mutable( k, m ) );
 
         _FindOrInsertToBufferResult result;
-        result._positionInBuffer = _buffer.begin();
+        result._inBuffer = _buffer.begin();
         result._isInserted = true;
         result._isReallocated = true;
 
@@ -2841,7 +2994,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
         array::insert( _buffer, greaterEqualInBuffer, value_type_mutable( k, m ) );
 
         _FindOrInsertToBufferResult result;
-        result._positionInBuffer = greaterEqualInBuffer;
+        result._inBuffer = greaterEqualInBuffer;
         result._isInserted = true;
         result._isReallocated = false;
 
