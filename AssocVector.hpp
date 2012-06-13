@@ -1740,6 +1740,8 @@ public:
     //
     std::pair< iterator, bool > insert( value_type const & value );
 
+    iterator insert( iterator hint, value_type const & value );
+
     template< typename _Iterator >
     inline void insert( _Iterator begin, _Iterator end );
 
@@ -2298,6 +2300,33 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert( value_type const & value
           )
         , result._isInserted
     );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
+      typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator hint
+    , value_type const & value
+)
+{
+    // todo: use hint
+    (void)(hint);
+
+    _InsertImplResult const result = insertImpl( value );
+
+    return
+        iterator(
+              this
+            , result._inStorage
+            , result._inBuffer
+            , result._inErased
+            , result._current
+        );
 }
 
 template<
