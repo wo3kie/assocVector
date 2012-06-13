@@ -2541,7 +2541,7 @@ void black_box_test()
 
     AV_ASSERT( isEqual( av, map ) );
 
-    for( int i = 0 ; i < 1 * 1024 ; ++ i )
+    for( int i = 0 ; i < 256 * 1024 ; ++ i )
     {
         unsigned const maxKeyValue = 128;
 
@@ -2648,7 +2648,7 @@ void mem_leak_test_1()
         typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
         AV av;
 
-        for( int i = 0 ; i < 1 * 1024 ; ++ i )
+        for( int i = 0 ; i < 256 * 1024 ; ++ i )
         {
             int const operation = rand() % 5;
 
@@ -2702,10 +2702,12 @@ void mem_leak_test_destructor()
     S3::destroyedObjects = 0;
 
     {
+        int const numberOfObjects = 1024;
+
         typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
         AV av;
 
-        for( int i = 0 ; i < 1024 ; ++ i ){
+        for( int i = 0 ; i < numberOfObjects ; ++ i ){
             av.insert( AV::value_type( i, S3() ) );
         }
     }
@@ -2727,7 +2729,7 @@ void mem_leak_test_clear()
     S3::createdObjects = 0;
     S3::destroyedObjects = 0;
 
-    int const numberOfObjects = 256;
+    int const numberOfObjects = 1024;
 
     typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
     AV av;
@@ -2755,7 +2757,7 @@ void mem_leak_test_copy_constructor()
     S3::destroyedObjects = 0;
 
     {
-        int const numberOfObjects = 256;
+        int const numberOfObjects = 1024;
 
         typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
         AV av;
@@ -2785,7 +2787,7 @@ void mem_leak_test_assign_operator()
     S3::destroyedObjects = 0;
 
     {
-        int const numberOfObjects = 256;
+        int const numberOfObjects = 1024;
 
         typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
         AV av;
@@ -2922,21 +2924,6 @@ void mem_leak_test_assign_operator()
 
 int main()
 {
-#ifdef AV_CXX11X_RVALUE_REFERENCE
-    cxx11x_move_test_1();
-    cxx11x_move_test_2();
-#endif
-
-    mem_leak_test_1();
-    mem_leak_test_destructor();
-    mem_leak_test_clear();
-    mem_leak_test_copy_constructor();
-    mem_leak_test_assign_operator();
-
-    black_box_test< S1 >();
-    black_box_test< S2 >();
-    black_box_test< S3 >();
-
     test_CmpByFirst_1();
     test_CmpByFirst_2();
     test_CmpByFirst_3();
@@ -3015,6 +3002,21 @@ int main()
     test_reverse_iterator_2();
 
     test_iterators_iterate_not_empty_storage_empty_cache();
+
+#ifdef AV_CXX11X_RVALUE_REFERENCE
+    cxx11x_move_test_1();
+    cxx11x_move_test_2();
+#endif
+
+    mem_leak_test_1();
+    mem_leak_test_destructor();
+    mem_leak_test_clear();
+    mem_leak_test_copy_constructor();
+    mem_leak_test_assign_operator();
+
+    black_box_test< S1 >();
+    black_box_test< S2 >();
+    black_box_test< S3 >();
 
     std::cout << "OK" << std::endl;
 

@@ -597,7 +597,7 @@ namespace array
           typename _T
         , typename _Cmp
     >
-    bool
+    std::pair< typename Array< _T >::iterator, bool >
     insert_in_sorted(
           Array< _T > & array
         , _T const & t
@@ -618,13 +618,13 @@ namespace array
             bool const isEqual = cmp( t, * greaterEqual ) == false;
 
             if( isEqual ){
-                return false;
+                return std::make_pair( greaterEqual, false );
             }
         }
 
         insert( array, greaterEqual, t );
 
-        return true;
+        return std::make_pair( greaterEqual, true );
     }
 
     template< typename _T >
@@ -945,6 +945,16 @@ namespace detail
                     , _currentInStorage
                     , std::less< typename _Container::_Storage::const_iterator >()
                 );
+
+                while(
+                       * _currentInErased == _currentInStorage
+                    && _currentInErased != _container->erased().end()
+                    && _currentInStorage != _container->storage().end()
+                )
+                {
+                    ++ _currentInErased;
+                    ++ _currentInStorage;
+                }
             }
 
             if( _current == 0 ){
@@ -1169,7 +1179,7 @@ namespace detail
             }
             else
             if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current == 0 ){
-                AV_PRECONDITION( false );
+                // erase from buffer + find in storage
             }
             else
             if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current != 0 ){
@@ -1183,6 +1193,8 @@ namespace detail
             else
             if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current == 0 ){
                 // begin iterator / end iterator
+                // erase from storage, not merged + find in buffer
+                // erase from storage, merged + find in buffer + find in storage
 
                 // current <- get it right now
             }
@@ -1412,9 +1424,9 @@ namespace detail
             , _currentInBuffer( currentInBuffer )
             , _currentInErased( 0 )
 
-            , _current( 0 )
+            , _current( current )
         {
-            _currentInErased  = util::last_less_equal(
+            _currentInErased = util::last_less_equal(
                       _container->erased().begin()
                     , _container->erased().end()
                     , _currentInStorage
@@ -1425,15 +1437,9 @@ namespace detail
                 _currentInErased = _container->erased().begin() - 1;
             }
 
-            if( current == 0 ){
+            if( _current == 0 ){
                 _current = calculateCurrentReverse();
             }
-            else{
-                _current = current;
-            }
-
-            AV_CHECK( _currentInErased != 0 );
-            AV_CHECK( _current != 0 );
         }
 
         AssocVectorReverseIterator & operator=( AssocVectorReverseIterator const & other )
@@ -1690,6 +1696,13 @@ private:
         }
     };
 
+    struct _TryToEraseFromStorageResult
+    {
+        typename _Erased::iterator _inErased;
+        bool _isErased;
+        bool _isMerged;
+    };
+
 public:
     //
     // Memory Management
@@ -1765,7 +1778,7 @@ public:
     // erase
     //
     std::size_t erase( key_type const & k );
-    void erase( iterator pos );
+    iterator erase( iterator pos );
 
     //
     // observers
@@ -1830,9 +1843,10 @@ private:
     tryToRemoveStorageBack( typename _Storage::iterator pos );
 
     //
-    // eraseFromStorage
+    // tryToEraseFromStorage
     //
-    bool eraseFromStorage( typename _Storage::iterator pos );
+    _TryToEraseFromStorageResult
+    tryToEraseFromStorage( typename _Storage::iterator pos );
 
     //
     // isErased
@@ -2578,22 +2592,38 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-bool
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::eraseFromStorage(
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryToEraseFromStorageResult
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToEraseFromStorage(
     typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
 )
 {
-    bool const result = array::insert_in_sorted(
-          _erased
-        , typename _Storage::const_iterator( pos )
-        , std::less< typename _Storage::const_iterator >()
-    );
+    std::pair< typename _Erased::iterator, bool > const insertInSortedResult
+        = array::insert_in_sorted(
+              _erased
+            , typename _Storage::const_iterator( pos )
+            , std::less< typename _Storage::const_iterator >()
+        );
 
-    if( _erased.full() ){
+    if( _erased.full() )
+    {
         mergeStorageWithErased();
-    }
 
-    return result;
+        _TryToEraseFromStorageResult result;
+        result._inErased = _erased.end();
+        result._isErased = true;
+        result._isMerged = true;
+
+        return result;
+    }
+    else
+    {
+        _TryToEraseFromStorageResult result;
+        result._inErased = insertInSortedResult.first;
+        result._isErased = insertInSortedResult.second;
+        result._isMerged = false;
+
+        return result;
+    }
 }
 
 template<
@@ -2872,7 +2902,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
     }
 
     {//erase from _storage
-        return eraseFromStorage( foundInStorage );
+        return tryToEraseFromStorage( foundInStorage )._isErased ? 1 : 0;
     }
 }
 
@@ -2882,7 +2912,7 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-void
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
 {
     // iterator::base converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
@@ -2890,14 +2920,26 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.base() );
 
     {//erase from _buffer
-        if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) ){
-            return array::erase( _buffer, posBase );
+        if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) )
+        {
+            _Key const key = pos->first;
+
+            array::erase( _buffer, posBase );
+
+            typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
+                  _storage.begin()
+                , _storage.end()
+                , key
+                , value_comp()
+            );
+
+            return iterator( this, greaterEqualInStorage, posBase, 0, 0 );
         }
     }
 
     {//item not present in container
         if( util::is_between( _storage.begin(), posBase, _storage.end() ) == false ){
-            return;
+            return end();
         }
     }
 
@@ -2905,12 +2947,38 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
         _TryToRemoveBackResult const result = tryToRemoveStorageBack( posBase );
 
         if( result._anyItemRemoved ){
-            return;
+            return end();
         }
     }
 
     {//erase from _storage
-        eraseFromStorage( posBase );
+        _Key const key = pos->first;
+
+        _TryToEraseFromStorageResult const result = tryToEraseFromStorage( posBase );
+
+        if( result._isErased == false ){
+            return end();
+        }
+
+        typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
+              _buffer.begin()
+            , _buffer.end()
+            , key
+            , value_comp()
+        );
+
+        if( result._isMerged == false ){
+            return iterator( this, posBase + 1, greaterEqualInBuffer, result._inErased, 0 );
+        }
+
+        typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
+              _storage.begin()
+            , _storage.end()
+            , key
+            , value_comp()
+        );
+
+        return iterator( this, greaterEqualInStorage, greaterEqualInBuffer, _erased.end(), 0 );
     }
 }
 
