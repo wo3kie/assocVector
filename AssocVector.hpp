@@ -720,6 +720,10 @@ namespace array
             && numberOfItemsToCreateByPlacementNew != 0
         )
         {
+            AV_CHECK( rWhereInsertInStorage != 0 );
+            AV_CHECK( rCurrentInStorage != 0 );
+            AV_CHECK( rCurrentInBuffer != 0 );
+
             if(
                    rCurrentInStorage == rEndInStorage
                 || cmp( * rCurrentInStorage, * rCurrentInBuffer )
@@ -746,6 +750,10 @@ namespace array
 
         while( rCurrentInBuffer != rEndInBuffer )
         {
+            AV_CHECK( rWhereInsertInStorage != 0 );
+            AV_CHECK( rCurrentInStorage != 0 );
+            AV_CHECK( rCurrentInBuffer != 0 );
+
             if(
                    rCurrentInStorage == rEndInStorage
                 || cmp( * rCurrentInStorage, * rCurrentInBuffer )
