@@ -116,11 +116,13 @@ namespace util
             static
             void destroy( _Ptr first, _Ptr const last )
             {
+                AV_PRECONDITION( first <= last );
+
                 typedef typename std::iterator_traits< _Ptr >::value_type T;
 
                 for( /*empty*/ ; first != last ; ++ first )
                 {
-                    AV_PRECONDITION( first != 0 );
+                    AV_CHECK( first != 0 );
 
                     first -> T::~T();
                 }
@@ -144,11 +146,11 @@ namespace util
 namespace util
 {
     template<
-          typename _InputPtr
-        , typename _OutputPtr
+          typename _InputIterator
+        , typename _OutputIterator
     >
-    _OutputPtr
-    move_forward( _InputPtr first, _InputPtr last, _OutputPtr output )
+    _OutputIterator
+    move_forward( _InputIterator first, _InputIterator last, _OutputIterator output )
     {
         AV_PRECONDITION( first <= last );
 
@@ -170,8 +172,8 @@ namespace util
 
         for( /*empty*/ ; first != last ; ++output, ++first )
         {
-            AV_PRECONDITION( first != 0 );
-            AV_PRECONDITION( output != 0 );
+            AV_CHECK( first != 0 );
+            AV_CHECK( output != 0 );
 
             new ( static_cast< void * >(  output ) )
                 typename std::iterator_traits< _OutputPtr >::value_type( AV_MOVE( * first ) );
@@ -181,11 +183,11 @@ namespace util
     }
 
     template<
-          typename _InputPtr
-        , typename _OutputPtr
+          typename _InputIterator
+        , typename _OutputIterator
     >
-    _OutputPtr
-    move_backward( _InputPtr first, _InputPtr last, _OutputPtr output )
+    _OutputIterator
+    move_backward( _InputIterator first, _InputIterator last, _OutputIterator output )
     {
         AV_PRECONDITION( first <= last );
 
@@ -248,12 +250,7 @@ last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp cmp )
         return last;
     }
 
-    _Iterator greaterEqual  = std::lower_bound(
-          first
-        , last
-        , t
-        , cmp
-    );
+    _Iterator greaterEqual  = std::lower_bound( first, last, t, cmp );
 
     if( greaterEqual != last )
     {
@@ -452,7 +449,7 @@ namespace array
 
         void * const rawMemory = allocator.allocate( capacity );
 
-        AV_POSTCONDITION( rawMemory != 0 );
+        AV_CHECK( rawMemory != 0 );
 
         result.setData( static_cast< _T * >( rawMemory ) );
         result.setSize( 0 );
@@ -606,12 +603,8 @@ namespace array
     {
         AV_PRECONDITION( array.size() + 1 <= array.capacity() );
 
-        typename Array< _T >::iterator const greaterEqual = std::lower_bound(
-              array.begin()
-            , array.end()
-            , t
-            , cmp
-        );
+        typename Array< _T >::iterator const greaterEqual
+            = std::lower_bound( array.begin(), array.end(), t, cmp );
 
         if( greaterEqual != array.end() )
         {
@@ -735,21 +728,18 @@ namespace array
                 new ( static_cast< void * >( rWhereInsertInStorage ) )
                     _T( AV_MOVE( * rCurrentInBuffer ) );
 
-                numberOfItemsToCreateByPlacementNew -= 1;
-
                 -- rCurrentInBuffer;
-                -- rWhereInsertInStorage;
             }
             else
             {
                 new ( static_cast< void * >( rWhereInsertInStorage ) )
                     _T( AV_MOVE( * rCurrentInStorage ) );
 
-                numberOfItemsToCreateByPlacementNew -= 1;
-
                 -- rCurrentInStorage;
-                -- rWhereInsertInStorage;
             }
+
+            -- numberOfItemsToCreateByPlacementNew;
+            -- rWhereInsertInStorage;
         }
 
         AV_CHECK( numberOfItemsToCreateByPlacementNew == 0 );
@@ -764,15 +754,15 @@ namespace array
                 * rWhereInsertInStorage = AV_MOVE( * rCurrentInBuffer );
 
                 -- rCurrentInBuffer;
-                -- rWhereInsertInStorage;
             }
             else
             {
                 * rWhereInsertInStorage = AV_MOVE( * rCurrentInStorage );
 
                 -- rCurrentInStorage;
-                -- rWhereInsertInStorage;
             }
+
+            -- rWhereInsertInStorage;
         }
 
         storage.setSize( storage.size() + buffer.size() );
@@ -803,9 +793,9 @@ move_merge_into_uninitialized(
 
     while( first1 != last1 && first2 != last2 )
     {
-        AV_PRECONDITION( first1 != 0 );
-        AV_PRECONDITION( first2 != 0 );
-        AV_PRECONDITION( output != 0 );
+        AV_CHECK( first1 != 0 );
+        AV_CHECK( first2 != 0 );
+        AV_CHECK( output != 0 );
 
         if( cmp( * first1, * first2 ) )
         {
@@ -2383,12 +2373,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
         }
     }
 
-    typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
-          _storage.begin()
-        , _storage.end()
-        , k
-        , value_comp()
-    );
+    typename _Storage::iterator const greaterEqualInStorage
+        = std::lower_bound( _storage.begin(), _storage.end(), k, value_comp() );
 
     bool const notPresentInStorage
         = greaterEqualInStorage == _storage.end()
@@ -2656,12 +2642,8 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_FindImplResult
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
 {
-    typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
-          _storage.begin()
-        , _storage.end()
-        , k
-        , value_comp()
-    );
+    typename _Storage::iterator const greaterEqualInStorage
+        = std::lower_bound( _storage.begin(), _storage.end(), k, value_comp() );
 
     bool const presentInStorage
         = greaterEqualInStorage != _storage.end()
@@ -2710,12 +2692,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
     }
 
     {// check in buffer
-        typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
-              _buffer.begin()
-            , _buffer.end()
-            , k
-            , value_comp()
-        );
+        typename _Storage::iterator const greaterEqualInBuffer
+            = std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
 
         bool const presentInBuffer
             = greaterEqualInBuffer != _buffer.end()
@@ -2926,12 +2904,10 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
 
             array::erase( _buffer, posBase );
 
-            typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
-                  _storage.begin()
-                , _storage.end()
-                , key
-                , value_comp()
-            );
+            typename _Storage::iterator const greaterEqualInStorage
+                = pos.getCurrentInBuffer()
+                ? pos.getCurrentInBuffer()
+                : std::lower_bound( _storage.begin(), _storage.end(), key, value_comp() );
 
             return iterator( this, greaterEqualInStorage, posBase, 0, 0 );
         }
@@ -2960,23 +2936,17 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
             return end();
         }
 
-        typename _Storage::iterator const greaterEqualInBuffer = std::lower_bound(
-              _buffer.begin()
-            , _buffer.end()
-            , key
-            , value_comp()
-        );
+        typename _Storage::iterator const greaterEqualInBuffer
+            = pos.getCurrentInBuffer()
+            ? pos.getCurrentInBuffer()
+            : std::lower_bound( _buffer.begin(), _buffer.end(), key, value_comp() );
 
         if( result._isMerged == false ){
             return iterator( this, posBase + 1, greaterEqualInBuffer, result._inErased, 0 );
         }
 
-        typename _Storage::iterator const greaterEqualInStorage = std::lower_bound(
-              _storage.begin()
-            , _storage.end()
-            , key
-            , value_comp()
-        );
+        typename _Storage::iterator const greaterEqualInStorage
+            = std::lower_bound( _storage.begin(), _storage.end(), key, value_comp() );
 
         return iterator( this, greaterEqualInStorage, greaterEqualInBuffer, _erased.end(), 0 );
     }
@@ -3049,12 +3019,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
 )
 {
     typename _Storage::iterator const greaterEqualInBuffer =
-        std::lower_bound(
-              _buffer.begin()
-            , _buffer.end()
-            , k
-            , value_comp()
-        );
+        std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
 
     if( greaterEqualInBuffer != _buffer.end() )
     {
