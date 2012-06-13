@@ -3,10 +3,13 @@
 // configuration.begin
 
 #ifdef AV_UNIT_TESTS
+    #define AV_TEST_EXTENSIONS
+
     unsigned const REPS = 1000;
 
     unsigned const AV_TIMEOUT = 10;
 #else
+    #define AV_TEST_EXTENSIONS
     //#define AV_TEST_VECTOR
     #define AV_TEST_LOKI
     //#define AV_TEST_STD_MAP
@@ -83,7 +86,7 @@ std::string make_padding( std::string const & message, int length )
 }
 
 template< typename _T >
-std::string name(){}
+std::string name(){ return "?"; }
 
 struct S1
 {
@@ -800,6 +803,10 @@ void insert_increasing()
     {
         test_insert_increasing< AssocVector< int, _T > >( REPS / i, i, "insert_increasing.AssocVector< int, " + name< _T >() + " >" );
 
+#ifdef AV_TEST_EXTENSIONS
+        test__insert_increasing< AssocVector< int, _T > >( REPS / i, i, "    _insert_increasing.AssocVector< int, " + name< _T >() + " >" );
+#endif
+
 #ifdef AV_TEST_LOKI
         test_insert_increasing< Loki::AssocVector< int, _T > >( REPS / i, i, "insert_increasing.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
@@ -817,23 +824,15 @@ void insert_increasing()
 }
 
 template< typename _T >
-void _insert_increasing()
-{
-    for( unsigned i = 100 ; i <= REPS ; i *= 10 )
-    {
-        test_insert_increasing< AssocVector< int, _T > >( REPS / i, i, "    insert_increasing.AssocVector< int, " + name< _T >() + " >" );
-        test__insert_increasing< AssocVector< int, _T > >( REPS / i, i, "    _insert_increasing.AssocVector< int, " + name< _T >() + " >" );
-
-        std::cout << std::endl;
-    }
-}
-
-template< typename _T >
 void insert_decreasing()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
     {
         test_insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "insert_decreasing.AssocVector< int, " + name< _T >() + " >" );
+
+#ifdef AV_TEST_EXTENSIONS
+        test__insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "    _insert_decreasing.AssocVector< int, " + name< _T >() + " >" );
+#endif
 
 #ifdef AV_TEST_VECTOR
         test_insert_decreasing_push_back_reverse< std::vector< std::pair< int, _T > > >( REPS / i, i, "    insert_decreasing.std::vector< int, _T >.push_back.reverse" );
@@ -856,18 +855,6 @@ void insert_decreasing()
 }
 
 template< typename _T >
-void _insert_decreasing()
-{
-    for( unsigned i = 100 ; i <= REPS ; i *= 10 )
-    {
-        test_insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "    insert_decreasing.AssocVector< int, " + name< _T >() + " >" );
-        test__insert_decreasing< AssocVector< int, _T > >( REPS / i, i, "    _insert_decreasing.AssocVector< int, " + name< _T >() + " >" );
-
-        std::cout << std::endl;
-    }
-}
-
-template< typename _T >
 void insert_random()
 {
     for( unsigned i = 100 ; i <= REPS ; i *= 10 )
@@ -878,6 +865,10 @@ void insert_random()
             array.push_back( rand() + rand() - rand() );
 
         test_insert_random< AssocVector< int, _T > >( REPS / i, array, "insert_random.AssocVector< int, " + name< _T >() + " >" );
+
+#ifdef AV_TEST_EXTENSIONS
+        test__insert_random< AssocVector< int, _T > >( REPS / i, array, "    _insert_random.AssocVector< int, " + name< _T >() + " >" );
+#endif
 
 #ifdef AV_TEST_VECTOR
         //test_insert_random_push_back_sort< std::vector< std::pair< int, _T > > >( REPS / i, array, "    insert_random.std::vector< int, _T >.push_back.sort" );
@@ -894,23 +885,6 @@ void insert_random()
 #ifdef AV_TEST_BOOST_HASH
         test_insert_random< boost::unordered_map< int, _T > >( REPS / i, array, "insert_random.boost::map< int, " + name< _T >() + " >" );
 #endif
-
-        std::cout << std::endl;
-    }
-}
-
-template< typename _T >
-void _insert_random()
-{
-    for( unsigned i = 100 ; i <= REPS ; i *= 10 )
-    {
-        std::vector< int > array;
-
-        for( unsigned j = 0 ; j < i ; ++ j )
-            array.push_back( rand() + rand() - rand() );
-
-        test_insert_random< AssocVector< int, _T > >( REPS / i, array, "    insert_random.AssocVector< int, " + name< _T >() + " >" );
-        test__insert_random< AssocVector< int, _T > >( REPS / i, array, "    _insert_random.AssocVector< int, " + name< _T >() + " >" );
 
         std::cout << std::endl;
     }
@@ -997,6 +971,10 @@ void find()
     {
         test_find< AssocVector< int, _T > >( REPS / i, i, "find.AssocVector< int, " + name< _T >() + " >" );
 
+#ifdef AV_TEST_EXTENSIONS
+        test__find< AssocVector< int, _T > >( REPS / i, i, "    _find.AssocVector< int, " + name< _T >() + " >" );
+#endif
+
 #ifdef AV_TEST_LOKI
     test_find< Loki::AssocVector< int, _T > >( REPS / i, i, "find.Loki::AssocVector< int, " + name< _T >() + " >" );
 #endif
@@ -1008,19 +986,6 @@ void find()
 #ifdef AV_TEST_BOOST_HASH
     test_find< boost::unordered_map< int, _T > >( REPS / i, i, "find.boost::map< int, " + name< _T >() + " >" );
 #endif
-
-        std::cout << std::endl;
-    }
-}
-
-template< typename _T >
-void _find()
-{
-    for( unsigned i = 100 ; i <= REPS ; i *= 10 )
-    {
-        test_find< AssocVector< int, _T > >( REPS / i, i, "    find.AssocVector< int, " + name< _T >() + " >" );
-        test__find< AssocVector< int, _T > >( REPS / i, i, "    _find.AssocVector< int, " + name< _T >() + " >" );
-
 
         std::cout << std::endl;
     }
@@ -1165,25 +1130,13 @@ int main()
     insert_increasing< S2 >();
     insert_increasing< S3 >();
 
-    _insert_increasing< S1 >();
-    _insert_increasing< S2 >();
-    _insert_increasing< S3 >();
-
     insert_decreasing< S1 >();
     insert_decreasing< S2 >();
     insert_decreasing< S3 >();
 
-    _insert_decreasing< S1 >();
-    _insert_decreasing< S2 >();
-    _insert_decreasing< S3 >();
-
     insert_random< S1 >();
     insert_random< S2 >();
     insert_random< S3 >();
-
-    _insert_random< S1 >();
-    _insert_random< S2 >();
-    _insert_random< S3 >();
 
     index_operator_increasing< S1 >();
     index_operator_increasing< S2 >();
@@ -1200,10 +1153,6 @@ int main()
     find< S1 >();
     find< S2 >();
     find< S3 >();
-
-    _find< S1 >();
-    _find< S2 >();
-    _find< S3 >();
 
     erase_increasing< S1 >();
     erase_increasing< S2 >();

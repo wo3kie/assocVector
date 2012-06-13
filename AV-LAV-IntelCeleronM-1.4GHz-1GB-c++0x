@@ -1,0 +1,558 @@
+********** Perf Tests C++11 **********
+
+insert_increasing.AssocVector< int, S1 >                    - 10000-100 - 0.109
+    _insert_increasing.AssocVector< int, S1 >               - 10000-100 - 0.078
+insert_increasing.Loki::AssocVector< int, S1 >              - 10000-100 - 0.094
+
+insert_increasing.AssocVector< int, S1 >                    - 1000-1000 - 0.063
+    _insert_increasing.AssocVector< int, S1 >               - 1000-1000 - 0.062
+insert_increasing.Loki::AssocVector< int, S1 >              - 1000-1000 - 0.078
+
+insert_increasing.AssocVector< int, S1 >                    - 100-10000 - 0.079
+    _insert_increasing.AssocVector< int, S1 >               - 100-10000 - 0.078
+insert_increasing.Loki::AssocVector< int, S1 >              - 100-10000 - 0.109
+
+insert_increasing.AssocVector< int, S1 >                    - 10-100000 - 0.094
+    _insert_increasing.AssocVector< int, S1 >               - 10-100000 - 0.063
+insert_increasing.Loki::AssocVector< int, S1 >              - 10-100000 - 0.14
+
+insert_increasing.AssocVector< int, S1 >                    - 1-1000000 - 0.078
+    _insert_increasing.AssocVector< int, S1 >               - 1-1000000 - 0.063
+insert_increasing.Loki::AssocVector< int, S1 >              - 1-1000000 - 0.156
+
+insert_increasing.AssocVector< int, S2 >                    - 10000-100 - 0.22
+    _insert_increasing.AssocVector< int, S2 >               - 10000-100 - 0.219
+insert_increasing.Loki::AssocVector< int, S2 >              - 10000-100 - 0.219
+
+insert_increasing.AssocVector< int, S2 >                    - 1000-1000 - 0.218
+    _insert_increasing.AssocVector< int, S2 >               - 1000-1000 - 0.219
+insert_increasing.Loki::AssocVector< int, S2 >              - 1000-1000 - 0.265
+
+insert_increasing.AssocVector< int, S2 >                    - 100-10000 - 0.345
+    _insert_increasing.AssocVector< int, S2 >               - 100-10000 - 0.406
+insert_increasing.Loki::AssocVector< int, S2 >              - 100-10000 - 0.437
+
+insert_increasing.AssocVector< int, S2 >                    - 10-100000 - 0.406
+    _insert_increasing.AssocVector< int, S2 >               - 10-100000 - 0.391
+insert_increasing.Loki::AssocVector< int, S2 >              - 10-100000 - 0.469
+
+insert_increasing.AssocVector< int, S2 >                    - 1-1000000 - 0.359
+    _insert_increasing.AssocVector< int, S2 >               - 1-1000000 - 0.344
+insert_increasing.Loki::AssocVector< int, S2 >              - 1-1000000 - 0.5
+
+insert_increasing.AssocVector< int, S3 >                    - 10000-100 - 2.373
+    _insert_increasing.AssocVector< int, S3 >               - 10000-100 - 2.485
+insert_increasing.Loki::AssocVector< int, S3 >              - 10000-100 - 2.296
+
+insert_increasing.AssocVector< int, S3 >                    - 1000-1000 - 2.483
+    _insert_increasing.AssocVector< int, S3 >               - 1000-1000 - 2.546
+insert_increasing.Loki::AssocVector< int, S3 >              - 1000-1000 - 2.422
+
+insert_increasing.AssocVector< int, S3 >                    - 100-10000 - 2.624
+    _insert_increasing.AssocVector< int, S3 >               - 100-10000 - 2.627
+insert_increasing.Loki::AssocVector< int, S3 >              - 100-10000 - 2.702
+
+insert_increasing.AssocVector< int, S3 >                    - 10-100000 - 2.704
+    _insert_increasing.AssocVector< int, S3 >               - 10-100000 - 2.716
+insert_increasing.Loki::AssocVector< int, S3 >              - 10-100000 - 2.828
+
+insert_increasing.AssocVector< int, S3 >                    - 1-1000000 - 2.719
+    _insert_increasing.AssocVector< int, S3 >               - 1-1000000 - 2.657
+insert_increasing.Loki::AssocVector< int, S3 >              - 1-1000000 - 2.766
+
+insert_decreasing.AssocVector< int, S1 >                    - 10000-100 - 0.202
+    _insert_decreasing.AssocVector< int, S1 >               - 10000-100 - 0.172
+insert_decreasing.Loki::AssocVector< int, S1 >              - 10000-100 - 0.203
+
+insert_decreasing.AssocVector< int, S1 >                    - 1000-1000 - 0.281
+    _insert_decreasing.AssocVector< int, S1 >               - 1000-1000 - 0.235
+insert_decreasing.Loki::AssocVector< int, S1 >              - 1000-1000 - 1.172
+
+insert_decreasing.AssocVector< int, S1 >                    - 100-10000 - 0.5
+    _insert_decreasing.AssocVector< int, S1 >               - 100-10000 - 0.469
+insert_decreasing.Loki::AssocVector< int, S1 >              - 100-10000 - 13.218
+
+insert_decreasing.AssocVector< int, S1 >                    - 10-100000 - 1.266
+    _insert_decreasing.AssocVector< int, S1 >               - 10-100000 - 1.234
+insert_decreasing.Loki::AssocVector< int, S1 >              - 10-100000 - 999
+
+insert_decreasing.AssocVector< int, S1 >                    - 1-1000000 - 8.594
+    _insert_decreasing.AssocVector< int, S1 >               - 1-1000000 - 8.672
+insert_decreasing.Loki::AssocVector< int, S1 >              - 1-1000000 - 999
+
+insert_decreasing.AssocVector< int, S2 >                    - 10000-100 - 0.469
+    _insert_decreasing.AssocVector< int, S2 >               - 10000-100 - 0.453
+insert_decreasing.Loki::AssocVector< int, S2 >              - 10000-100 - 1.563
+
+insert_decreasing.AssocVector< int, S2 >                    - 1000-1000 - 0.734
+    _insert_decreasing.AssocVector< int, S2 >               - 1000-1000 - 0.719
+insert_decreasing.Loki::AssocVector< int, S2 >              - 1000-1000 - 13.781
+
+insert_decreasing.AssocVector< int, S2 >                    - 100-10000 - 1.875
+    _insert_decreasing.AssocVector< int, S2 >               - 100-10000 - 1.875
+insert_decreasing.Loki::AssocVector< int, S2 >              - 100-10000 - 999
+
+insert_decreasing.AssocVector< int, S2 >                    - 10-100000 - 14.422
+    _insert_decreasing.AssocVector< int, S2 >               - 10-100000 - 14.359
+insert_decreasing.Loki::AssocVector< int, S2 >              - 10-100000 - 999
+
+insert_decreasing.AssocVector< int, S2 >                    - 1-1000000 - 54.016
+    _insert_decreasing.AssocVector< int, S2 >               - 1-1000000 - 53.812
+insert_decreasing.Loki::AssocVector< int, S2 >              - 1-1000000 - 999
+
+insert_decreasing.AssocVector< int, S3 >                    - 10000-100 - 4.829
+    _insert_decreasing.AssocVector< int, S3 >               - 10000-100 - 4.858
+insert_decreasing.Loki::AssocVector< int, S3 >              - 10000-100 - 2.858
+
+insert_decreasing.AssocVector< int, S3 >                    - 1000-1000 - 5.328
+    _insert_decreasing.AssocVector< int, S3 >               - 1000-1000 - 5.266
+insert_decreasing.Loki::AssocVector< int, S3 >              - 1000-1000 - 7.921
+
+insert_decreasing.AssocVector< int, S3 >                    - 100-10000 - 6.172
+    _insert_decreasing.AssocVector< int, S3 >               - 100-10000 - 6.188
+insert_decreasing.Loki::AssocVector< int, S3 >              - 100-10000 - 999
+
+insert_decreasing.AssocVector< int, S3 >                    - 10-100000 - 9.468
+    _insert_decreasing.AssocVector< int, S3 >               - 10-100000 - 9.56
+insert_decreasing.Loki::AssocVector< int, S3 >              - 10-100000 - 999
+
+insert_decreasing.AssocVector< int, S3 >                    - 1-1000000 - 25.359
+    _insert_decreasing.AssocVector< int, S3 >               - 1-1000000 - 25.391
+insert_decreasing.Loki::AssocVector< int, S3 >              - 1-1000000 - 999
+
+insert_random.AssocVector< int, S1 >                        - 10000-100 - 0.266
+    _insert_random.AssocVector< int, S1 >                   - 10000-100 - 0.25
+insert_random.Loki::AssocVector< int, S1 >                  - 10000-100 - 0.187
+
+insert_random.AssocVector< int, S1 >                        - 1000-1000 - 0.391
+    _insert_random.AssocVector< int, S1 >                   - 1000-1000 - 0.344
+insert_random.Loki::AssocVector< int, S1 >                  - 1000-1000 - 0.672
+
+insert_random.AssocVector< int, S1 >                        - 100-10000 - 0.578
+    _insert_random.AssocVector< int, S1 >                   - 100-10000 - 0.563
+insert_random.Loki::AssocVector< int, S1 >                  - 100-10000 - 5.375
+
+insert_random.AssocVector< int, S1 >                        - 10-100000 - 0.671
+    _insert_random.AssocVector< int, S1 >                   - 10-100000 - 0.657
+insert_random.Loki::AssocVector< int, S1 >                  - 10-100000 - 17.593
+
+insert_random.AssocVector< int, S1 >                        - 1-1000000 - 0.36
+    _insert_random.AssocVector< int, S1 >                   - 1-1000000 - 0.343
+insert_random.Loki::AssocVector< int, S1 >                  - 1-1000000 - 4.969
+
+insert_random.AssocVector< int, S2 >                        - 10000-100 - 0.563
+    _insert_random.AssocVector< int, S2 >                   - 10000-100 - 0.53
+insert_random.Loki::AssocVector< int, S2 >                  - 10000-100 - 0.938
+
+insert_random.AssocVector< int, S2 >                        - 1000-1000 - 0.781
+    _insert_random.AssocVector< int, S2 >                   - 1000-1000 - 0.766
+insert_random.Loki::AssocVector< int, S2 >                  - 1000-1000 - 7.109
+
+insert_random.AssocVector< int, S2 >                        - 100-10000 - 1.735
+    _insert_random.AssocVector< int, S2 >                   - 100-10000 - 1.671
+insert_random.Loki::AssocVector< int, S2 >                  - 100-10000 - 59.125
+
+insert_random.AssocVector< int, S2 >                        - 10-100000 - 4.062
+    _insert_random.AssocVector< int, S2 >                   - 10-100000 - 4.031
+insert_random.Loki::AssocVector< int, S2 >                  - 10-100000 - 999
+
+insert_random.AssocVector< int, S2 >                        - 1-1000000 - 1.672
+    _insert_random.AssocVector< int, S2 >                   - 1-1000000 - 1.656
+insert_random.Loki::AssocVector< int, S2 >                  - 1-1000000 - 999
+
+insert_random.AssocVector< int, S3 >                        - 10000-100 - 4.721
+    _insert_random.AssocVector< int, S3 >                   - 10000-100 - 4.719
+insert_random.Loki::AssocVector< int, S3 >                  - 10000-100 - 2.654
+
+insert_random.AssocVector< int, S3 >                        - 1000-1000 - 5.28
+    _insert_random.AssocVector< int, S3 >                   - 1000-1000 - 5.187
+insert_random.Loki::AssocVector< int, S3 >                  - 1000-1000 - 5.142
+
+insert_random.AssocVector< int, S3 >                        - 100-10000 - 5.748
+    _insert_random.AssocVector< int, S3 >                   - 100-10000 - 5.751
+insert_random.Loki::AssocVector< int, S3 >                  - 100-10000 - 27.281
+
+insert_random.AssocVector< int, S3 >                        - 10-100000 - 5.439
+    _insert_random.AssocVector< int, S3 >                   - 10-100000 - 5.375
+insert_random.Loki::AssocVector< int, S3 >                  - 10-100000 - 999
+
+insert_random.AssocVector< int, S3 >                        - 1-1000000 - 2.938
+    _insert_random.AssocVector< int, S3 >                   - 1-1000000 - 2.938
+insert_random.Loki::AssocVector< int, S3 >                  - 1-1000000 - 28.563
+
+index_operator_increasing.AssocVector< int, S1 >            - 10000-100 - 0.203
+index_operator_increasing.Loki::AssocVector< int, S1 >      - 10000-100 - 0.125
+
+index_operator_increasing.AssocVector< int, S1 >            - 1000-1000 - 0.172
+index_operator_increasing.Loki::AssocVector< int, S1 >      - 1000-1000 - 0.125
+
+index_operator_increasing.AssocVector< int, S1 >            - 100-10000 - 0.203
+index_operator_increasing.Loki::AssocVector< int, S1 >      - 100-10000 - 0.157
+
+index_operator_increasing.AssocVector< int, S1 >            - 10-100000 - 0.25
+index_operator_increasing.Loki::AssocVector< int, S1 >      - 10-100000 - 0.234
+
+index_operator_increasing.AssocVector< int, S1 >            - 1-1000000 - 0.266
+index_operator_increasing.Loki::AssocVector< int, S1 >      - 1-1000000 - 0.265
+
+index_operator_increasing.AssocVector< int, S2 >            - 10000-100 - 0.328
+index_operator_increasing.Loki::AssocVector< int, S2 >      - 10000-100 - 0.203
+
+index_operator_increasing.AssocVector< int, S2 >            - 1000-1000 - 0.297
+index_operator_increasing.Loki::AssocVector< int, S2 >      - 1000-1000 - 0.25
+
+index_operator_increasing.AssocVector< int, S2 >            - 100-10000 - 0.532
+index_operator_increasing.Loki::AssocVector< int, S2 >      - 100-10000 - 0.515
+
+index_operator_increasing.AssocVector< int, S2 >            - 10-100000 - 0.531
+index_operator_increasing.Loki::AssocVector< int, S2 >      - 10-100000 - 0.547
+
+index_operator_increasing.AssocVector< int, S2 >            - 1-1000000 - 0.578
+index_operator_increasing.Loki::AssocVector< int, S2 >      - 1-1000000 - 0.578
+
+index_operator_increasing.AssocVector< int, S3 >            - 10000-100 - 6.813
+index_operator_increasing.Loki::AssocVector< int, S3 >      - 10000-100 - 6.813
+
+index_operator_increasing.AssocVector< int, S3 >            - 1000-1000 - 6.893
+index_operator_increasing.Loki::AssocVector< int, S3 >      - 1000-1000 - 6.828
+
+index_operator_increasing.AssocVector< int, S3 >            - 100-10000 - 7.127
+index_operator_increasing.Loki::AssocVector< int, S3 >      - 100-10000 - 7.062
+
+index_operator_increasing.AssocVector< int, S3 >            - 10-100000 - 7.747
+index_operator_increasing.Loki::AssocVector< int, S3 >      - 10-100000 - 7.814
+
+index_operator_increasing.AssocVector< int, S3 >            - 1-1000000 - 7.516
+index_operator_increasing.Loki::AssocVector< int, S3 >      - 1-1000000 - 7.531
+
+index_operator_decreasing.AssocVector< int, S1 >            - 10000-100 - 0.344
+index_operator_decreasing.Loki::AssocVector< int, S1 >      - 10000-100 - 0.235
+
+index_operator_decreasing.AssocVector< int, S1 >            - 1000-1000 - 0.421
+index_operator_decreasing.Loki::AssocVector< int, S1 >      - 1000-1000 - 1.204
+
+index_operator_decreasing.AssocVector< int, S1 >            - 100-10000 - 0.671
+index_operator_decreasing.Loki::AssocVector< int, S1 >      - 100-10000 - 13.266
+
+index_operator_decreasing.AssocVector< int, S1 >            - 10-100000 - 1.422
+index_operator_decreasing.Loki::AssocVector< int, S1 >      - 10-100000 - 999
+
+index_operator_decreasing.AssocVector< int, S1 >            - 1-1000000 - 8.797
+index_operator_decreasing.Loki::AssocVector< int, S1 >      - 1-1000000 - 999
+
+index_operator_decreasing.AssocVector< int, S2 >            - 10000-100 - 0.593
+index_operator_decreasing.Loki::AssocVector< int, S2 >      - 10000-100 - 1.578
+
+index_operator_decreasing.AssocVector< int, S2 >            - 1000-1000 - 0.891
+index_operator_decreasing.Loki::AssocVector< int, S2 >      - 1000-1000 - 13.922
+
+index_operator_decreasing.AssocVector< int, S2 >            - 100-10000 - 2.202
+index_operator_decreasing.Loki::AssocVector< int, S2 >      - 100-10000 - 999
+
+index_operator_decreasing.AssocVector< int, S2 >            - 10-100000 - 14.656
+index_operator_decreasing.Loki::AssocVector< int, S2 >      - 10-100000 - 999
+
+index_operator_decreasing.AssocVector< int, S2 >            - 1-1000000 - 54.297
+index_operator_decreasing.Loki::AssocVector< int, S2 >      - 1-1000000 - 999
+
+index_operator_decreasing.AssocVector< int, S3 >            - 10000-100 - 9.254
+index_operator_decreasing.Loki::AssocVector< int, S3 >      - 10000-100 - 7.266
+
+index_operator_decreasing.AssocVector< int, S3 >            - 1000-1000 - 9.936
+index_operator_decreasing.Loki::AssocVector< int, S3 >      - 1000-1000 - 12.392
+
+index_operator_decreasing.AssocVector< int, S3 >            - 100-10000 - 10.84
+index_operator_decreasing.Loki::AssocVector< int, S3 >      - 100-10000 - 999
+
+index_operator_decreasing.AssocVector< int, S3 >            - 10-100000 - 14.22
+index_operator_decreasing.Loki::AssocVector< int, S3 >      - 10-100000 - 999
+
+index_operator_decreasing.AssocVector< int, S3 >            - 1-1000000 - 30.359
+index_operator_decreasing.Loki::AssocVector< int, S3 >      - 1-1000000 - 999
+
+index_operator_random.AssocVector< int, S1 >                - 10000-100 - 0.422
+index_operator_random.Loki::AssocVector< int, S1 >          - 10000-100 - 0.25
+
+index_operator_random.AssocVector< int, S1 >                - 1000-1000 - 0.594
+index_operator_random.Loki::AssocVector< int, S1 >          - 1000-1000 - 0.844
+
+index_operator_random.AssocVector< int, S1 >                - 100-10000 - 0.843
+index_operator_random.Loki::AssocVector< int, S1 >          - 100-10000 - 5.5
+
+index_operator_random.AssocVector< int, S1 >                - 10-100000 - 0.922
+index_operator_random.Loki::AssocVector< int, S1 >          - 10-100000 - 17.907
+
+index_operator_random.AssocVector< int, S1 >                - 1-1000000 - 0.563
+index_operator_random.Loki::AssocVector< int, S1 >          - 1-1000000 - 5.156
+
+index_operator_random.AssocVector< int, S2 >                - 10000-100 - 0.641
+index_operator_random.Loki::AssocVector< int, S2 >          - 10000-100 - 1.062
+
+index_operator_random.AssocVector< int, S2 >                - 1000-1000 - 1.001
+index_operator_random.Loki::AssocVector< int, S2 >          - 1000-1000 - 6.968
+
+index_operator_random.AssocVector< int, S2 >                - 100-10000 - 1.985
+index_operator_random.Loki::AssocVector< int, S2 >          - 100-10000 - 59.297
+
+index_operator_random.AssocVector< int, S2 >                - 10-100000 - 4.297
+index_operator_random.Loki::AssocVector< int, S2 >          - 10-100000 - 999
+
+index_operator_random.AssocVector< int, S2 >                - 1-1000000 - 1.937
+index_operator_random.Loki::AssocVector< int, S2 >          - 1-1000000 - 999
+
+index_operator_random.AssocVector< int, S3 >                - 10000-100 - 9.393
+index_operator_random.Loki::AssocVector< int, S3 >          - 10000-100 - 7.062
+
+index_operator_random.AssocVector< int, S3 >                - 1000-1000 - 9.768
+index_operator_random.Loki::AssocVector< int, S3 >          - 1000-1000 - 9.767
+
+index_operator_random.AssocVector< int, S3 >                - 100-10000 - 10.549
+index_operator_random.Loki::AssocVector< int, S3 >          - 100-10000 - 31.579
+
+index_operator_random.AssocVector< int, S3 >                - 10-100000 - 10.72
+index_operator_random.Loki::AssocVector< int, S3 >          - 10-100000 - 999
+
+index_operator_random.AssocVector< int, S3 >                - 1-1000000 - 8.141
+index_operator_random.Loki::AssocVector< int, S3 >          - 1-1000000 - 29.906
+
+find.AssocVector< int, S1 >                                 - 10000-100 - 0.094
+    _find.AssocVector< int, S1 >                            - 10000-100 - 0.109
+find.Loki::AssocVector< int, S1 >                           - 10000-100 - 0.063
+
+find.AssocVector< int, S1 >                                 - 1000-1000 - 0.109
+    _find.AssocVector< int, S1 >                            - 1000-1000 - 0.125
+find.Loki::AssocVector< int, S1 >                           - 1000-1000 - 0.094
+
+find.AssocVector< int, S1 >                                 - 100-10000 - 0.125
+    _find.AssocVector< int, S1 >                            - 100-10000 - 0.125
+find.Loki::AssocVector< int, S1 >                           - 100-10000 - 0.109
+
+find.AssocVector< int, S1 >                                 - 10-100000 - 0.14
+    _find.AssocVector< int, S1 >                            - 10-100000 - 0.141
+find.Loki::AssocVector< int, S1 >                           - 10-100000 - 0.14
+
+find.AssocVector< int, S1 >                                 - 1-1000000 - 0.156
+    _find.AssocVector< int, S1 >                            - 1-1000000 - 0.156
+find.Loki::AssocVector< int, S1 >                           - 1-1000000 - 0.156
+
+find.AssocVector< int, S2 >                                 - 10000-100 - 0.109
+    _find.AssocVector< int, S2 >                            - 10000-100 - 0.11
+find.Loki::AssocVector< int, S2 >                           - 10000-100 - 0.078
+
+find.AssocVector< int, S2 >                                 - 1000-1000 - 0.14
+    _find.AssocVector< int, S2 >                            - 1000-1000 - 0.141
+find.Loki::AssocVector< int, S2 >                           - 1000-1000 - 0.141
+
+find.AssocVector< int, S2 >                                 - 100-10000 - 0.156
+    _find.AssocVector< int, S2 >                            - 100-10000 - 0.156
+find.Loki::AssocVector< int, S2 >                           - 100-10000 - 0.141
+
+find.AssocVector< int, S2 >                                 - 10-100000 - 0.187
+    _find.AssocVector< int, S2 >                            - 10-100000 - 0.188
+find.Loki::AssocVector< int, S2 >                           - 10-100000 - 0.188
+
+find.AssocVector< int, S2 >                                 - 1-1000000 - 0.203
+    _find.AssocVector< int, S2 >                            - 1-1000000 - 0.219
+find.Loki::AssocVector< int, S2 >                           - 1-1000000 - 0.188
+
+find.AssocVector< int, S3 >                                 - 10000-100 - 0.109
+    _find.AssocVector< int, S3 >                            - 10000-100 - 0.109
+find.Loki::AssocVector< int, S3 >                           - 10000-100 - 0.078
+
+find.AssocVector< int, S3 >                                 - 1000-1000 - 0.141
+    _find.AssocVector< int, S3 >                            - 1000-1000 - 0.125
+find.Loki::AssocVector< int, S3 >                           - 1000-1000 - 0.14
+
+find.AssocVector< int, S3 >                                 - 100-10000 - 0.156
+    _find.AssocVector< int, S3 >                            - 100-10000 - 0.125
+find.Loki::AssocVector< int, S3 >                           - 100-10000 - 0.14
+
+find.AssocVector< int, S3 >                                 - 10-100000 - 0.172
+    _find.AssocVector< int, S3 >                            - 10-100000 - 0.172
+find.Loki::AssocVector< int, S3 >                           - 10-100000 - 0.156
+
+find.AssocVector< int, S3 >                                 - 1-1000000 - 0.171
+    _find.AssocVector< int, S3 >                            - 1-1000000 - 0.188
+find.Loki::AssocVector< int, S3 >                           - 1-1000000 - 0.171
+
+erase_increasing.AssocVector< int, S1 >                     - 10000-100 - 0.079
+erase_increasing.Loki::AssocVector< int, S1 >               - 10000-100 - 0.111
+
+erase_increasing.AssocVector< int, S1 >                     - 1000-1000 - 0.221
+erase_increasing.Loki::AssocVector< int, S1 >               - 1000-1000 - 1.141
+
+erase_increasing.AssocVector< int, S1 >                     - 100-10000 - 0.376
+erase_increasing.Loki::AssocVector< int, S1 >               - 100-10000 - 12.407
+
+erase_increasing.AssocVector< int, S1 >                     - 10-100000 - 0.812
+erase_increasing.Loki::AssocVector< int, S1 >               - 10-100000 - 999
+
+erase_increasing.AssocVector< int, S1 >                     - 1-1000000 - 6.828
+erase_increasing.Loki::AssocVector< int, S1 >               - 1-1000000 - 999
+
+erase_increasing.AssocVector< int, S2 >                     - 10000-100 - 0.174
+erase_increasing.Loki::AssocVector< int, S2 >               - 10000-100 - 0.545
+
+erase_increasing.AssocVector< int, S2 >                     - 1000-1000 - 0.374
+erase_increasing.Loki::AssocVector< int, S2 >               - 1000-1000 - 6.442
+
+erase_increasing.AssocVector< int, S2 >                     - 100-10000 - 0.782
+erase_increasing.Loki::AssocVector< int, S2 >               - 100-10000 - 999
+
+erase_increasing.AssocVector< int, S2 >                     - 10-100000 - 10.452
+erase_increasing.Loki::AssocVector< int, S2 >               - 10-100000 - 999
+
+erase_increasing.AssocVector< int, S2 >                     - 1-1000000 - 41.078
+erase_increasing.Loki::AssocVector< int, S2 >               - 1-1000000 - 999
+
+erase_increasing.AssocVector< int, S3 >                     - 10000-100 - 0.331
+erase_increasing.Loki::AssocVector< int, S3 >               - 10000-100 - 0.563
+
+erase_increasing.AssocVector< int, S3 >                     - 1000-1000 - 0.469
+erase_increasing.Loki::AssocVector< int, S3 >               - 1000-1000 - 4.07
+
+erase_increasing.AssocVector< int, S3 >                     - 100-10000 - 0.842
+erase_increasing.Loki::AssocVector< int, S3 >               - 100-10000 - 42.948
+
+erase_increasing.AssocVector< int, S3 >                     - 10-100000 - 2.484
+erase_increasing.Loki::AssocVector< int, S3 >               - 10-100000 - 999
+
+erase_increasing.AssocVector< int, S3 >                     - 1-1000000 - 14.344
+erase_increasing.Loki::AssocVector< int, S3 >               - 1-1000000 - 999
+
+erase_decreasing.AssocVector< int, S1 >                     - 10000-100 - 0.063
+erase_decreasing.Loki::AssocVector< int, S1 >               - 10000-100 - 0.016
+
+erase_decreasing.AssocVector< int, S1 >                     - 1000-1000 - 0.094
+erase_decreasing.Loki::AssocVector< int, S1 >               - 1000-1000 - 0.063
+
+erase_decreasing.AssocVector< int, S1 >                     - 100-10000 - 0.109
+erase_decreasing.Loki::AssocVector< int, S1 >               - 100-10000 - 0.078
+
+erase_decreasing.AssocVector< int, S1 >                     - 10-100000 - 0.11
+erase_decreasing.Loki::AssocVector< int, S1 >               - 10-100000 - 0.077
+
+erase_decreasing.AssocVector< int, S1 >                     - 1-1000000 - 0.14
+erase_decreasing.Loki::AssocVector< int, S1 >               - 1-1000000 - 0.14
+
+erase_decreasing.AssocVector< int, S2 >                     - 10000-100 - 0.062
+erase_decreasing.Loki::AssocVector< int, S2 >               - 10000-100 - 0.015
+
+erase_decreasing.AssocVector< int, S2 >                     - 1000-1000 - 0.078
+erase_decreasing.Loki::AssocVector< int, S2 >               - 1000-1000 - 0.094
+
+erase_decreasing.AssocVector< int, S2 >                     - 100-10000 - 0.078
+erase_decreasing.Loki::AssocVector< int, S2 >               - 100-10000 - 0.094
+
+erase_decreasing.AssocVector< int, S2 >                     - 10-100000 - 0.202
+erase_decreasing.Loki::AssocVector< int, S2 >               - 10-100000 - 0.186
+
+erase_decreasing.AssocVector< int, S2 >                     - 1-1000000 - 0.343
+erase_decreasing.Loki::AssocVector< int, S2 >               - 1-1000000 - 0.329
+
+erase_decreasing.AssocVector< int, S3 >                     - 10000-100 - 0.219
+erase_decreasing.Loki::AssocVector< int, S3 >               - 10000-100 - 0.173
+
+erase_decreasing.AssocVector< int, S3 >                     - 1000-1000 - 0.399
+erase_decreasing.Loki::AssocVector< int, S3 >               - 1000-1000 - 0.267
+
+erase_decreasing.AssocVector< int, S3 >                     - 100-10000 - 0.375
+erase_decreasing.Loki::AssocVector< int, S3 >               - 100-10000 - 0.341
+
+erase_decreasing.AssocVector< int, S3 >                     - 10-100000 - 0.501
+erase_decreasing.Loki::AssocVector< int, S3 >               - 10-100000 - 0.468
+
+erase_decreasing.AssocVector< int, S3 >                     - 1-1000000 - 0.594
+erase_decreasing.Loki::AssocVector< int, S3 >               - 1-1000000 - 0.578
+
+erase_random.AssocVector< int, S1 >                         - 10000-100 - 0.127
+erase_random.Loki::AssocVector< int, S1 >                   - 10000-100 - 0.11
+
+erase_random.AssocVector< int, S1 >                         - 1000-1000 - 0.406
+erase_random.Loki::AssocVector< int, S1 >                   - 1000-1000 - 0.706
+
+erase_random.AssocVector< int, S1 >                         - 100-10000 - 0.47
+erase_random.Loki::AssocVector< int, S1 >                   - 100-10000 - 5.179
+
+erase_random.AssocVector< int, S1 >                         - 10-100000 - 0.63
+erase_random.Loki::AssocVector< int, S1 >                   - 10-100000 - 16.234
+
+erase_random.AssocVector< int, S1 >                         - 1-1000000 - 0.234
+erase_random.Loki::AssocVector< int, S1 >                   - 1-1000000 - 4.531
+
+erase_random.AssocVector< int, S2 >                         - 10000-100 - 0.157
+erase_random.Loki::AssocVector< int, S2 >                   - 10000-100 - 0.39
+
+erase_random.AssocVector< int, S2 >                         - 1000-1000 - 0.451
+erase_random.Loki::AssocVector< int, S2 >                   - 1000-1000 - 2.935
+
+erase_random.AssocVector< int, S2 >                         - 100-10000 - 0.916
+erase_random.Loki::AssocVector< int, S2 >                   - 100-10000 - 999
+
+erase_random.AssocVector< int, S2 >                         - 10-100000 - 3.065
+erase_random.Loki::AssocVector< int, S2 >                   - 10-100000 - 999
+
+erase_random.AssocVector< int, S2 >                         - 1-1000000 - 0.875
+erase_random.Loki::AssocVector< int, S2 >                   - 1-1000000 - 999
+
+erase_random.AssocVector< int, S3 >                         - 10000-100 - 0.377
+erase_random.Loki::AssocVector< int, S3 >                   - 10000-100 - 0.499
+
+erase_random.AssocVector< int, S3 >                         - 1000-1000 - 0.656
+erase_random.Loki::AssocVector< int, S3 >                   - 1000-1000 - 2.296
+
+erase_random.AssocVector< int, S3 >                         - 100-10000 - 0.891
+erase_random.Loki::AssocVector< int, S3 >                   - 100-10000 - 17.998
+
+erase_random.AssocVector< int, S3 >                         - 10-100000 - 1.095
+erase_random.Loki::AssocVector< int, S3 >                   - 10-100000 - 999
+
+erase_random.AssocVector< int, S3 >                         - 1-1000000 - 0.359
+erase_random.Loki::AssocVector< int, S3 >                   - 1-1000000 - 16.781
+
+test_random_operations.AssocVector< int, S1 >               - 10000-100 - 0.187
+test_random_operations.Loki::AssocVector< int, S1 >         - 10000-100 - 0.125
+
+test_random_operations.AssocVector< int, S1 >               - 1000-1000 - 0.328
+test_random_operations.Loki::AssocVector< int, S1 >         - 1000-1000 - 0.422
+
+test_random_operations.AssocVector< int, S1 >               - 100-10000 - 0.516
+test_random_operations.Loki::AssocVector< int, S1 >         - 100-10000 - 2.625
+
+test_random_operations.AssocVector< int, S1 >               - 10-100000 - 0.718
+test_random_operations.Loki::AssocVector< int, S1 >         - 10-100000 - 15.485
+
+test_random_operations.AssocVector< int, S1 >               - 1-1000000 - 0.563
+test_random_operations.Loki::AssocVector< int, S1 >         - 1-1000000 - 15.594
+
+test_random_operations.AssocVector< int, S2 >               - 10000-100 - 0.421
+test_random_operations.Loki::AssocVector< int, S2 >         - 10000-100 - 0.547
+
+test_random_operations.AssocVector< int, S2 >               - 1000-1000 - 0.688
+test_random_operations.Loki::AssocVector< int, S2 >         - 1000-1000 - 3.25
+
+test_random_operations.AssocVector< int, S2 >               - 100-10000 - 1.281
+test_random_operations.Loki::AssocVector< int, S2 >         - 100-10000 - 28.031
+
+test_random_operations.AssocVector< int, S2 >               - 10-100000 - 3.469
+test_random_operations.Loki::AssocVector< int, S2 >         - 10-100000 - 999
+
+test_random_operations.AssocVector< int, S2 >               - 1-1000000 - 3.547
+test_random_operations.Loki::AssocVector< int, S2 >         - 1-1000000 - 999
+
+test_random_operations.AssocVector< int, S3 >               - 10000-100 - 3.061
+test_random_operations.Loki::AssocVector< int, S3 >         - 10000-100 - 1.69
+
+test_random_operations.AssocVector< int, S3 >               - 1000-1000 - 3.454
+test_random_operations.Loki::AssocVector< int, S3 >         - 1000-1000 - 2.875
+
+test_random_operations.AssocVector< int, S3 >               - 100-10000 - 4
+test_random_operations.Loki::AssocVector< int, S3 >         - 100-10000 - 13.532
+
+test_random_operations.AssocVector< int, S3 >               - 10-100000 - 4.049
+test_random_operations.Loki::AssocVector< int, S3 >         - 10-100000 - 999
+
+test_random_operations.AssocVector< int, S3 >               - 1-1000000 - 2.922
+test_random_operations.Loki::AssocVector< int, S3 >         - 1-1000000 - 999
+
+OK
