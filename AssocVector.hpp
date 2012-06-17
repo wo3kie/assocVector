@@ -840,21 +840,13 @@ namespace detail
     template< typename _Iterator >
     bool equal( _Iterator const & lhs, _Iterator const & rhs )
     {
-        if(
-               lhs.getContainer()->storage().getData() != rhs.getContainer()->storage().getData()
-            || lhs.getContainer()->buffer().getData() != rhs.getContainer()->buffer().getData()
-        ){
+        if( lhs.getContainer() != rhs.getContainer() ){
             return false;
         }
 
         // for empty container returns that begin == end
         // despite on fact they are not
-        if(
-                lhs.getContainer()->storage().size() == 0
-             && rhs.getContainer()->storage().size() == 0
-             && lhs.getContainer()->storage().size() == 0
-             && rhs.getContainer()->storage().size() == 0
-        ){
+        if( lhs.getContainer()->empty() ){
             return true;
         }
 
@@ -890,6 +882,624 @@ namespace detail
             , typename value_type::second_type
         > * pointer;
 
+    private:
+        struct _CurrentInErased
+        {
+            _CurrentInErased( typename _Container::_Erased::const_iterator current )
+                : _current( current )
+            {
+            }
+
+            _CurrentInErased( _CurrentInErased const & other )
+                : _current( other._current )
+            {
+            }
+
+            _CurrentInErased & operator=( _CurrentInErased const & other )
+            {
+                _current = other._current;
+
+                return * this;
+            }
+
+            _CurrentInErased & operator=( typename _Container::_Erased::const_iterator current )
+            {
+                _current = current;
+
+                return * this;
+            }
+
+            bool is_end( _Container const * container )const
+            {
+                return _current == container->erased().end();
+            }
+
+            bool is_not_end( _Container const * container )const
+            {
+                return ! is_end( container );
+            }
+
+            bool is_begin( _Container const * container )const
+            {
+                return _current == container->erased().begin();
+            }
+
+            bool is_not_begin( _Container const * container )const
+            {
+                return ! is_begin( container );
+            }
+
+            void increment( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_end( container ) );
+
+                ++ _current;
+            }
+
+            void try_increment( _Container const * container )
+            {
+                if( is_end( container ) ){
+                    return;
+                }
+
+                increment( container );
+            }
+
+            void decrement( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_begin( container ) );
+
+                -- _current;
+            }
+
+            void try_decrement( _Container const * container )
+            {
+                if( is_begin( container ) ){
+                    return;
+                }
+
+                decrement( container );
+            }
+
+            bool validate( _Container const * container )const
+            {
+                return util::is_between( container->erased().begin(), _current, container->erased().end() );
+            }
+
+            typename _Container::_Erased::value_type
+            get( _Container const * container )const
+            {
+                AV_PRECONDITION( _current );
+                AV_PRECONDITION( is_not_end( container ) );
+                AV_PRECONDITION( validate( container ) );
+
+                return * _current;
+            }
+
+            typename _Container::_Erased::const_iterator data()const
+            {
+                return _current;
+            }
+
+            operator bool()const
+            {
+                return _current != 0;
+            }
+
+        private:
+            typename _Container::_Erased::const_iterator _current;
+        };
+
+        struct _CurrentInBuffer
+        {
+            _CurrentInBuffer( pointer_mutable current )
+                : _current( current )
+            {
+            }
+
+            _CurrentInBuffer( _CurrentInBuffer const & other )
+                : _current( other._current )
+            {
+            }
+
+            _CurrentInBuffer & operator=( _CurrentInBuffer const & other )
+            {
+                _current = other._current;
+            }
+
+            _CurrentInBuffer & operator=( pointer_mutable current )
+            {
+                _current = current;
+            }
+
+            bool is_begin( _Container const * container )const
+            {
+                return _current == container->buffer().begin();
+            }
+
+            bool is_not_begin( _Container const * container )const
+            {
+                return ! is_begin( container );
+            }
+
+            bool is_end( _Container const * container )const
+            {
+                return _current == container->buffer().end();
+            }
+
+            bool is_not_end( _Container const * container )const
+            {
+                return ! is_end( container );
+            }
+
+            void increment( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_end( container ) );
+
+                ++ _current;
+            }
+
+            void try_increment( _Container const * container )
+            {
+                if( is_end( container ) ){
+                    return;
+                }
+
+                increment( container );
+            }
+
+            void decrement( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_begin( container ) );
+
+                -- _current;
+            }
+
+            void try_decrement( _Container const * container )
+            {
+                if( is_begin( container ) ){
+                    return;
+                }
+
+                decrement( container );
+            }
+
+            bool validate( _Container const * container )const
+            {
+                return util::is_between( container->buffer().begin(), _current, container->buffer().end() );
+            }
+
+            typename _Container::_Storage::value_type
+            get( _Container const * container )const
+            {
+                AV_PRECONDITION( _current );
+                AV_PRECONDITION( is_not_end( container ) );
+                AV_PRECONDITION( validate( container ) );
+
+                return * _current;
+            }
+
+            operator bool()const
+            {
+                return _current != 0;
+            }
+
+            pointer_mutable data()const
+            {
+                return _current;
+            }
+        private:
+            pointer_mutable _current;
+        };
+
+        struct _CurrentInStorage
+        {
+            _CurrentInStorage( pointer_mutable current )
+                : _dir( 1 )
+                , _current( current )
+            {
+            }
+
+            _CurrentInStorage( _CurrentInStorage const & other )
+                : _dir( other._dir )
+                , _current( other._current )
+            {
+            }
+
+            _CurrentInStorage & operator=( _CurrentInStorage const & other )
+            {
+                _dir = other._dir;
+                _current = other._current;
+
+                return * this;
+            }
+
+            bool operator==( _CurrentInStorage const & other )const
+            {
+                return _current == other._current;
+            }
+
+            bool operator!=( _CurrentInStorage const & other )const
+            {
+                return _current != other._current;
+            }
+
+            bool operator==( typename _Container::_Erased::value_type inErased )const
+            {
+                return _current == inErased;
+            }
+
+            bool operator!=( typename _Container::_Erased::value_type inErased )const
+            {
+                return _current != inErased;
+            }
+
+            bool is_begin( _Container const * container )const
+            {
+                _CurrentInStorage currentInStorage = const_cast< pointer_mutable >( container->storage().begin() );
+                _CurrentInErased currentInErased = container->erased().begin();
+
+                currentInStorage.setOnNotErased( currentInErased, container );
+
+                return *this == currentInStorage;
+            }
+
+            bool is_not_begin( _Container const * container )const
+            {
+                return ! is_begin( container );
+            }
+
+            bool _is_begin( _Container const * container )const
+            {
+                return _current == container->storage().begin();
+            }
+
+            bool _is_not_begin( _Container const * container )const
+            {
+                return ! _is_begin( container );
+            }
+
+            bool is_end( _Container const * container )const
+            {
+                return _current == container->storage().end();
+            }
+
+            bool is_not_end( _Container const * container )const
+            {
+                return ! is_end( container );
+            }
+
+            void
+            increment(
+                  _CurrentInErased & currentInErased
+                , _Container const * container
+            )
+            {
+                AV_PRECONDITION( is_not_end( container ) );
+
+                increment( container );
+
+                if( _dir == -1 )
+                {
+                    _dir = 1;
+                    currentInErased.try_increment( container );
+                }
+
+                setOnNotErased( currentInErased, container );
+            }
+
+            void
+            try_increment(
+                  _CurrentInErased & currentInErased
+                , _Container const * container
+            )
+            {
+                if( is_end( container ) ){
+                    return;
+                }
+
+                increment( currentInErased, container );
+            }
+
+            void
+            decrement(
+                  _CurrentInErased & currentInErased
+                , _Container const * container
+            )
+            {
+                AV_PRECONDITION( is_not_begin( container ) );
+
+                _CurrentInStorage const oldInStorage = *this;
+                _CurrentInErased const oldInErased = currentInErased;
+
+                decrement( container );
+
+                if( _dir == 1 )
+                {
+                    _dir = -1;
+                    currentInErased.try_decrement( container );
+                }
+
+                {//setOnNotErasedBackward
+                    AV_CHECK( is_not_end( container ) );
+
+                    while(
+                           is_not_begin( container )
+                        && currentInErased.is_not_begin( container )
+                        && currentInErased.is_not_end( container )
+                        && *this == currentInErased.get( container )
+                    )
+                    {
+                        decrement( container );
+                        currentInErased.decrement( container );
+                    }
+                }
+
+                if(
+                       _is_begin( container )
+                    && currentInErased.is_not_end( container )
+                    && *this == currentInErased.get( container )
+                )
+                {
+                    *this = oldInStorage;
+                    currentInErased = oldInErased;
+                }
+
+                AV_POSTCONDITION( validate( container ) );
+
+                AV_POSTCONDITION(
+                       currentInErased.is_end( container )
+                    || *this != currentInErased.get( container )
+                );
+            }
+
+            void
+            try_decrement(
+                  _CurrentInErased & currentInErased
+                , _Container const * container
+            )
+            {
+                if( _is_begin( container ) ){
+                    return;
+                }
+
+                decrement( currentInErased, container );
+            }
+
+            void
+            setOnNotErased(
+                  _CurrentInErased & currentInErased
+                , _Container const * container
+            )
+            {
+                if( !currentInErased )
+                {
+                    currentInErased = std::lower_bound(
+                          container->erased().begin()
+                        , container->erased().end()
+                        , data()
+                        , std::less< typename _Container::_Storage::const_iterator >()
+                    );
+                }
+
+                if( _dir == -1 ){
+                    _dir = 1;
+                }
+
+                while(
+                       is_not_end( container )
+                    && currentInErased.is_not_end( container )
+                    && *this == currentInErased.get( container )
+                )
+                {
+                    increment( container );
+                    currentInErased.increment( container );
+                }
+
+                AV_POSTCONDITION( currentInErased );
+
+                AV_POSTCONDITION(
+                       (
+                             is_end( container )
+                          && currentInErased.is_end( container )
+                       )
+                    || currentInErased.is_end( container )
+                    || *this != currentInErased.get( container )
+                );
+            }
+
+            void
+            setOnNotErasedBackward(
+                  _CurrentInErased & currentInErased
+                , _Container const * container
+            )
+            {
+                AV_CHECK( ! "todo" );
+            }
+
+            operator bool()const
+            {
+                return _current != 0;
+            }
+
+            bool validate( _Container const * container )const
+            {
+                return util::is_between( container->storage().begin(), _current, container->storage().end() );
+            }
+
+            typename _Container::_Storage::value_type
+            get( _Container const * container )const
+            {
+                AV_PRECONDITION( _current );
+                AV_PRECONDITION( is_not_end( container ) );
+
+                return * _current;
+            }
+
+            pointer_mutable data()const
+            {
+                return _current;
+            }
+
+        private:
+            void increment( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_end( container ) );
+
+                ++ _current;
+            }
+
+            void decrement( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_begin( container ) );
+
+                -- _current;
+            }
+
+        private:
+            int _dir;
+
+            pointer_mutable _current;
+        };
+
+        struct _Current
+        {
+            _Current( pointer_mutable current )
+                : _current( current )
+             {
+             }
+
+             _Current( _CurrentInStorage const & inStorage )
+                : _current( inStorage.data() )
+            {
+            }
+
+             _Current( _CurrentInBuffer const & inBuffer )
+                : _current( inBuffer.data() )
+            {
+            }
+
+            _Current & operator=( _Current const & other )
+            {
+                _current = other._current;
+            }
+
+            _Current & operator=( _CurrentInStorage const & inStorage )
+            {
+                _current = inStorage.data();
+            }
+
+            _Current & operator=( _CurrentInBuffer const & inBuffer )
+            {
+                _current = inBuffer.data();
+            }
+
+            bool operator==( _Current const & other )const
+            {
+                return _current == other._current;
+            }
+
+            bool operator==( _CurrentInStorage const & inStorage )const
+            {
+                return _current == inStorage.data();
+            }
+
+            bool operator==( _CurrentInBuffer const & inBuffer )const
+            {
+                return _current == inBuffer.data();
+            }
+
+            bool validate(
+                  _CurrentInStorage currentInStorage
+                , _CurrentInBuffer currentInBuffer
+                , _Container const * container
+            )const
+            {
+                AV_PRECONDITION( currentInStorage || currentInBuffer );
+                AV_PRECONDITION( container != 0 );
+
+                if( !currentInStorage ){//lazy
+                    return _current == currentInBuffer.data();
+                }
+
+                if( !currentInBuffer ){//lazy
+                    return _current == currentInStorage.data();
+                }
+
+                // if 'setLower' does not work 'validateCurrent' does not work as well :O(
+                return _current == getLower( currentInStorage, currentInBuffer, container ).data();
+            }
+
+            void setLower(
+                  _CurrentInStorage currentInStorage
+                , _CurrentInBuffer currentInBuffer
+                , _Container const * container
+            )
+            {
+                _current = getLower( currentInStorage, currentInBuffer, container ).data();
+            }
+
+            _Current getLower(
+                  _CurrentInStorage currentInStorage
+                , _CurrentInBuffer currentInBuffer
+                , _Container const * container
+            )const
+            {
+                AV_CHECK( currentInStorage );
+                AV_CHECK( currentInBuffer );
+
+                if( currentInStorage == container->storage().end() )
+                {
+                    if( currentInBuffer.is_end( container ) ){
+                        return _Current( 0 );
+                    }
+                    else{
+                        return _Current( currentInBuffer );
+                    }
+                }
+                else
+                {
+                    if( currentInBuffer.is_end( container ) ){
+                        return _Current( currentInStorage );
+                    }
+                    else
+                    {
+                        if( container->value_comp()(
+                                currentInStorage.get( container )
+                              , currentInBuffer.get( container )
+                            )
+                        ){
+                            return _Current( currentInStorage );
+                        }
+                        else{
+                            return _Current( currentInBuffer );
+                        }
+                    }
+                }
+            }
+
+            operator bool()const
+            {
+                return _current != 0;
+            }
+
+            typename _Container::_Storage::value_type
+            get( _Container const * container )const
+            {
+                return * _current;
+            }
+
+            pointer_mutable
+            data()const
+            {
+                return _current;
+            }
+
+        private:
+            pointer_mutable _current;
+        };
+
+    public:
         AssocVectorLazyIterator(
             typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
@@ -933,31 +1543,45 @@ namespace detail
             AV_PRECONDITION( container != 0 );
             AV_PRECONDITION( validate() );
 
-            if( _currentInErased == 0 )
+            if( _currentInStorage && _currentInBuffer && !_currentInErased && !_current )
             {
-                AV_CHECK( _currentInStorage );
+                // not found in storage, insert to buffer
+                // erase from buffer + find in storage
 
-                _currentInErased = std::lower_bound(
-                      _container->erased().begin()
-                    , _container->erased().end()
-                    , _currentInStorage
-                    , std::less< typename _Container::_Storage::const_iterator >()
-                );
+                // _currentInStorage <- fix against '!_currentInErased'
+                _currentInStorage.setOnNotErased( _currentInErased, _container );
 
-                while(
-                       * _currentInErased == _currentInStorage
-                    && _currentInErased != _container->erased().end()
-                    && _currentInStorage != _container->storage().end()
-                )
-                {
-                    ++ _currentInErased;
-                    ++ _currentInStorage;
-                }
+                // _current <- get it right now
+                _current.setLower( _currentInStorage, _currentInBuffer, _container );
+            }
+            else
+            if( _currentInStorage && _currentInBuffer && !_currentInErased && _current )
+            {
+                // not found in storage, found in buffer
+                // not found in storage, inserted to buffer
+
+                // _currentInStorage <- fix against '!_currentInErased'
+                _currentInStorage.setOnNotErased( _currentInErased, _container );
+            }
+            else
+            if( _currentInStorage && _currentInBuffer && _currentInErased && !_current )
+            {
+                // begin iterator
+                // end iterator
+                // erase from storage, not merged + find in buffer
+                // erase from storage, merged + find in buffer + find in storage
+
+                // _currentInStorage <- check against _currentInErased
+                _currentInStorage.setOnNotErased( _currentInErased, _container );
+
+                // _current <- get it right now
+                _current.setLower( _currentInStorage, _currentInBuffer, _container );
             }
 
-            if( _current == 0 ){
-                _current = calculateCurrent();
-            }
+            AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+            AV_POSTCONDITION( _currentInStorage || _currentInBuffer );
+            AV_POSTCONDITION( _currentInErased );
+            AV_POSTCONDITION( _container != 0 );
         }
 
         AssocVectorLazyIterator &
@@ -975,29 +1599,37 @@ namespace detail
         }
 
         bool operator==( AssocVectorLazyIterator const & other )const{
+            resolveLazyValues();
+
+            AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
             return equal( *this, other );
         }
 
         bool operator!=( AssocVectorLazyIterator const & other )const{
+            resolveLazyValues();
+
+            AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
             return ! ( ( * this ) == other );
         }
 
         AssocVectorLazyIterator & operator++()
         {
-            if( _current == 0 ){
-                return * this;
-            }
-
             resolveLazyValues();
 
+            AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
             if( _current == _currentInStorage ){
-                ++ _currentInStorage;
+                _currentInStorage.try_increment( _currentInErased, _container );
             }
-            else{
-                ++ _currentInBuffer;
+            else if( _current == _currentInBuffer ){
+                _currentInBuffer.try_increment( _container );
             }
 
-            _current = calculateCurrent();
+            _current.setLower( _currentInStorage, _currentInBuffer, _container );
+
+            AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
 
             return * this;
         }
@@ -1015,29 +1647,65 @@ namespace detail
         {
             resolveLazyValues();
 
+            AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
             if(
-                   _currentInStorage == _container->storage().begin()
-                && _currentInBuffer == _container->buffer().begin()
-            ){
+                   _currentInStorage.is_begin( _container )
+                && _currentInBuffer.is_begin( _container )
+            )
+            {
+                AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
                 return * this;
             }
-            else if( _current == 0 )
+
+            if( _currentInStorage.is_begin( _container ) )
             {
-                -- _currentInStorage;
-                -- _currentInBuffer;
+                _currentInBuffer.decrement( _container );
+
+                _current = _currentInBuffer;
+
+                AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+                return * this;
+            }
+
+            if( _currentInBuffer.is_begin( _container ) )
+            {
+                _currentInStorage.decrement( _currentInErased, _container );
+
+                _current = _currentInStorage;
+
+                AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+                return * this;
+            }
+
+            _CurrentInStorage currentInStorage = _currentInStorage;
+            _CurrentInBuffer currentInBuffer = _currentInBuffer;
+
+            _CurrentInErased currentInErased = _currentInErased;
+
+            currentInStorage.decrement( currentInErased, _container );
+            currentInBuffer.decrement( _container );
+
+            if(
+                _container->value_comp()(
+                      currentInStorage.get( _container )
+                    , currentInBuffer.get( _container )
+                )
+            )
+            {
+                _currentInBuffer = currentInBuffer;
+
+                _current = _currentInBuffer;
             }
             else
             {
-                if( _current == _currentInStorage ){
-                    -- _currentInStorage;
-                }
-                else{
-                    -- _currentInBuffer;
-                }
+                _currentInStorage = currentInStorage;
+                _currentInErased = currentInErased;
+
+                _current = _currentInStorage;
             }
 
-            _current = calculateCurrent();
-
+            AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
             return * this;
         }
 
@@ -1047,24 +1715,26 @@ namespace detail
 
             ( * this ).operator--();
 
-
             return result;
         }
 
         reference operator*()const{
-            AV_PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _current );
+            AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
 
             return * base();
         }
 
         pointer operator->()const{
-            AV_PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _current );
+            AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
 
             return base();
         }
 
         pointer base()const{
-            AV_PRECONDITION( _current != 0 );
+            AV_PRECONDITION( _current );
+            AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
 
             // make key const
             // pair< T1, T2 > * -> pair< T1 const, T2 > *
@@ -1073,7 +1743,7 @@ namespace detail
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
-                        reinterpret_cast< void const * >( _current )
+                        reinterpret_cast< void const * >( _current.data() )
                     )
                 );
         }
@@ -1081,124 +1751,178 @@ namespace detail
         // public for copy constructor only : Iterator -> ConstIterator
         _Container const * getContainer()const{ return _container; }
 
-        pointer_mutable getCurrentInStorage()const{ return _currentInStorage; }
-        pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
-        typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
+        pointer_mutable getCurrentInStorage()const{ return _currentInStorage.data(); }
+        pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer.data(); }
+        typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased.data(); }
 
-        pointer_mutable getCurrent()const{ return _current; }
+        pointer_mutable getCurrent()const{ return _current.data(); }
 
     private:
+        /*const function*/
+        static
         void
-        resolveLazyValues()
+        resolveLazyCurrentInBuffer(
+              _CurrentInBuffer & currentInBuffer
+            , _Current const current
+            , _Container const * container
+        )
         {
-            if( _currentInBuffer == 0 )
-            {
-                _currentInBuffer = const_cast< pointer_mutable >(
-                    std::lower_bound(
-                          _container->buffer().begin()
-                        , _container->buffer().end()
-                        , * _current
-                        , _container->value_comp()
-                    )
-                );
+            if( currentInBuffer ){
+                return;
             }
-            else if( _currentInStorage == 0 )
-            {
-                _currentInStorage = const_cast< pointer_mutable >(
-                    std::lower_bound(
-                          _container->storage().begin()
-                        , _container->storage().end()
-                        , * _current
-                        , _container->value_comp()
-                    )
-                );
-            }
+
+            currentInBuffer = const_cast< pointer_mutable >(
+                std::lower_bound(
+                      container->buffer().begin()
+                    , container->buffer().end()
+                    , current.get( container )
+                    , container->value_comp()
+                )
+            );
         }
 
+        static
+        void
+        resolveLazyCurrentInStorage(
+              _CurrentInStorage & currentInStorage
+            , _CurrentInErased & currentInErased
+            , _Current const current
+            , _Container const * container
+        )
+        {
+            if( currentInStorage ){
+                return;
+            }
+
+            currentInStorage = const_cast< pointer_mutable >(
+                std::lower_bound(
+                      container->storage().begin()
+                    , container->storage().end()
+                    , current.get( container )
+                    , container->value_comp()
+                )
+            );
+
+            currentInStorage.setOnNotErased( currentInErased, container );
+        }
+
+        void
+        resolveLazyValues()const
+        {
+          resolveLazyCurrentInBuffer( _currentInBuffer, _current, _container );
+          resolveLazyCurrentInStorage( _currentInStorage, _currentInErased, _current, _container );
+        }
+
+        /*pure function*/
         bool
         validate()const
         {
-            if( _currentInStorage == 0 && _currentInBuffer == 0 && _currentInErased == 0 && _current == 0 ){
+            if( !_currentInStorage && !_currentInBuffer && !_currentInErased && !_current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage == 0 && _currentInBuffer == 0 && _currentInErased == 0 && _current != 0 ){
+            if( !_currentInStorage && !_currentInBuffer && !_currentInErased && _current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage == 0 && _currentInBuffer == 0 && _currentInErased != 0 && _current == 0 ){
+            if( !_currentInStorage && !_currentInBuffer && _currentInErased && !_current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage == 0 && _currentInBuffer == 0 && _currentInErased != 0 && _current != 0 ){
+            if( !_currentInStorage && !_currentInBuffer && _currentInErased && _current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage == 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current == 0 ){
+            if( !_currentInStorage && _currentInBuffer && !_currentInErased && !_current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage == 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current != 0 ){
+            if( !_currentInStorage && _currentInBuffer && !_currentInErased && _current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage == 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current == 0 ){
+            if( !_currentInStorage && _currentInBuffer && _currentInErased && !_current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage == 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current != 0 ){
+            if( !_currentInStorage && _currentInBuffer && _currentInErased && _current )
+            {
                 // not found in storage, inserted to buffer, buffer merged to storage
-                AV_CHECK( util::is_between( _container->buffer().begin(), _currentInBuffer, _container->buffer().end() ) );
-                AV_CHECK( _currentInErased == _container->erased().end() );
+
+                AV_CHECK( _currentInBuffer.validate( _container ) );
+                AV_CHECK( _currentInErased.is_end( _container ) );
                 AV_CHECK( _current == _currentInBuffer );
 
-                // _currentInStorage <- lazy in operator++/operator--
+                // _currentInStorage <- lazy in operator++/operator--/operator==/operator!=
             }
             else
-            if( _currentInStorage != 0 && _currentInBuffer == 0 && _currentInErased == 0 && _current == 0 ){
+            if( _currentInStorage && !_currentInBuffer && !_currentInErased && !_current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage != 0 && _currentInBuffer == 0 && _currentInErased == 0 && _current != 0 ){
+            if( _currentInStorage && !_currentInBuffer && !_currentInErased && _current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage != 0 && _currentInBuffer == 0 && _currentInErased != 0 && _current == 0 ){
+            if( _currentInStorage && !_currentInBuffer && _currentInErased && !_current ){
                 AV_CHECK( false );
             }
             else
-            if( _currentInStorage != 0 && _currentInBuffer == 0 && _currentInErased != 0 && _current != 0 ){
-                // found in storage
-                AV_CHECK( util::is_between( _container->storage().begin(), _currentInStorage, _container->storage().end() ) );
-                AV_CHECK( util::is_between( _container->erased().begin(), _currentInErased, _container->erased().end() ) );
+            if( _currentInStorage && !_currentInBuffer && _currentInErased && _current )
+            {
+                // found in storage, not found in erased
+
+                AV_CHECK( _currentInStorage.validate( _container ) );
+                AV_CHECK( std::binary_search( _container->erased().begin(), _container->erased().end(), _currentInStorage.data() ) == false );
+                AV_CHECK( _currentInErased.validate( _container ) );
                 AV_CHECK( _current == _currentInStorage );
 
-                // _currentInBuffer <- lazy in operator++/operator--
+                // _currentInBuffer <- lazy in operator++/operator--/operator==/operator!=
             }
             else
-            if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current == 0 ){
+            if( _currentInStorage && _currentInBuffer && !_currentInErased && !_current )
+            {
+                // not found in storage, insert to buffer
                 // erase from buffer + find in storage
+
+                AV_CHECK( _currentInStorage.validate( _container ) );
+                AV_CHECK( _currentInBuffer.validate( _container ) );
+
+                // _currentInStorage <- fix against '!_currentInErased'
+                // _current <- get it right now
             }
             else
-            if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased == 0 && _current != 0 ){
-                // found in buffer / inserted to buffer
-                AV_CHECK( util::is_between( _container->storage().begin(), _currentInStorage, _container->storage().end() ) );
-                AV_CHECK( util::is_between( _container->buffer().begin(), _currentInBuffer, _container->buffer().end() ) );
+            if( _currentInStorage && _currentInBuffer && !_currentInErased && _current )
+            {
+                // not found in storage, found in buffer
+                // not found in storage, inserted to buffer
+
+                AV_CHECK( _currentInStorage.validate( _container ) );
+                AV_CHECK( _currentInBuffer.validate( _container ) );
                 AV_CHECK( _current == _currentInBuffer );
 
+                // _currentInStorage <- fix against '!_currentInErased'
                 // _currentInErased <- get it right now
             }
             else
-            if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current == 0 ){
-                // begin iterator / end iterator
+            if( _currentInStorage && _currentInBuffer && _currentInErased && !_current )
+            {
+                // begin iterator
+                // end iterator
                 // erase from storage, not merged + find in buffer
                 // erase from storage, merged + find in buffer + find in storage
 
-                // current <- get it right now
+                AV_CHECK( _currentInStorage.validate( _container ) );
+                AV_CHECK( _currentInBuffer.validate( _container ) );
+                AV_CHECK( _currentInErased.validate( _container ) );
+
+                // _currentInStorage <- check against _currentInErased
+                // _current <- get it right now
             }
             else
-            if( _currentInStorage != 0 && _currentInBuffer != 0 && _currentInErased != 0 && _current != 0 ){
-                // not known case, but probably not valid
+            if( _currentInStorage && _currentInBuffer && _currentInErased && _current ){
+                // not known case, but probably valid
+                AV_CHECK( false );
             }
             else{
                 AV_CHECK( false );
@@ -1207,64 +1931,83 @@ namespace detail
             return true;
         }
 
-        pointer_mutable
-        calculateCurrent()
-        {
-            AV_CHECK( _currentInStorage );
-            AV_CHECK( _currentInBuffer );
-            AV_CHECK( _currentInErased );
-
-            while(
-                   _currentInErased != _container->erased().end()
-                && _currentInStorage != _container->storage().end()
-                && _currentInStorage == *_currentInErased
-            )
-            {
-                ++ _currentInStorage;
-                ++ _currentInErased;
-            }
-
-            if( _currentInStorage == _container->storage().end() )
-            {
-                if( _currentInBuffer == _container->buffer().end() ){
-                    return 0;
-                }
-
-                return _currentInBuffer;
-            }
-
-            if(
-                   _currentInBuffer == _container->buffer().end()
-                || _container->value_comp()( * _currentInStorage, * _currentInBuffer )
-            )
-            {
-                return _currentInStorage;
-            }
-            else
-            {
-                return _currentInBuffer;
-            }
-        }
-
     private:
         _Container const * _container;
 
-        pointer_mutable _currentInStorage;
-        pointer_mutable _currentInBuffer;
+        // mutable since lazy values in operator==()const / operator!=()const
+        mutable _CurrentInStorage _currentInStorage;
+        mutable _CurrentInBuffer _currentInBuffer;
+        mutable _CurrentInErased _currentInErased;
 
-        typename _Container::_Erased::const_iterator _currentInErased;
-
-        pointer_mutable _current;
+        _Current _current;
     };
 
+    template<
+          typename _Iterator
+        , typename _Container
+    >
+    std::ostream &
+    operator<<(
+        std::ostream & out
+        , AssocVectorLazyIterator< _Iterator, _Container > const & iter
+    )
+    {
+        out
+            << "S: "
+            << iter.getCurrentInStorage();
+
+        if( iter.getContainer()->storage().end() == iter.getCurrentInStorage() ){
+            out << " (end)";
+        }
+        else{
+            out << " " << * iter.getCurrentInStorage();
+        }
+
+         out
+            << "\n"
+            << "B: " << iter.getCurrentInBuffer();
+
+        if( iter.getContainer()->buffer().end() == iter.getCurrentInBuffer() ){
+            out << " (end)";
+        }
+        else{
+            out << " " << * iter.getCurrentInBuffer();
+        }
+
+
+         out
+            << "\n"
+            << "E: " << iter.getCurrentInErased();
+
+        if( iter.getContainer()->erased().end() == iter.getCurrentInErased() ){
+            out << " (end)";
+        }
+        else{
+            out << " " << * * iter.getCurrentInErased();
+        }
+
+        out
+            << "\n"
+            << "C: " << iter.getCurrent();
+
+        if( iter.getCurrent() == 0 ){
+            out << " (null)";
+        }
+        else{
+            out << " " << * iter.getCurrent();
+        }
+
+        return out;
+    }
+
     //
-    // _AssocVectorLazyIterator, simplified version of AssocVectorLazyIterator, works with _find and _end
+    // _AssocVectorIterator, simplified version of AssocVectorLazyIterator, works with _find and _end
     //
     template<
           typename _Iterator
         , typename _Container
     >
-    struct _AssocVectorLazyIterator
+    struct _AssocVectorIterator
     {
     private:
         typedef typename std::iterator_traits< _Iterator >::pointer pointer_mutable;
@@ -1284,7 +2027,7 @@ namespace detail
             , typename value_type::second_type
         > * pointer;
 
-        _AssocVectorLazyIterator(
+        _AssocVectorIterator(
             typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
             : _current( 0 )
@@ -1292,29 +2035,29 @@ namespace detail
         }
 
         template< typename _Iter >
-        _AssocVectorLazyIterator( _AssocVectorLazyIterator< _Iter, _Container > const & other )
+        _AssocVectorIterator( _AssocVectorIterator< _Iter, _Container > const & other )
             : _current( other.getCurrent() )
         {
         }
 
-        _AssocVectorLazyIterator( pointer_mutable current )
+        _AssocVectorIterator( pointer_mutable current )
             : _current( current )
         {
         }
 
-        _AssocVectorLazyIterator &
-        operator=( _AssocVectorLazyIterator const & other )
+        _AssocVectorIterator &
+        operator=( _AssocVectorIterator const & other )
         {
             _current = other._current;
 
             return * this;
         }
 
-        bool operator==( _AssocVectorLazyIterator const & other )const{
+        bool operator==( _AssocVectorIterator const & other )const{
             return _current == other.getCurrent();
         }
 
-        bool operator!=( _AssocVectorLazyIterator const & other )const{
+        bool operator!=( _AssocVectorIterator const & other )const{
             return ! ( ( * this ) == other );
         }
 
@@ -1594,6 +2337,64 @@ namespace detail
         pointer_mutable _current;
     };
 
+    template<
+          typename _Iterator
+        , typename _Container
+    >
+    std::ostream &
+    operator<<(
+          std::ostream & out
+        , AssocVectorReverseIterator< _Iterator, _Container > const & iter
+    )
+    {
+        out
+            << "S: "
+            << iter.getCurrentInStorage();
+
+        if( iter.getContainer()->storage().end() == iter.getCurrentInStorage() ){
+            out << " (end)";
+        }
+        else{
+            out << " " << * iter.getCurrentInStorage();
+        }
+
+         out
+            << "\n"
+            << "B: " << iter.getCurrentInBuffer();
+
+        if( iter.getContainer()->buffer().end() == iter.getCurrentInBuffer() ){
+            out << " (end)";
+        }
+        else{
+            out << " " << * iter.getCurrentInBuffer();
+        }
+
+
+         out
+            << "\n"
+            << "E: " << iter.getCurrentInErased();
+
+        if( iter.getContainer()->erased().end() == iter.getCurrentInErased() ){
+            out << " (end)";
+        }
+        else{
+            out << " " << * * iter.getCurrentInErased();
+        }
+
+        out
+            << "\n"
+            << "C: " << iter.getCurrent();
+
+        if( iter.getCurrent() == 0 ){
+            out << " (null)";
+        }
+        else{
+            out << " " << * iter.getCurrent();
+        }
+
+        return out;
+    }
+
 } // namespace detail
 
 template<
@@ -1639,8 +2440,8 @@ public:
     //
     // extension, faster, non STL compatible version of iterator, working with _find end _end
     //
-    typedef detail::_AssocVectorLazyIterator< value_type_mutable *, AssocVector > _iterator;
-    typedef detail::_AssocVectorLazyIterator< value_type_mutable const *, AssocVector > _const_iterator;
+    typedef detail::_AssocVectorIterator< value_type_mutable *, AssocVector > _iterator;
+    typedef detail::_AssocVectorIterator< value_type_mutable const *, AssocVector > _const_iterator;
 
 private:
     struct _FindOrInsertToBufferResult
@@ -1796,7 +2597,7 @@ public:
     void merge();
 
     //
-    // extension, faster, non STL compatible version on insert
+    // extension, faster, non STL compatible version of insert
     //
     bool _insert( value_type const & value );
 
@@ -1811,6 +2612,11 @@ public:
     //
     _iterator _find( key_type const & k );
     _const_iterator _find( key_type const & k )const;
+
+    //
+    // extension, faster, non STL compatible version of erase
+    //
+    bool _erase( iterator pos );
 
 private:
 
@@ -2391,8 +3197,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
     {//find or insert to buffer
         if( notPresentInStorage )
         {
-            _FindOrInsertToBufferResult const findOrInsertToBufferResult
-                = findOrInsertToBuffer( k, m );
+            _FindOrInsertToBufferResult const findOrInsertToBufferResult = findOrInsertToBuffer( k, m );
 
             _InsertImplResult result;
             result._isInserted = findOrInsertToBufferResult._isInserted;
@@ -2913,8 +3718,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
             array::erase( _buffer, posBase );
 
             typename _Storage::iterator const greaterEqualInStorage
-                = pos.getCurrentInBuffer()
-                ? pos.getCurrentInBuffer()
+                = pos.getCurrentInStorage()
+                ? pos.getCurrentInStorage()
                 : std::lower_bound( _storage.begin(), _storage.end(), key, value_comp() );
 
             return iterator( this, greaterEqualInStorage, posBase, 0, 0 );
@@ -2957,6 +3762,47 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
             = std::lower_bound( _storage.begin(), _storage.end(), key, value_comp() );
 
         return iterator( this, greaterEqualInStorage, greaterEqualInBuffer, _erased.end(), 0 );
+    }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_erase( iterator pos )
+{
+    // iterator::base converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
+    // revert real iterator type: pair< T1 const, T2 > * -> pair< T1, T2 > *
+    value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.base() );
+
+    {//erase from _buffer
+        if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) )
+        {
+            array::erase( _buffer, posBase );
+
+            return true;
+        }
+    }
+
+    {//item not present in container
+        if( util::is_between( _storage.begin(), posBase, _storage.end() ) == false ){
+            return false;
+        }
+    }
+
+    {//erase from back
+        _TryToRemoveBackResult const result = tryToRemoveStorageBack( posBase );
+
+        if( result._anyItemRemoved ){
+            return true;
+        }
+    }
+
+    {//erase from _storage
+        return tryToEraseFromStorage( posBase )._isErased;
     }
 }
 
