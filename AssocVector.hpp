@@ -1005,11 +1005,15 @@ namespace detail
             _CurrentInBuffer & operator=( _CurrentInBuffer const & other )
             {
                 _current = other._current;
+
+                return * this;
             }
 
             _CurrentInBuffer & operator=( pointer_mutable current )
             {
                 _current = current;
+
+                return * this;
             }
 
             bool is_begin( _Container const * container )const
@@ -1209,9 +1213,6 @@ namespace detail
             {
                 AV_PRECONDITION( is_not_begin( container ) );
 
-                _CurrentInStorage const oldInStorage = *this;
-                _CurrentInErased const oldInErased = currentInErased;
-
                 decrement( container );
 
                 if( _dir == 1 )
@@ -1220,37 +1221,7 @@ namespace detail
                     currentInErased.try_decrement( container );
                 }
 
-                {//setOnNotErasedBackward
-                    AV_CHECK( is_not_end( container ) );
-
-                    while(
-                           is_not_begin( container )
-                        && currentInErased.is_not_begin( container )
-                        && currentInErased.is_not_end( container )
-                        && *this == currentInErased.get( container )
-                    )
-                    {
-                        decrement( container );
-                        currentInErased.decrement( container );
-                    }
-                }
-
-                if(
-                       _is_begin( container )
-                    && currentInErased.is_not_end( container )
-                    && *this == currentInErased.get( container )
-                )
-                {
-                    *this = oldInStorage;
-                    currentInErased = oldInErased;
-                }
-
-                AV_POSTCONDITION( validate( container ) );
-
-                AV_POSTCONDITION(
-                       currentInErased.is_end( container )
-                    || *this != currentInErased.get( container )
-                );
+                setOnNotErasedBackward( currentInErased, container );
             }
 
             void
@@ -1314,7 +1285,25 @@ namespace detail
                 , _Container const * container
             )
             {
-                AV_CHECK( ! "todo" );
+                AV_CHECK( is_not_end( container ) );
+
+                while(
+                       is_not_begin( container )
+                    && currentInErased.is_not_begin( container )
+                    && currentInErased.is_not_end( container )
+                    && *this == currentInErased.get( container )
+                )
+                {
+                    decrement( container );
+                    currentInErased.decrement( container );
+                }
+
+                AV_POSTCONDITION( validate( container ) );
+
+                AV_POSTCONDITION(
+                       currentInErased.is_end( container )
+                    || *this != currentInErased.get( container )
+                );
             }
 
             operator bool()const
@@ -1382,16 +1371,22 @@ namespace detail
             _Current & operator=( _Current const & other )
             {
                 _current = other._current;
+
+                return * this;
             }
 
             _Current & operator=( _CurrentInStorage const & inStorage )
             {
                 _current = inStorage.data();
+
+                return * this;
             }
 
             _Current & operator=( _CurrentInBuffer const & inBuffer )
             {
                 _current = inBuffer.data();
+
+                return * this;
             }
 
             bool operator==( _Current const & other )const
