@@ -2022,6 +2022,7 @@ namespace detail
             , typename value_type::second_type
         > * pointer;
 
+    public:
         _AssocVectorIterator(
             typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
@@ -2124,6 +2125,366 @@ namespace detail
             , typename value_type::second_type
         > * pointer;
 
+
+    private:
+        struct _RCurrentInErased
+        {
+            _RCurrentInErased( typename _Container::_Erased::const_iterator current )
+                : _current( current )
+            {
+            }
+
+            _RCurrentInErased( _RCurrentInErased const & other )
+                : _current( other._current )
+            {
+            }
+
+            _RCurrentInErased & operator=( typename _Container::_Erased::const_iterator current )
+            {
+                _current = current;
+
+                return * this;
+            }
+
+            bool is_rbegin( _Container const * container )const
+            {
+                return _current == container->erased().end() - 1;
+            }
+
+            bool is_not_rbegin( _Container const * container )const
+            {
+                return ! is_rbegin( container );
+            }
+
+            bool is_rend( _Container const * container )const
+            {
+                return _current == container->erased().begin() - 1;
+            }
+
+            bool is_not_rend( _Container const * container )const
+            {
+                return ! is_rend( container );
+            }
+
+            void increment( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_rend( container ) );
+
+                -- _current; // reverse iterator
+            }
+
+            void try_increment( _Container const * container )
+            {
+                if( is_rend( container ) ){
+                    return;
+                }
+
+                increment( container );
+            }
+
+            void decrement( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_rbegin( container ) );
+
+                ++ _current; // reverse iterator
+            }
+
+            void try_decrement( _Container const * container )
+            {
+                if( is_rbegin( container ) ){
+                    return;
+                }
+
+                decrement( container );
+            }
+
+            typename _Container::_Erased::value_type
+            get( _Container const * container )const
+            {
+                AV_PRECONDITION( _current );
+                AV_PRECONDITION( is_not_rend( container ) );
+
+                return * _current;
+            }
+
+            operator bool()const
+            {
+                return _current != 0;
+            }
+
+            typename _Container::_Erased::const_iterator
+            data()const
+            {
+                return _current;
+            }
+
+        private:
+            typename _Container::_Erased::const_iterator _current;
+        };
+
+        struct _RCurrentInBuffer
+        {
+            _RCurrentInBuffer( pointer_mutable current )
+                : _current( current )
+            {
+            }
+
+            _RCurrentInBuffer( _RCurrentInBuffer const & other )
+                : _current( other._current )
+            {
+            }
+
+            _RCurrentInBuffer & operator=( _RCurrentInBuffer const & other )
+            {
+                _current = other._current;
+
+                return * this;
+            }
+
+            _RCurrentInBuffer & operator=( pointer_mutable current )
+            {
+                _current = current;
+
+                return * this;
+            }
+
+            bool is_rbegin( _Container const * container )const
+            {
+                return _current == container->buffer().end() - 1;
+            }
+
+            bool is_not_rbegin( _Container const * container )const
+            {
+                return ! is_rbegin( container );
+            }
+
+            bool is_rend( _Container const * container )const
+            {
+                return _current == container->buffer().begin() - 1;
+            }
+
+            bool is_not_rend( _Container const * container )const
+            {
+                return ! is_rend( container );
+            }
+
+            void increment( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_rend( container ) );
+
+                -- _current; // reverse iterator
+            }
+
+            void try_increment( _Container const * container )
+            {
+                if( is_rend( container ) ){
+                    return;
+                }
+
+                increment( container );
+            }
+
+            void decrement( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_rbegin( container ) );
+
+                ++ _current;
+            }
+
+            void try_decrement( _Container const * container )
+            {
+                if( is_rbegin( container ) ){
+                    return;
+                }
+
+                decrement( container );
+            }
+
+            typename _Container::_Storage::value_type
+            get( _Container const * container )const
+            {
+                AV_PRECONDITION( _current );
+                AV_PRECONDITION( is_not_rend( container ) );
+
+                return * _current;
+            }
+
+            operator bool()const
+            {
+                return _current != 0;
+            }
+
+            pointer_mutable data()const
+            {
+                return _current;
+            }
+
+        private:
+            pointer_mutable _current;
+        };
+
+        struct _RCurrentInStorage
+        {
+            _RCurrentInStorage( pointer_mutable current )
+                : _current( current )
+            {
+            }
+
+            _RCurrentInStorage( _RCurrentInBuffer const & other )
+                : _current( other._current )
+            {
+            }
+
+            _RCurrentInStorage & operator=( _RCurrentInStorage const & other )
+            {
+                _current = other._current;
+
+                return * this;
+            }
+
+            _RCurrentInStorage & operator=( pointer_mutable current )
+            {
+                _current = current;
+
+                return * this;
+            }
+
+            bool is_rbegin( _Container const * container )const
+            {
+                return _current == container->storage().end() - 1;
+            }
+
+            bool is_not_rbegin( _Container const * container )const
+            {
+                return ! is_rbegin( container );
+            }
+
+            bool is_rend( _Container const * container )const
+            {
+                return _current == container->storage().begin() - 1;
+            }
+
+            bool is_not_rend( _Container const * container )const
+            {
+                return ! is_rend( container );
+            }
+
+            void increment( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_rend( container ) );
+
+                -- _current; // reverse iterator
+            }
+
+            void try_increment( _Container const * container )
+            {
+                if( is_rend( container ) ){
+                    return;
+                }
+
+                increment( container );
+            }
+
+            void decrement( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_rbegin( container ) );
+
+                ++ _current;
+            }
+
+            void try_decrement( _Container const * container )
+            {
+                if( is_rbegin( container ) ){
+                    return;
+                }
+
+                decrement( container );
+            }
+
+            typename _Container::_Storage::value_type
+            get( _Container const * container )const
+            {
+                AV_PRECONDITION( _current );
+                AV_PRECONDITION( is_not_rend( container ) );
+
+                return * _current;
+            }
+
+            operator bool()const
+            {
+                return _current != 0;
+            }
+
+            pointer_mutable data()const
+            {
+                return _current;
+            }
+
+        private:
+            pointer_mutable _current;
+        };
+
+        struct _RCurrent
+        {
+            _RCurrent( pointer_mutable current )
+                : _current( current )
+            {
+            }
+
+            _RCurrent( _RCurrent const & other )
+                : _current( other._current )
+            {
+            }
+
+            _RCurrent( _RCurrentInBuffer const & inBuffer )
+                : _current( inBuffer.data() )
+            {
+            }
+
+            _RCurrent( _RCurrentInStorage const & inStorage )
+                : _current( inStorage.data() )
+            {
+            }
+
+            bool operator==( pointer_mutable other )const
+            {
+                return _current == other;
+            }
+
+            bool operator!=( pointer_mutable other )const
+            {
+                return ! this->operator==( other );
+            }
+
+            bool operator==( _RCurrentInBuffer const & inBuffer )const
+            {
+                return _current == inBuffer.data();
+            }
+
+            bool operator!=( _RCurrentInBuffer const & inBuffer )const
+            {
+                return ! this->operator!=( inBuffer );
+            }
+
+            bool operator==( _RCurrentInStorage const & inStorage )const
+            {
+                return _current == inStorage.data();
+            }
+
+            bool operator!=( _RCurrentInStorage const & inStorage )const
+            {
+                return ! this->operator!=( inStorage );
+            }
+
+            pointer_mutable data()const
+            {
+                return _current;
+            }
+
+        private:
+            pointer_mutable _current;
+        };
+    public:
         AssocVectorReverseIterator(
             typename _Container::value_compare const & cmp = typename _Container::value_compare()
         )
@@ -2131,6 +2492,7 @@ namespace detail
 
             , _currentInStorage( 0 )
             , _currentInBuffer( 0 )
+            , _currentInErased( 0 )
 
             , _current( 0 )
         {
@@ -2162,14 +2524,17 @@ namespace detail
 
             , _current( current )
         {
-            _currentInErased = util::last_less_equal(
+            typename _Container::_Erased::const_iterator const found = util::last_less_equal(
                       _container->erased().begin()
                     , _container->erased().end()
-                    , _currentInStorage
+                    , _currentInStorage.data()
                     , std::less< typename _Container::_Storage::const_iterator >()
                 );
 
-            if( _currentInErased == _container->erased().end() ){
+            if( found != _container->erased().end() ){
+                _currentInErased = found;
+            }
+            else{
                 _currentInErased = _container->erased().begin() - 1;
             }
 
@@ -2205,10 +2570,13 @@ namespace detail
                 return * this;
             }
             else if( _current == _currentInStorage ){
-                -- _currentInStorage;
+                _currentInStorage.decrement( _container );
+            }
+            else if( _current == _currentInBuffer ){
+                _currentInBuffer.decrement( _container );
             }
             else{
-                -- _currentInBuffer;
+                AV_CHECK( false );
             }
 
             _current = calculateCurrentReverse();
@@ -2228,23 +2596,23 @@ namespace detail
         AssocVectorReverseIterator & operator--()
         {
             if(
-                   _currentInStorage == ( _container->storage().end() - 1 )
-                && _currentInBuffer == ( _container->buffer().end() - 1 )
+                   _currentInStorage.is_rbegin( _container )
+                && _currentInBuffer.is_rbegin( _container )
             ){
                 return * this;
             }
             else if( _current == 0 )
             {
-                ++ _currentInStorage;
-                ++ _currentInBuffer;
+                _currentInStorage.increment( _container );
+                _currentInBuffer.decrement( _container );
             }
             else
             {
                 if( _current == _currentInStorage ){
-                    ++ _currentInStorage;
+                    _currentInStorage.increment( _container );
                 }
                 else{
-                    ++ _currentInBuffer;
+                    _currentInBuffer.increment( _container );
                 }
             }
 
@@ -2274,7 +2642,7 @@ namespace detail
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
-                        reinterpret_cast< void const * >( _current )
+                        reinterpret_cast< void const * >( _current.data() )
                     )
                 );
         }
@@ -2282,54 +2650,59 @@ namespace detail
         // public for copy constructor only : Iterator -> ConstIterator
         _Container const * getContainer()const{ return _container; }
 
-        pointer_mutable getCurrentInStorage()const{ return _currentInStorage; }
-        pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer; }
-        typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased; }
+        pointer_mutable getCurrentInStorage()const{ return _currentInStorage.data(); }
+        pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer.data(); }
+        typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased.data(); }
 
-        pointer_mutable getCurrent()const{ return _current; }
+        pointer_mutable getCurrent()const{ return _current.data(); }
 
     private:
-        pointer_mutable
+        _RCurrent
         calculateCurrentReverse()
         {
            while(
-                   _currentInErased != ( _container->erased().begin() - 1 )
-                && _currentInStorage != ( _container->storage().begin() - 1 )
-                && _currentInStorage == * _currentInErased
+                   _currentInErased.is_not_rend( _container )
+                && _currentInStorage.is_not_rend( _container )
+                && _currentInStorage.data() == _currentInErased.get( _container )
             )
             {
-                -- _currentInStorage;
-                -- _currentInErased;
+                _currentInStorage.decrement( _container );
+                _currentInErased.decrement( _container );
             }
 
-            if( _currentInStorage == ( _container->storage().begin() - 1 ) )
+            if( _currentInStorage.is_rend( _container ) )
             {
-                if( _currentInBuffer == (_container->buffer().begin() - 1 ) ){
-                    return 0;
+                if( _currentInBuffer.is_rend( _container ) ){
+                    return _RCurrent( 0 );
                 }
 
-                return _currentInBuffer;
+                return _RCurrent( _currentInBuffer );
             }
-            else if( _currentInBuffer == ( _container->buffer().begin() - 1 ) )
+            else if( _currentInBuffer.is_rend( _container ) )
             {
-                return _currentInStorage;
+                return _RCurrent( _currentInStorage );
             }
-            else if( _container->value_comp()( * _currentInStorage, * _currentInBuffer ) == false )
+            else if(
+                _container->value_comp()(
+                      _currentInStorage.get( _container )
+                    , _currentInBuffer.get( _container )
+                ) == false
+            )
             {
-                return _currentInStorage;
+                return _RCurrent( _currentInStorage );
             }
 
-            return _currentInBuffer;
+            return _RCurrent(_currentInBuffer );
         }
 
     private:
         _Container const * _container;
 
-        pointer_mutable _currentInStorage;
-        pointer_mutable _currentInBuffer;
-        typename _Container::_Erased::const_iterator _currentInErased;
+        _RCurrentInStorage _currentInStorage;
+        _RCurrentInBuffer _currentInBuffer;
+        _RCurrentInErased _currentInErased;
 
-        pointer_mutable _current;
+        _RCurrent _current;
     };
 
     template<
@@ -2364,8 +2737,7 @@ namespace detail
             out << " " << * iter.getCurrentInBuffer();
         }
 
-
-         out
+        out
             << "\n"
             << "E: " << iter.getCurrentInErased();
 
