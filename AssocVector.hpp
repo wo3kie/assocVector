@@ -14,11 +14,13 @@
 
 #if( _MSC_VER >= 1600 )
     #define AV_CXX11X_RVALUE_REFERENCE
+    #define AV_MAP_ERASE_RETURNS_ITERATOR
 #endif
 
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
     #if ( __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 )
       #define AV_CXX11X_RVALUE_REFERENCE
+      #define AV_MAP_ERASE_RETURNS_ITERATOR
     #endif
 #endif
 
@@ -30,7 +32,7 @@
 
 // configuration.end
 
-#define AV_PRECONDITION( condition ) assert( ( condition ) );
+#define AV_PRECONDITION( condition ) if( (bool)( condition ) == false ){ int * i = 0 ; * i = 0; }
 #define AV_CHECK( condition ) assert( ( condition ) );
 #define AV_POSTCONDITION( condition ) assert( ( condition ) );
 
@@ -856,6 +858,7 @@ namespace detail
     //
     // AssocVectorLazyIterator
     //
+
     template<
           typename _Iterator
         , typename _Container
@@ -963,7 +966,14 @@ namespace detail
 
             bool validate( _Container const * container )const
             {
-                return util::is_between( container->erased().begin(), _current, container->erased().end() );
+                bool const result
+                    = util::is_between( container->erased().begin(), _current, container->erased().end() );
+
+                if( result ){
+                    return true;
+                }
+
+                AV_CHECK( false );
             }
 
             typename _Container::_Erased::value_type
@@ -1070,7 +1080,14 @@ namespace detail
 
             bool validate( _Container const * container )const
             {
-                return util::is_between( container->buffer().begin(), _current, container->buffer().end() );
+                bool const result
+                    = util::is_between( container->buffer().begin(), _current, container->buffer().end() );
+
+                if( result ){
+                    return true;
+                }
+
+                AV_CHECK( false );
             }
 
             typename _Container::_Storage::value_type
@@ -1098,6 +1115,25 @@ namespace detail
 
         struct _CurrentInStorage
         {
+            // begin is always set at first not erased item, marked with ^
+            // end is always set at the end of container, marked with    $
+
+            // Case 1: no item erased
+            // storage: ^1 3 5 7$
+            // erased :
+
+            // Case 2: item from front erased
+            // storage: 1 ^3 5 7$
+            // erased : 1
+
+            // Case 3: item erased from back
+            // storage: ^1 3 5 7$
+            // erased : 7
+
+            // Case 4: item erased either from front or back
+            // storage: 1 ^3 5 7$
+            // erased : 1 7
+
             _CurrentInStorage( pointer_mutable current )
                 : _dir( 1 )
                 , _current( current )
@@ -1145,7 +1181,12 @@ namespace detail
 
                 currentInStorage.setOnNotErased( currentInErased, container );
 
-                return *this == currentInStorage;
+                if( data() == currentInStorage.data() ){
+                    return true;
+                }
+                else{
+                    return false;
+                }
             }
 
             bool is_not_begin( _Container const * container )const
@@ -1243,6 +1284,16 @@ namespace detail
                 , _Container const * container
             )
             {
+                if( is_end( container ) )
+                {
+                    if( !currentInErased )
+                    {
+                        currentInErased = container->erased().end();
+                    }
+
+                    return;
+                }
+
                 if( !currentInErased )
                 {
                     currentInErased = std::lower_bound(
@@ -1313,7 +1364,14 @@ namespace detail
 
             bool validate( _Container const * container )const
             {
-                return util::is_between( container->storage().begin(), _current, container->storage().end() );
+                bool const result
+                    = util::is_between( container->storage().begin(), _current, container->storage().end() );
+
+                if( result ){
+                    return true;
+                }
+
+                AV_CHECK( false );
             }
 
             typename _Container::_Storage::value_type
@@ -1414,15 +1472,30 @@ namespace detail
                 AV_PRECONDITION( container != 0 );
 
                 if( !currentInStorage ){//lazy
-                    return _current == currentInBuffer.data();
+                    if( _current == currentInBuffer.data() ){
+                        return true;
+                    }
+
+                    AV_CHECK( false );
                 }
 
                 if( !currentInBuffer ){//lazy
-                    return _current == currentInStorage.data();
+                    if( _current == currentInStorage.data() ){
+                        return true;
+                    }
+
+                    AV_CHECK( false );
                 }
 
                 // if 'setLower' does not work 'validateCurrent' does not work as well :O(
-                return _current == getLower( currentInStorage, currentInBuffer, container ).data();
+                bool const result
+                    = _current == getLower( currentInStorage, currentInBuffer, container ).data();
+
+                if( result ){
+                    return true;
+                }
+
+                AV_CHECK( false );
             }
 
             void setLower(
@@ -1443,7 +1516,7 @@ namespace detail
                 AV_CHECK( currentInStorage );
                 AV_CHECK( currentInBuffer );
 
-                if( currentInStorage == container->storage().end() )
+                if( currentInStorage.is_end( container ) )
                 {
                     if( currentInBuffer.is_end( container ) ){
                         return _Current( 0 );
@@ -1484,8 +1557,7 @@ namespace detail
                 return * _current;
             }
 
-            pointer_mutable
-            data()const
+            pointer_mutable data()const
             {
                 return _current;
             }
@@ -1554,6 +1626,7 @@ namespace detail
             {
                 // not found in storage, found in buffer
                 // not found in storage, inserted to buffer
+                // erased from storage's back
 
                 // _currentInStorage <- fix against '!_currentInErased'
                 _currentInStorage.setOnNotErased( _currentInErased, _container );
@@ -1891,6 +1964,7 @@ namespace detail
             {
                 // not found in storage, found in buffer
                 // not found in storage, inserted to buffer
+                // erased from storage's back
 
                 AV_CHECK( _currentInStorage.validate( _container ) );
                 AV_CHECK( _currentInBuffer.validate( _container ) );
@@ -2351,7 +2425,17 @@ namespace detail
 
             bool is_rbegin( _Container const * container )const
             {
-                return _current == container->storage().end() - 1;
+                _RCurrentInStorage currentInStorage = const_cast< pointer_mutable >( container->storage().end() - 1 );
+                _RCurrentInErased currentInErased = container->erased().end() - 1;
+
+                currentInStorage.setOnNotErased( currentInErased, container );
+
+                if( data() == currentInStorage.data() ){
+                    return true;
+                }
+                else{
+                    return false;
+                }
             }
 
             bool is_not_rbegin( _Container const * container )const
@@ -2361,7 +2445,12 @@ namespace detail
 
             bool is_rend( _Container const * container )const
             {
-                return _current == container->storage().begin() - 1;
+                if( _current == container->storage().begin() - 1 ){
+                    return true;
+                }
+                else{
+                    return false;
+                }
             }
 
             bool is_not_rend( _Container const * container )const
@@ -2369,37 +2458,116 @@ namespace detail
                 return ! is_rend( container );
             }
 
-            void increment( _Container const * container )
+            void increment(
+                  _RCurrentInErased & currentInErased
+                , _Container const * container
+            )
             {
                 AV_PRECONDITION( is_not_rend( container ) );
 
-                -- _current; // reverse iterator
+                increment( container );
+
+                if( _dir == -1 )
+                {
+                    _dir = 1;
+                    currentInErased.try_increment( container );
+                }
+
+                setOnNotErased( currentInErased, container );
             }
 
-            void try_increment( _Container const * container )
+            void try_increment(
+                  _RCurrentInErased & inErased
+                , _Container const * container
+            )
             {
                 if( is_rend( container ) ){
                     return;
                 }
 
-                increment( container );
+                increment( inErased, container );
             }
 
-            void decrement( _Container const * container )
+            void decrement(
+                  _RCurrentInErased & currentInErased
+                , _Container const * container
+            )
             {
                 AV_PRECONDITION( is_not_rbegin( container ) );
 
-                ++ _current;
+                decrement( container );
+
+                if( _dir == 1 )
+                {
+                    _dir = -1;
+                    currentInErased.try_decrement( container );
+                }
+
+                setOnNotErasedBackward( currentInErased, container );
             }
 
-            void try_decrement( _Container const * container )
+            void try_decrement(
+                  _RCurrentInErased & currentInErased
+                , _Container const * container
+            )
             {
                 if( is_rbegin( container ) ){
                     return;
                 }
 
-                decrement( container );
+                decrement( currentInErased, container );
             }
+
+            void setOnNotErased(
+                  _RCurrentInErased & currentInErased
+                , _Container const * container
+            )
+            {
+                if( !currentInErased )
+                {
+                    currentInErased = util::last_less_equal(
+                          container->erased().begin()
+                        , container->erased().end()
+                        , data()
+                        , std::less< typename _Container::_Storage::const_iterator >()
+                    );
+                }
+
+                if( _dir == -1 ){
+                    _dir = 1;
+                }
+
+                while(
+                       is_not_rend( container )
+                    && currentInErased.is_not_rend( container )
+                    && data() == currentInErased.get( container )
+                )
+                {
+                    increment( container );
+                    currentInErased.increment( container );
+                }
+            }
+
+            void setOnNotErasedBackward(
+                  _RCurrentInErased & currentInErased
+                , _Container const * container
+            )
+            {
+                if( _dir == 1 ){
+                    _dir = -1;
+                }
+
+                while(
+                       is_not_rend( container )
+                    && currentInErased.is_not_rend( container )
+                    && data() == currentInErased.get( container )
+                )
+                {
+                    decrement( container );
+                    currentInErased.decrement( container );
+                }
+            }
+
 
             typename _Container::_Storage::value_type
             get( _Container const * container )const
@@ -2421,6 +2589,23 @@ namespace detail
             }
 
         private:
+
+            void increment( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_rend( container ) );
+
+                -- _current; // reverse iterator
+            }
+
+            void decrement( _Container const * container )
+            {
+                AV_PRECONDITION( is_not_rbegin( container ) );
+
+                ++ _current;
+            }
+
+        private:
+            int _dir;
             pointer_mutable _current;
         };
 
@@ -2474,6 +2659,54 @@ namespace detail
             bool operator!=( _RCurrentInStorage const & inStorage )const
             {
                 return ! this->operator!=( inStorage );
+            }
+
+            void setGreater(
+                  _RCurrentInStorage const & currentInStorage
+                , _RCurrentInBuffer const & currentInBuffer
+                , _Container const * container
+            )
+            {
+                _current = getGreater( currentInStorage, currentInBuffer, container ).data();
+            }
+
+            _RCurrent getGreater(
+                  _RCurrentInStorage const & currentInStorage
+                , _RCurrentInBuffer const & currentInBuffer
+                , _Container const * container
+            )const
+            {
+                AV_CHECK( currentInStorage );
+                AV_CHECK( currentInBuffer );
+
+                if( currentInStorage.is_rend( container ) )
+                {
+                    if( currentInBuffer.is_rend( container ) ){
+                        return _RCurrent( 0 );
+                    }
+                    else{
+                        return _RCurrent( currentInBuffer );
+                    }
+                }
+                else
+                {
+                    if( currentInBuffer.is_rend( container ) ){
+                      return _RCurrent( currentInStorage );
+                    }
+                    else
+                    {
+                      if( container->value_comp()(
+                              currentInBuffer.get( container )
+                            , currentInStorage.get( container )
+                          )
+                      ){
+                          return _RCurrent( currentInStorage );
+                      }
+                      else{
+                          return _RCurrent( currentInBuffer );
+                      }
+                    }
+                }
             }
 
             pointer_mutable data()const
@@ -2538,9 +2771,9 @@ namespace detail
                 _currentInErased = _container->erased().begin() - 1;
             }
 
-            if( _current == 0 ){
-                _current = calculateCurrentReverse();
-            }
+            _currentInStorage.setOnNotErased( _currentInErased, _container );
+
+            _current.setGreater( _currentInStorage, _currentInBuffer, _container );
         }
 
         AssocVectorReverseIterator & operator=( AssocVectorReverseIterator const & other )
@@ -2570,16 +2803,16 @@ namespace detail
                 return * this;
             }
             else if( _current == _currentInStorage ){
-                _currentInStorage.decrement( _container );
+                _currentInStorage.increment( _currentInErased, _container );
             }
             else if( _current == _currentInBuffer ){
-                _currentInBuffer.decrement( _container );
+                _currentInBuffer.increment( _container );
             }
             else{
                 AV_CHECK( false );
             }
 
-            _current = calculateCurrentReverse();
+            _current.setGreater( _currentInStorage, _currentInBuffer, _container );
 
             return * this;
         }
@@ -2601,22 +2834,34 @@ namespace detail
             ){
                 return * this;
             }
-            else if( _current == 0 )
+
+            if( _currentInStorage.is_rbegin( _container ) )
             {
-                _currentInStorage.increment( _container );
                 _currentInBuffer.decrement( _container );
-            }
-            else
-            {
-                if( _current == _currentInStorage ){
-                    _currentInStorage.increment( _container );
-                }
-                else{
-                    _currentInBuffer.increment( _container );
-                }
+                _current = _currentInBuffer;
+
+                return * this;
             }
 
-            _current = calculateCurrentReverse();
+            if( _currentInBuffer.is_rbegin( _container ) )
+            {
+                _currentInStorage.decrement( _currentInErased, _container );
+                _current = _currentInStorage;
+
+                return * this;
+            }
+
+            if( _current == _currentInStorage ){
+                _currentInStorage.decrement( _currentInErased, _container );
+            }
+            else if( _current == _currentInBuffer ){
+                _currentInBuffer.decrement( _container );
+            }
+            else{
+                AV_CHECK( false );
+            }
+
+            _current.setGreater( _currentInStorage, _currentInBuffer, _container );
 
             return * this;
         }
@@ -2851,11 +3096,11 @@ private:
         bool validate()const
         {
             if( _current == 0 ){
-                return false;
+                AV_CHECK( false );
             }
 
             if( _inStorage == 0 && ( _inBuffer == 0 || _inErased == 0 ) ){
-                return false;
+                AV_CHECK( false );
             }
 
             return true;
@@ -4073,6 +4318,10 @@ template<
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
 {
+    if( pos == end() ){
+        return end();
+    }
+
     // iterator::base converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
     // revert real iterator type: pair< T1 const, T2 > * -> pair< T1, T2 > *
     value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.base() );
@@ -4100,10 +4349,23 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     }
 
     {//erase from back
+        _Key const key = pos->first;
+
         _TryToRemoveBackResult const result = tryToRemoveStorageBack( posBase );
 
-        if( result._anyItemRemoved ){
-            return end();
+        if( result._anyItemRemoved )
+        {
+            typename _Storage::iterator const greaterEqualInBuffer
+                = pos.getCurrentInBuffer()
+                ? pos.getCurrentInBuffer()
+                : std::lower_bound( _buffer.begin(), _buffer.end(), key, value_comp() );
+
+            if( greaterEqualInBuffer == _buffer.end() ){
+                return end();
+            }
+            else{
+                return iterator( this, _storage.end(), greaterEqualInBuffer, 0, 0 );
+            }
         }
     }
 
@@ -4122,7 +4384,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
             : std::lower_bound( _buffer.begin(), _buffer.end(), key, value_comp() );
 
         if( result._isMerged == false ){
-            return iterator( this, posBase + 1, greaterEqualInBuffer, result._inErased, 0 );
+            return iterator( this, posBase + 1, greaterEqualInBuffer, result._inErased + 1, 0 );
         }
 
         typename _Storage::iterator const greaterEqualInStorage

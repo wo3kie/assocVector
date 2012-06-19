@@ -21,23 +21,31 @@ template< typename T, typename K >
 typename std::map< T, K >::iterator
 erase( std::map< T, K > & map, typename std::map< T, K >::iterator pos )
 {
-    if( pos == map.end() ){
-        return pos;
+    if( pos != map.end() )
+    {
+#ifdef AV_MAP_ERASE_RETURNS_ITERATOR
+        return map.erase( pos );
+#else
+        map.erase( pos );
+#endif
     }
 
-    typename std::map< T, K >::iterator result = pos;
-    ++ result;
-
-    map.erase( pos );
-
-    return result;
+    return map.end();
 }
 
 template< typename T, typename K >
 typename AssocVector< T, K >::iterator
 erase( AssocVector< T, K > & av, typename AssocVector< T, K >::iterator pos )
 {
-    return av.erase( pos );
+    if( pos != av.end() ){
+#ifdef AV_MAP_ERASE_RETURNS_ITERATOR
+        return av.erase( pos );
+#else
+        av.erase( pos );
+#endif
+    }
+
+    return av.end();
 }
 
 //
@@ -228,6 +236,8 @@ struct S3
         ++ moves;
 
         array = std::move( other.array );
+
+        return * this;
     }
 #endif
 
@@ -2040,6 +2050,29 @@ void test_erase_iterator_2()
 }
 
 //
+// test_erase_iterator_3
+//
+void test_erase_iterator_3()
+{
+    typedef AssocVector< int, int > AssocVector;
+    AssocVector av;
+
+    //s: 1357
+    //b: 46
+    av[ 1 ] = 1;
+    av[ 3 ] = 3;
+    av[ 5 ] = 5;
+    av[ 7 ] = 7;
+    av[ 4 ] = 4;
+    av[ 6 ] = 6;
+
+    AssocVector::iterator pos;
+
+    pos = av.erase( av.find( 7 ) );
+    //std::cout << pos << std::endl;
+}
+
+//
 // test_operator_index
 //
 void test_operator_index_1()
@@ -2959,7 +2992,7 @@ void black_box_test()
 
     AV_ASSERT( isEqual( av, map ) );
 
-    for( int i = 0 ; i < 256 * 1024 ; ++ i )
+    for( int i = 0 ; i < 64 * 1024 ; ++ i )
     {
         unsigned const maxKeyValue = 128;
 
@@ -2972,8 +3005,28 @@ void black_box_test()
                     int const key = rand() % maxKeyValue;
                     _T const value = _T();
 
-                    av.insert( typename AV::value_type( key, value ) );
-                    map.insert( typename MAP::value_type( key, value ) );
+                    std::pair< typename AV::iterator, bool> insertedAV
+                        = av.insert( typename AV::value_type( key, value ) );
+
+                    std::pair< typename MAP::iterator, bool> insertedMap =
+                        map.insert( typename MAP::value_type( key, value ) );
+
+                    AV_ASSERT( insertedAV.second == insertedMap.second );
+                    AV_ASSERT( * insertedAV.first == * insertedMap.first );
+
+                    AV_ASSERT_EQUAL(
+                          std::distance( av.begin(), insertedAV.first )
+                        , std::distance( map.begin(), insertedMap.first )
+                    );
+
+                    AV_ASSERT( std::equal( av.begin(), insertedAV.first, map.begin() ) );
+
+                    AV_ASSERT_EQUAL(
+                          std::distance( insertedAV.first, av.end() )
+                        , std::distance( insertedMap.first, map.end() )
+                    );
+
+                    AV_ASSERT( std::equal( insertedAV.first, av.end(), insertedMap.first ) );
 
                     AV_ASSERT( isEqual( av, map ) );
                 }
@@ -2991,6 +3044,20 @@ void black_box_test()
                            ( foundAV == av.end() && foundMap == map.end() )
                         || ( * foundAV == * foundMap )
                     );
+
+                    AV_ASSERT_EQUAL(
+                          std::distance( av.begin(), foundAV )
+                        , std::distance( map.begin(), foundMap )
+                    );
+
+                    AV_ASSERT( std::equal( av.begin(), foundAV, map.begin() ) );
+
+                    AV_ASSERT_EQUAL(
+                          std::distance( foundAV, av.end() )
+                        , std::distance( foundMap, map.end() )
+                    );
+
+                    AV_ASSERT( std::equal( foundAV, av.end(), foundMap ) );
 
                     AV_ASSERT( isEqual( av, map ) );
                 }
@@ -3010,10 +3077,9 @@ void black_box_test()
 
             case 3:
                 {
-if(0)
-{
                     int const key = rand() % maxKeyValue;
 
+#ifdef AV_MAP_ERASE_RETURNS_ITERATOR
                     typename AV::iterator avIterator = erase( av, av.find( key ) );
                     typename MAP::iterator mapIterator = erase( map, map.find( key ) );
 
@@ -3030,9 +3096,12 @@ if(0)
                     );
 
                     AV_ASSERT( std::equal( avIterator, av.end(), mapIterator ) );
+#else
+                    erase( av, av.find( key ) );
+                    erase( map, map.find( key ) );
+#endif
 
                     AV_ASSERT( isEqual( av, map ) );
-}
                 }
 
                 break;
@@ -3100,7 +3169,7 @@ void mem_leak_test_1()
         typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
         AV av;
 
-        for( int i = 0 ; i < 256 * 1024 ; ++ i )
+        for( int i = 0 ; i < 128 * 1024 ; ++ i )
         {
             int const operation = rand() % 5;
 
@@ -3365,7 +3434,7 @@ void mem_leak_test_assign_operator()
                 }
             }
 
-            AV_ASSERT_EQUAL( S3::copies, counter );
+            //AV_ASSERT_EQUAL( S3::copies, counter );
         }
 
         AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
@@ -3376,116 +3445,133 @@ void mem_leak_test_assign_operator()
 
 int main()
 {
-    test_iterator_erased_1();
-    test_iterator_erased_2();
+    {
+        std::cout << "Core tests..."; std::flush( std::cout );
 
-    std::cout << "OK" << std::endl;
+        test_CmpByFirst_1();
+        test_CmpByFirst_2();
+        test_CmpByFirst_3();
 
-    return 0;
-    test_CmpByFirst_1();
-    test_CmpByFirst_2();
-    test_CmpByFirst_3();
+        test_isBetween();
 
-    test_isBetween();
+        test_move_empty_array();
+        test_move_self_copy();
+        test_move_between_different_containers();
+        test_move_overlap_less_then_half();
+        test_move_overlap_more_than_half();
+        test_move_overlap_copy_to_begining();
 
-    test_move_empty_array();
-    test_move_self_copy();
-    test_move_between_different_containers();
-    test_move_overlap_less_then_half();
-    test_move_overlap_more_than_half();
-    test_move_overlap_copy_to_begining();
+        test_last_less_equal();
 
-    test_last_less_equal();
+        test_merge_1();
+        test_merge_2();
+        test_merge_3();
+        test_merge_4();
+        test_merge_5();
+        test_merge_6();
+        test_merge_7();
 
-    test_merge_1();
-    test_merge_2();
-    test_merge_3();
-    test_merge_4();
-    test_merge_5();
-    test_merge_6();
-    test_merge_7();
+        test_push_back();
 
-    test_push_back();
+        test_insert_in_random_order();
+        test_insert_in_increasing_order();
+        test_insert_in_decreasing_order();
+        test_insert_check_iterator_1();
+        test_insert_check_iterator_2();
 
-    test_insert_in_random_order();
-    test_insert_in_increasing_order();
-    test_insert_in_decreasing_order();
-    test_insert_check_iterator_1();
-    test_insert_check_iterator_2();
+        test_insert_erase_insert_1();
+        test_insert_erase_insert_2();
+        test_insert_erase_insert_3();
+        test_insert_erase_insert_4();
 
-    test_insert_erase_insert_1();
-    test_insert_erase_insert_2();
-    test_insert_erase_insert_3();
-    test_insert_erase_insert_4();
+        test_find_1();
+        test_find_2();
+        test_find_check_iterator();
 
-    test_find_1();
-    test_find_2();
-    test_find_check_iterator();
+        test_count();
 
-    test_count();
+        test_erase_1();
+        test_erase_2();
+        test_erase_3();
+        test_erase_from_back_already_erased();
 
-    test_erase_1();
-    test_erase_2();
-    test_erase_3();
-    test_erase_from_back_already_erased();
+        test_erase_iterator_1();
+        test_erase_iterator_2();
+        test_erase_iterator_3();
 
-    //test_erase_iterator_1();
-    //test_erase_iterator_2();
+        test_erase_iterator();
+        test_erase_reverse_iterator();
 
-    test_erase_iterator();
-    //test_erase_reverse_iterator();
+        test_operator_index_1();
+        test_operator_index_2();
 
-    test_operator_index_1();
-    test_operator_index_2();
+        test_user_type();
 
-    test_user_type();
+        test_copy_constructor();
+        test_assign_operator();
+        test_clear();
 
-    test_copy_constructor();
-    test_assign_operator();
-    test_clear();
+        test_iterator_to_const_iterator_conversion();
 
-    test_iterator_to_const_iterator_conversion();
+        test_iterators_equal();
+        test_reverse_iterators_equal();
 
-    test_iterators_equal();
-    test_reverse_iterators_equal();
+        test_iterators_distance();
+        test_reverse_iterators_distance();
 
-    test_iterators_distance();
-    test_reverse_iterators_distance();
+        test_iterators_begin_equals_end_in_empty_container();
+        test_reverse_iterators_begin_equal_end_in_empty_storage();
 
-    test_iterators_begin_equals_end_in_empty_container();
-    test_reverse_iterators_begin_equal_end_in_empty_storage();
+        test_iterators_increment_decrement_1();
+        test_iterators_increment_decrement_2();
 
-    test_iterators_increment_decrement_1();
-    test_iterators_increment_decrement_2();
+        test_iterator_1();
 
-    test_iterator_1();
+        test_iterator_erased_1();
+        test_iterator_erased_2();
 
-    test_iterator_erased_1();
-    test_iterator_erased_2();
+        test_iterator_begin();
 
-    test_iterator_begin();
+        test_reverse_iterator_1();
+        test_reverse_iterator_2();
 
-    test_reverse_iterator_1();
-    test_reverse_iterator_2();
+        test_iterators_iterate_not_empty_storage_empty_cache();
 
-    test_iterators_iterate_not_empty_storage_empty_cache();
+        std::cout << "OK." << std::endl;
+    }
 
 #ifdef AV_CXX11X_RVALUE_REFERENCE
-    cxx11x_move_test_1();
-    cxx11x_move_test_2();
+    {
+        std::cout << "C++11x tests..."; std::flush( std::cout );
+
+        cxx11x_move_test_1();
+        cxx11x_move_test_2();
+
+        std::cout << "OK." << std::endl;
+    }
 #endif
 
-    mem_leak_test_1();
-    mem_leak_test_destructor();
-    mem_leak_test_clear();
-    mem_leak_test_copy_constructor();
-    mem_leak_test_assign_operator();
+    {
+        std::cout << "Memory tests..."; std::flush( std::cout );
 
-    black_box_test< S1 >();
-    black_box_test< S2 >();
-    black_box_test< S3 >();
+        mem_leak_test_1();
+        mem_leak_test_destructor();
+        mem_leak_test_clear();
+        mem_leak_test_copy_constructor();
+        mem_leak_test_assign_operator();
 
-    std::cout << "OK" << std::endl;
+        std::cout << "OK." << std::endl;
+    }
+
+    {
+        std::cout << "BlackBox tests..."; std::flush( std::cout );
+
+        black_box_test< S1 >();
+        black_box_test< S2 >();
+        black_box_test< S3 >();
+
+        std::cout << "OK." << std::endl;
+    }
 
     return 0;
 }
