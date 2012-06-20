@@ -17,6 +17,8 @@
     #define AV_ASSERT_NOT_EQUAL( actual, expected )\
         if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; assert( false );}
 #else
+    #error Are you trying to run unit tests with assertions disabled ?
+
     #define AV_ASSERT( expression ) (void)( expression );
     #define AV_ASSERT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
     #define AV_ASSERT_NOT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
@@ -97,7 +99,51 @@ bool isEqual(
 
     AV_ASSERT_EQUAL( result1, result2 );
 
-    return result1;
+    if( av.empty() ){
+        return result1;
+    }
+
+    {
+        typename AssocVector< _T1, _T2 >::const_iterator currentAV = av.end();
+        typename AssocVector< _T1, _T2 >::const_iterator const beginAV = av.begin();
+
+        typename std::map< _T1, _T2 >::const_iterator currentMAP = map.end();
+        typename std::map< _T1, _T2 >::const_iterator const beginMAP = map.begin();
+
+        do
+        {
+            -- currentAV;
+            -- currentMAP;
+
+            AV_ASSERT_EQUAL( * currentAV, * currentMAP );
+        }
+        while( currentMAP != beginMAP );
+
+        AV_ASSERT_EQUAL( currentAV, beginAV );
+
+        AV_ASSERT_EQUAL( * currentAV, * currentMAP );
+    }
+
+    {
+        typename AssocVector< _T1, _T2 >::const_reverse_iterator currentAV = av.rend();
+        typename AssocVector< _T1, _T2 >::const_reverse_iterator const rbeginAV = av.rbegin();
+
+        typename std::map< _T1, _T2 >::const_reverse_iterator currentMAP = map.rend();
+        typename std::map< _T1, _T2 >::const_reverse_iterator const rbeginMAP = map.rbegin();
+
+        do
+        {
+            -- currentAV;
+            -- currentMAP;
+
+            AV_ASSERT_EQUAL( * currentAV, * currentMAP );
+        }
+        while( currentMAP != rbeginMAP );
+
+        AV_ASSERT_EQUAL( currentAV, rbeginAV );
+    }
+
+    return true;
 }
 
 //
@@ -2074,7 +2120,6 @@ void test_erase_iterator_3()
     AssocVector::iterator pos;
 
     pos = av.erase( av.find( 7 ) );
-    //std::cout << pos << std::endl;
 }
 
 //
@@ -2997,8 +3042,22 @@ void black_box_test()
 
     AV_ASSERT( isEqual( av, map ) );
 
-    for( int i = 0 ; i < 64 * 1024 ; ++ i )
+    int percentage = 1;
+    int const progressStep = 20;
+    int const numberOfRepetitions = 64 * 1024;
+
+    {//draw simple progress bar
+        std::cout << "["; std::flush( std::cout );
+    }
+
+    for( int i = 0 ; i < numberOfRepetitions ; ++ i )
     {
+        {//draw simple progress bar
+            if( 100 * i / numberOfRepetitions >= progressStep * percentage ){
+                std::cout << progressStep * (percentage++) << "%.."; std::flush( std::cout );
+            }
+        }
+
         unsigned const maxKeyValue = 128;
 
         int operation = rand() % 6;
@@ -3149,6 +3208,10 @@ void black_box_test()
             default:
                 AV_ASSERT( false );
         }
+    }
+
+    {//draw simple progress bar
+        std::cout << "100%] "; std::flush( std::cout );
     }
 }
 
