@@ -194,6 +194,8 @@ struct S3
         ++ moves;
 
         array = std::move( other.array );
+
+        return * this;
     }
 #endif
 
@@ -572,24 +574,6 @@ void test_erase_random( unsigned tests, std::vector< int > const & array, std::s
 
     printSummary( message, tests, array.size(), timeout, total_time );
 }
-
-#ifdef AV_TEST_LOKI
-    template< typename T, typename K >
-    void merge( Loki::AssocVector< T, K > & ){}
-#endif
-
-#ifdef AV_TEST_STD_MAP
-    template< typename T, typename K >
-    void merge( std::map< T, K > & ){}
-#endif
-
-#ifdef AV_TEST_BOOST_HASH
-    template< typename T, typename K >
-    void merge( boost::unordered_map< T, K > & ){}
-#endif
-
-template< typename T, typename K >
-void merge( AssocVector< T, K > & av ){ av.merge(); }
 
 template< typename _Storage >
 void test_find( unsigned tests, unsigned rep, std::string const & message )

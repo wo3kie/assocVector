@@ -7,15 +7,20 @@
 #define AV_ENABLE_EXTENSIONS
 #include "AssocVector.hpp"
 
-#define AV_ASSERT( expression )\
-    assert( expression )
+#ifdef AV_DEBUG
+    #define AV_ASSERT( expression )\
+        assert( expression )
 
-#define AV_ASSERT_EQUAL( actual, expected )\
-    if( ( actual ) != ( expected ) ){ std::cout << "(" << actual << ") == " << expected << std::endl; assert( false );}
+    #define AV_ASSERT_EQUAL( actual, expected )\
+        if( ( actual ) != ( expected ) ){ std::cout << "(" << actual << ") == " << expected << std::endl; assert( false );}
 
-#define AV_ASSERT_NOT_EQUAL( actual, expected )\
-    if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; assert( false );}
-
+    #define AV_ASSERT_NOT_EQUAL( actual, expected )\
+        if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; assert( false );}
+#else
+    #define AV_ASSERT( expression ) (void)( expression );
+    #define AV_ASSERT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
+    #define AV_ASSERT_NOT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
+#endif
 
 template< typename T, typename K >
 typename std::map< T, K >::iterator
@@ -258,20 +263,20 @@ struct S3
 
     std::vector< int > array;
 
-    static int createdObjects;
-    static int destroyedObjects;
+    static unsigned createdObjects;
+    static unsigned destroyedObjects;
 
-    static int copies;
-    static int moves;
+    static unsigned copies;
+    static unsigned moves;
 };
 
-int S3::createdObjects = 0;
+unsigned S3::createdObjects = 0;
 
-int S3::destroyedObjects = 0;
+unsigned S3::destroyedObjects = 0;
 
-int S3::copies = 0;
+unsigned S3::copies = 0;
 
-int S3::moves = 0;
+unsigned S3::moves = 0;
 
 std::ostream & operator<<( std::ostream & out, S3 const & s3 )
 {
@@ -1344,7 +1349,7 @@ void test_insert_in_random_order()
 
     AV_ASSERT_EQUAL( av.size(), 20 );
 
-    for( int i = 0 ; i < av.size() ; ++ i ){
+    for( unsigned i = 0 ; i < av.size() ; ++ i ){
         AV_ASSERT( av.find( i ) != av.end() );
         AV_ASSERT_EQUAL( av.find( i )->first, i );
     }
@@ -2401,7 +2406,7 @@ void test_iterators_increment_decrement_2()
         Iterator current = av.end();
         Iterator const begin = av.begin();
 
-        for( unsigned counter = 16 ; current != begin ; /*empty*/ )
+        for( int counter = 16 ; current != begin ; /*empty*/ )
         {
             -- current;
             -- counter;
@@ -2417,7 +2422,7 @@ void test_iterators_increment_decrement_2()
         Iterator current = av.begin();
         Iterator const end = av.end();
 
-        for( unsigned counter = 0 ; current != end ; /*empty*/ )
+        for( int counter = 0 ; current != end ; /*empty*/ )
         {
             AV_ASSERT( current->first == counter );
             AV_ASSERT( current->second == counter );
@@ -3350,7 +3355,7 @@ void mem_leak_test_assign_operator()
             AV av1;
 
             {// insert( value_type )
-                for( int i = 0 ; i < counter ; ++ i ){
+                for( unsigned i = 0 ; i < counter ; ++ i ){
                     av1.insert( AV::value_type( i, S3() ) );
                 }
             }
@@ -3389,7 +3394,7 @@ void mem_leak_test_assign_operator()
             AV av;
 
             {// insert( value_type )
-                for( int i = 0 ; i < counter / 2 ; ++ i ){
+                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
                     av.insert( AV::value_type( i, S3() ) );
                 }
             }
@@ -3397,7 +3402,7 @@ void mem_leak_test_assign_operator()
             AV_ASSERT_EQUAL( S3::copies, counter / 2 );
 
             {// _insert( value_type )
-                for( int i = counter / 2 ; i < counter ; ++ i ){
+                for( unsigned i = counter / 2 ; i < counter ; ++ i ){
                     av._insert( AV::value_type( i, S3() ) );
                 }
             }
@@ -3405,7 +3410,7 @@ void mem_leak_test_assign_operator()
             AV_ASSERT_EQUAL( S3::copies, counter );
 
             {// find( value_type )
-                for( int i = 0 ; i < counter / 2 ; ++ i ){
+                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
                     av.find( i );
                 }
             }
@@ -3413,7 +3418,7 @@ void mem_leak_test_assign_operator()
             AV_ASSERT_EQUAL( S3::copies, counter );
 
             {// _find( value_type )
-                for( int i = 0 ; i < counter / 2 ; ++ i ){
+                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
                     av._find( i );
                 }
             }
@@ -3421,7 +3426,7 @@ void mem_leak_test_assign_operator()
             AV_ASSERT_EQUAL( S3::copies, counter );
 
             {// erase( value_type )
-                for( int i = 0 ; i < counter / 2 ; ++ i ){
+                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
                     av.erase( i );
                 }
             }
@@ -3429,12 +3434,12 @@ void mem_leak_test_assign_operator()
             AV_ASSERT_EQUAL( S3::copies, counter );
 
             {// erase( iterator )
-                for( int i = counter / 2 ; i < counter ; ++ i ){
+                for( unsigned i = counter / 2 ; i < counter ; ++ i ){
                     av.erase( av.find( i ) );
                 }
             }
 
-            //AV_ASSERT_EQUAL( S3::copies, counter );
+            AV_ASSERT( S3::copies < 2 * counter );
         }
 
         AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );

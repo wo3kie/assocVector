@@ -32,12 +32,18 @@
 
 // configuration.end
 
-#define AV_PRECONDITION( condition ) if( (bool)( condition ) == false ){ int * i = 0 ; * i = 0; }
-#define AV_CHECK( condition ) assert( ( condition ) );
-#define AV_POSTCONDITION( condition ) assert( ( condition ) );
-
 #ifndef NDEBUG
     #define AV_DEBUG
+#endif
+
+#ifdef AV_DEBUG
+    #define AV_PRECONDITION( condition ) assert( ( condition ) );
+    #define AV_CHECK( condition ) assert( ( condition ) );
+    #define AV_POSTCONDITION( condition ) assert( ( condition ) );
+#else
+    #define AV_PRECONDITION( condition ) (void)( condition );
+    #define AV_CHECK( condition ) (void)( condition );
+    #define AV_POSTCONDITION( condition ) (void)( condition );
 #endif
 
 namespace util
@@ -967,13 +973,19 @@ namespace detail
             bool validate( _Container const * container )const
             {
                 bool const result
-                    = util::is_between( container->erased().begin(), _current, container->erased().end() );
+                    = util::is_between(
+                          container->erased().begin()
+                        , _current
+                        , container->erased().end()
+                    );
 
                 if( result ){
                     return true;
                 }
 
                 AV_CHECK( false );
+
+                return false;
             }
 
             typename _Container::_Erased::value_type
@@ -1081,13 +1093,19 @@ namespace detail
             bool validate( _Container const * container )const
             {
                 bool const result
-                    = util::is_between( container->buffer().begin(), _current, container->buffer().end() );
+                    = util::is_between(
+                          container->buffer().begin()
+                        , _current
+                        , container->buffer().end()
+                    );
 
                 if( result ){
                     return true;
                 }
 
                 AV_CHECK( false );
+
+                return false;
             }
 
             typename _Container::_Storage::value_type
@@ -1181,12 +1199,7 @@ namespace detail
 
                 currentInStorage.setOnNotErased( currentInErased, container );
 
-                if( data() == currentInStorage.data() ){
-                    return true;
-                }
-                else{
-                    return false;
-                }
+                return data() == currentInStorage.data();
             }
 
             bool is_not_begin( _Container const * container )const
@@ -1365,13 +1378,19 @@ namespace detail
             bool validate( _Container const * container )const
             {
                 bool const result
-                    = util::is_between( container->storage().begin(), _current, container->storage().end() );
+                    = util::is_between(
+                          container->storage().begin()
+                        , _current
+                        , container->storage().end()
+                    );
 
                 if( result ){
                     return true;
                 }
 
                 AV_CHECK( false );
+
+                return false;
             }
 
             typename _Container::_Storage::value_type
@@ -1477,6 +1496,8 @@ namespace detail
                     }
 
                     AV_CHECK( false );
+
+                    return false;
                 }
 
                 if( !currentInBuffer ){//lazy
@@ -1485,6 +1506,8 @@ namespace detail
                     }
 
                     AV_CHECK( false );
+
+                    return false;
                 }
 
                 // if 'setLower' does not work 'validateCurrent' does not work as well :O(
@@ -1496,6 +1519,8 @@ namespace detail
                 }
 
                 AV_CHECK( false );
+
+                return false;
             }
 
             void setLower(
@@ -1887,30 +1912,44 @@ namespace detail
         {
             if( !_currentInStorage && !_currentInBuffer && !_currentInErased && !_current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( !_currentInStorage && !_currentInBuffer && !_currentInErased && _current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( !_currentInStorage && !_currentInBuffer && _currentInErased && !_current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( !_currentInStorage && !_currentInBuffer && _currentInErased && _current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( !_currentInStorage && _currentInBuffer && !_currentInErased && !_current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( !_currentInStorage && _currentInBuffer && !_currentInErased && _current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( !_currentInStorage && _currentInBuffer && _currentInErased && !_current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( !_currentInStorage && _currentInBuffer && _currentInErased && _current )
@@ -1926,14 +1965,20 @@ namespace detail
             else
             if( _currentInStorage && !_currentInBuffer && !_currentInErased && !_current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( _currentInStorage && !_currentInBuffer && !_currentInErased && _current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( _currentInStorage && !_currentInBuffer && _currentInErased && !_current ){
                 AV_CHECK( false );
+
+                return false;
             }
             else
             if( _currentInStorage && !_currentInBuffer && _currentInErased && _current )
@@ -1995,6 +2040,8 @@ namespace detail
             }
             else{
                 AV_CHECK( false );
+
+                return false;
             }
 
             return true;
@@ -3097,10 +3144,14 @@ private:
         {
             if( _current == 0 ){
                 AV_CHECK( false );
+
+                return false;
             }
 
             if( _inStorage == 0 && ( _inBuffer == 0 || _inErased == 0 ) ){
                 AV_CHECK( false );
+
+                return false;
             }
 
             return true;
