@@ -3111,7 +3111,7 @@ private:
         bool _isReallocated;
     };
 
-    struct _TryToRemoveBackResult
+    struct _TryRemoveBackResult
     {
         bool _anyItemRemoved;
         bool _erasedItemRemoved;
@@ -3161,7 +3161,7 @@ private:
         }
     };
 
-    struct _TryToEraseFromStorageResult
+    struct _TryEraseFromStorageResult
     {
         typename _Erased::iterator _inErased;
         bool _isErased;
@@ -3316,14 +3316,14 @@ private:
     //
     // erase
     //
-    _TryToRemoveBackResult
+    _TryRemoveBackResult
     tryRemoveStorageBack( typename _Storage::iterator pos );
 
     //
-    // tryToEraseFromStorage
+    // tryEraseFromStorage
     //
-    _TryToEraseFromStorageResult
-    tryToEraseFromStorage( typename _Storage::iterator pos );
+    _TryEraseFromStorageResult
+    tryEraseFromStorage( typename _Storage::iterator pos );
 
     //
     // isErased
@@ -4023,14 +4023,14 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryToRemoveBackResult
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryRemoveBackResult
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryRemoveStorageBack(
     typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
 )
 {
     if( pos + 1 != _storage.end() )
     {
-        _TryToRemoveBackResult result;
+        _TryRemoveBackResult result;
         result._anyItemRemoved = false;
         result._erasedItemRemoved = false;
 
@@ -4048,14 +4048,14 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryRemoveStorageBack(
     {
         _erased.setSize( _erased.size() - 1 );
 
-        _TryToRemoveBackResult result;
+        _TryRemoveBackResult result;
         result._anyItemRemoved = true;
         result._erasedItemRemoved = true;
 
         return result;
     }
 
-    _TryToRemoveBackResult result;
+    _TryRemoveBackResult result;
     result._anyItemRemoved = true;
     result._erasedItemRemoved = false;
 
@@ -4068,8 +4068,8 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryToEraseFromStorageResult
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToEraseFromStorage(
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryEraseFromStorageResult
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryEraseFromStorage(
     typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
 )
 {
@@ -4084,7 +4084,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToEraseFromStorage(
     {
         mergeStorageWithErased();
 
-        _TryToEraseFromStorageResult result;
+        _TryEraseFromStorageResult result;
         result._inErased = _erased.end();
         result._isErased = true;
         result._isMerged = true;
@@ -4093,7 +4093,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToEraseFromStorage(
     }
     else
     {
-        _TryToEraseFromStorageResult result;
+        _TryEraseFromStorageResult result;
         result._inErased = insertInSortedResult.first;
         result._isErased = insertInSortedResult.second;
         result._isMerged = false;
@@ -4356,7 +4356,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
     }
 
     {//erase from back
-        _TryToRemoveBackResult const result = tryRemoveStorageBack( foundInStorage );
+        _TryRemoveBackResult const result = tryRemoveStorageBack( foundInStorage );
 
         if( result._anyItemRemoved )
         {
@@ -4370,7 +4370,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
     }
 
     {//erase from _storage
-        return tryToEraseFromStorage( foundInStorage )._isErased ? 1 : 0;
+        return tryEraseFromStorage( foundInStorage )._isErased ? 1 : 0;
     }
 }
 
@@ -4416,7 +4416,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     {//erase from back
         _Key const key = pos->first;
 
-        _TryToRemoveBackResult const result = tryRemoveStorageBack( posBase );
+        _TryRemoveBackResult const result = tryRemoveStorageBack( posBase );
 
         if( result._anyItemRemoved )
         {
@@ -4437,7 +4437,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     {//erase from _storage
         _Key const key = pos->first;
 
-        _TryToEraseFromStorageResult const result = tryToEraseFromStorage( posBase );
+        _TryEraseFromStorageResult const result = tryEraseFromStorage( posBase );
 
         if( result._isErased == false ){
             return end();
@@ -4488,7 +4488,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_erase( iterator pos )
     }
 
     {//erase from back
-        _TryToRemoveBackResult const result = tryRemoveStorageBack( posBase );
+        _TryRemoveBackResult const result = tryRemoveStorageBack( posBase );
 
         if( result._anyItemRemoved ){
             return true;
@@ -4496,7 +4496,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_erase( iterator pos )
     }
 
     {//erase from _storage
-        return tryToEraseFromStorage( posBase )._isErased;
+        return tryEraseFromStorage( posBase )._isErased;
     }
 }
 

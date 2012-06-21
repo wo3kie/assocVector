@@ -24,35 +24,41 @@
     #define AV_ASSERT_NOT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
 #endif
 
+#ifndef AV_CXX11X_RVALUE_REFERENCE
+    #warning Do not forget to run unit tests with C++11 as well if possible !
+#endif
+
 template< typename T, typename K >
 typename std::map< T, K >::iterator
 erase( std::map< T, K > & map, typename std::map< T, K >::iterator pos )
 {
+    typename std::map< T, K >::iterator result = map.end();
+
     if( pos != map.end() )
     {
 #ifdef AV_MAP_ERASE_RETURNS_ITERATOR
-        return map.erase( pos );
+        result = map.erase( pos );
 #else
+        result = pos;
+        ++ result;
         map.erase( pos );
 #endif
     }
 
-    return map.end();
+    return result;
 }
 
 template< typename T, typename K >
 typename AssocVector< T, K >::iterator
 erase( AssocVector< T, K > & av, typename AssocVector< T, K >::iterator pos )
 {
+    typename AssocVector< T, K >::iterator result = av.end();
+
     if( pos != av.end() ){
-#ifdef AV_MAP_ERASE_RETURNS_ITERATOR
-        return av.erase( pos );
-#else
-        av.erase( pos );
-#endif
+        result = av.erase( pos );
     }
 
-    return av.end();
+    return result;
 }
 
 //
@@ -89,8 +95,7 @@ bool isEqual(
     , std::map< _T1, _T2 > const & map
 )
 {
-    if( av.size() != map.size() )
-    {
+    if( av.size() != map.size() ){
         return false;
     }
 
@@ -3044,7 +3049,7 @@ void black_box_test()
 
     int percentage = 1;
     int const progressStep = 20;
-    int const numberOfRepetitions = 64 * 1024;
+    int const numberOfRepetitions = 16 * 1024;
 
     {//draw simple progress bar
         std::cout << "["; std::flush( std::cout );
@@ -3514,7 +3519,7 @@ void mem_leak_test_assign_operator()
 int main()
 {
     {
-        std::cout << "Core tests..."; std::flush( std::cout );
+        std::cout << "Util tests..."; std::flush( std::cout );
 
         test_CmpByFirst_1();
         test_CmpByFirst_2();
@@ -3538,6 +3543,16 @@ int main()
         test_merge_5();
         test_merge_6();
         test_merge_7();
+
+        std::cout << "OK." << std::endl;
+    }
+
+    {
+        std::cout << "Core tests..."; std::flush( std::cout );
+
+        test_copy_constructor();
+        test_assign_operator();
+        test_clear();
 
         test_push_back();
 
@@ -3563,21 +3578,23 @@ int main()
         test_erase_3();
         test_erase_from_back_already_erased();
 
+        test_operator_index_1();
+        test_operator_index_2();
+
+        test_user_type();
+
+        std::cout << "OK." << std::endl;
+    }
+
+    {
+        std::cout << "Iterator tests..."; std::flush( std::cout );
+
         test_erase_iterator_1();
         test_erase_iterator_2();
         test_erase_iterator_3();
 
         test_erase_iterator();
         test_erase_reverse_iterator();
-
-        test_operator_index_1();
-        test_operator_index_2();
-
-        test_user_type();
-
-        test_copy_constructor();
-        test_assign_operator();
-        test_clear();
 
         test_iterator_to_const_iterator_conversion();
 
