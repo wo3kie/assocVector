@@ -59,15 +59,18 @@ namespace util
         {
         }
 
-        bool operator()( _Pair const & lhs, _Pair const & rhs )const{
+        bool operator()( _Pair const & lhs, _Pair const & rhs )const
+        {
             return _cmp( lhs.first, rhs.first );
         }
 
-        bool operator()( _Pair const & pair, typename _Pair::first_type const & value )const{
+        bool operator()( _Pair const & pair, typename _Pair::first_type const & value )const
+        {
             return _cmp( pair.first, value );
         }
 
-        bool operator()( typename _Pair::first_type const & value, _Pair const & pair )const{
+        bool operator()( typename _Pair::first_type const & value, _Pair const & pair )const
+        {
             return _cmp( value, pair.first );
         }
 
@@ -143,8 +146,6 @@ namespace util
     void
     destroy_range( _Ptr first, _Ptr const last )
     {
-        AV_PRECONDITION( first <= last );
-
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
         detail::DestroyRangeImpl< __has_trivial_destructor( T ) >::destroy( first, last );
@@ -320,110 +321,132 @@ namespace array
             return _data;
         }
 
-        const_iterator begin()const{
+        const_iterator begin()const
+        {
             return _data;
         }
 
-        iterator end(){
+        iterator end()
+        {
             return _data + _size;
         }
 
-        const_iterator end()const{
+        const_iterator end()const
+        {
             return _data + _size;
         }
 
-        bool empty()const{
+        bool empty()const
+        {
             return _size == 0;
         }
 
-        bool full()const{
+        bool full()const
+        {
             return _size == _capacity;
         }
 
-        std::size_t size()const{
+        std::size_t size()const
+        {
             return _size;
         }
 
-        std::size_t getSize()const{
+        std::size_t getSize()const
+        {
             return size();
         }
 
-        void setSize( std::size_t newSize ){
+        void setSize( std::size_t newSize )
+        {
             AV_PRECONDITION( _data != 0 || newSize == 0 );
 
             _size = newSize;
         }
 
-        std::size_t capacity()const{
+        std::size_t capacity()const
+        {
             return _capacity;
         }
 
-        std::size_t getCapacity()const{
+        std::size_t getCapacity()const
+        {
             return capacity();
         }
 
-        void setCapacity( std::size_t newCapacity ){
+        void setCapacity( std::size_t newCapacity )
+        {
             AV_PRECONDITION( _data != 0 || newCapacity == 0 );
 
             _capacity = newCapacity;
         }
 
-        value_type & front(){
+        value_type & front()
+        {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( empty() == false );
 
             return _data[ 0 ];
         }
 
-        value_type const & front()const{
+        value_type const & front()const
+        {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( empty() == false );
 
             return _data[ 0 ];
         }
 
-        value_type & back(){
+        value_type & back()
+        {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( empty() == false );
 
             return _data[ _size - 1 ];
         }
 
-        value_type const & back()const{
+        value_type const & back()const
+        {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( empty() == false );
 
             return _data[ _size - 1 ];
         }
 
-        _T * const data()const{
+        _T * const data()const
+        {
             return _data;
         }
 
-        _T * const getData()const{
+        _T * const getData()const
+        {
             return data();
         }
 
-        _T * data(){
+        _T * data()
+        {
             return _data;
         }
 
-        _T * getData(){
+        _T * getData()
+        {
             return data();
         }
 
-        void setData( _T * t ){
+        void setData( _T * t )
+        {
             _data = t;
         }
 
-        value_type & operator[]( std::size_t index ){
+        value_type & operator[]( std::size_t index )
+        {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( index < size() );
 
             return _data[ index ];
         }
 
-        value_type const & operator[]( std::size_t index )const{
+        value_type const & operator[]( std::size_t index )const
+        {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( index < size() );
 
@@ -821,7 +844,8 @@ move_merge_into_uninitialized(
             ++ output;
             ++ first1;
         }
-        else{
+        else
+        {
             new ( static_cast< void * >( output ) )
                 typename std::iterator_traits< _OutputPtr >::value_type( AV_MOVE( * first2 ) );
 
@@ -1317,7 +1341,8 @@ namespace detail
                     );
                 }
 
-                if( _dir == -1 ){
+                if( _dir == -1 )
+                {
                     _dir = 1;
                     currentInErased.try_increment( container );
                 }
@@ -1325,7 +1350,7 @@ namespace detail
                 while(
                        is_not_end( container )
                     && currentInErased.is_not_end( container )
-                    && *this == currentInErased.get( container )
+                    && data() == currentInErased.get( container )
                 )
                 {
                     increment( container );
@@ -1352,7 +1377,8 @@ namespace detail
             {
                 AV_CHECK( is_not_end( container ) );
 
-                if( _dir == 1 ){
+                if( _dir == 1 )
+                {
                     _dir = -1;
                     currentInErased.try_decrement( container );
                 }
@@ -1360,7 +1386,7 @@ namespace detail
                 while(
                        is_not_begin( container )
                     && currentInErased.is_not_end( container )
-                    && *this == currentInErased.get( container )
+                    && data() == currentInErased.get( container )
                 )
                 {
                     decrement( container );
@@ -1382,8 +1408,7 @@ namespace detail
 
             bool validate( _Container const * container )const
             {
-                bool const result
-                    = util::is_between(
+                bool const result = util::is_between(
                           container->storage().begin()
                         , _current
                         , container->storage().end()
@@ -1495,7 +1520,8 @@ namespace detail
                 AV_PRECONDITION( currentInStorage || currentInBuffer );
                 AV_PRECONDITION( container != 0 );
 
-                if( !currentInStorage ){//lazy
+                if( !currentInStorage )
+                {
                     if( _current == currentInBuffer.data() ){
                         return true;
                     }
@@ -1505,7 +1531,8 @@ namespace detail
                     return false;
                 }
 
-                if( !currentInBuffer ){//lazy
+                if( !currentInBuffer )
+                {
                     if( _current == currentInStorage.data() ){
                         return true;
                     }
@@ -1696,7 +1723,8 @@ namespace detail
             return * this;
         }
 
-        bool operator==( AssocVectorLazyIterator const & other )const{
+        bool operator==( AssocVectorLazyIterator const & other )const
+        {
             resolveLazyValues();
 
             AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
@@ -1704,7 +1732,8 @@ namespace detail
             return equal( *this, other );
         }
 
-        bool operator!=( AssocVectorLazyIterator const & other )const{
+        bool operator!=( AssocVectorLazyIterator const & other )const
+        {
             resolveLazyValues();
 
             AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
@@ -1718,11 +1747,17 @@ namespace detail
 
             AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
 
-            if( _current == _currentInStorage ){
+            if( _current == _Current( 0 ) ){
+                return * this;
+            }
+            else if( _current == _currentInStorage ){
                 _currentInStorage.try_increment( _currentInErased, _container );
             }
             else if( _current == _currentInBuffer ){
                 _currentInBuffer.try_increment( _container );
+            }
+            else{
+                AV_CHECK( false );
             }
 
             _current.setLower( _currentInStorage, _currentInBuffer, _container );
@@ -1816,11 +1851,13 @@ namespace detail
             return result;
         }
 
-        reference operator*()const{
+        reference operator*()const
+        {
             return * base();
         }
 
-        pointer operator->()const{
+        pointer operator->()const
+        {
             return base();
         }
 
@@ -1910,48 +1947,6 @@ namespace detail
         bool
         validate()const
         {
-            if( !_currentInStorage && !_currentInBuffer && !_currentInErased && !_current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
-            if( !_currentInStorage && !_currentInBuffer && !_currentInErased && _current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
-            if( !_currentInStorage && !_currentInBuffer && _currentInErased && !_current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
-            if( !_currentInStorage && !_currentInBuffer && _currentInErased && _current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
-            if( !_currentInStorage && _currentInBuffer && !_currentInErased && !_current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
-            if( !_currentInStorage && _currentInBuffer && !_currentInErased && _current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
-            if( !_currentInStorage && _currentInBuffer && _currentInErased && !_current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
             if( !_currentInStorage && _currentInBuffer && _currentInErased && _current )
             {
                 // not found in storage, inserted to buffer, buffer merged to storage
@@ -1963,19 +1958,8 @@ namespace detail
                 // _currentInStorage <- lazy in operator++/operator--/operator==/operator!=
             }
             else
-            if( _currentInStorage && !_currentInBuffer && !_currentInErased && !_current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
-            if( _currentInStorage && !_currentInBuffer && !_currentInErased && _current ){
-                AV_CHECK( false );
-
-                return false;
-            }
-            else
-            if( _currentInStorage && !_currentInBuffer && _currentInErased && !_current ){
+            if( _currentInStorage && !_currentInBuffer && _currentInErased && !_current )
+            {
                 AV_CHECK( false );
 
                 return false;
@@ -2034,11 +2018,7 @@ namespace detail
                 // _current <- get it right now
             }
             else
-            if( _currentInStorage && _currentInBuffer && _currentInErased && _current ){
-                // not known case, but probably valid
-                AV_CHECK( false );
-            }
-            else{
+            {
                 AV_CHECK( false );
 
                 return false;
@@ -2068,9 +2048,7 @@ namespace detail
         , AssocVectorLazyIterator< _Iterator, _Container > const & iter
     )
     {
-        out
-            << "S: "
-            << iter.getCurrentInStorage();
+        out << "S: " << iter.getCurrentInStorage();
 
         if( iter.getCurrentInStorage() == 0 ){
             out << " (null)";
@@ -2082,9 +2060,7 @@ namespace detail
             out << " " << * iter.getCurrentInStorage();
         }
 
-        out
-            << "\n"
-            << "B: " << iter.getCurrentInBuffer();
+        out << "\nB: " << iter.getCurrentInBuffer();
 
         if( iter.getCurrentInBuffer() == 0 ){
             out << " (null)";
@@ -2096,9 +2072,7 @@ namespace detail
             out << " " << * iter.getCurrentInBuffer();
         }
 
-        out
-            << "\n"
-            << "E: " << iter.getCurrentInErased();
+        out << "\nE: " << iter.getCurrentInErased();
 
         if( iter.getCurrentInErased() == 0 ){
             out << " (null)";
@@ -2112,9 +2086,7 @@ namespace detail
             out << " " << * * iter.getCurrentInErased();
         }
 
-        out
-            << "\n"
-            << "C: " << iter.getCurrent();
+        out << "\nC: " << iter.getCurrent();
 
         if( iter.getCurrent() == 0 ){
             out << " (null)";
@@ -2182,27 +2154,32 @@ namespace detail
             return * this;
         }
 
-        bool operator==( _AssocVectorIterator const & other )const{
+        bool operator==( _AssocVectorIterator const & other )const
+        {
             return _current == other.getCurrent();
         }
 
-        bool operator!=( _AssocVectorIterator const & other )const{
+        bool operator!=( _AssocVectorIterator const & other )const
+        {
             return ! ( ( * this ) == other );
         }
 
-        reference operator*()const{
+        reference operator*()const
+        {
             AV_PRECONDITION( _current != 0 );
 
             return * base();
         }
 
-        pointer operator->()const{
+        pointer operator->()const
+        {
             AV_PRECONDITION( _current != 0 );
 
             return base();
         }
 
-        pointer base()const{
+        pointer base()const
+        {
             AV_PRECONDITION( _current != 0 );
 
             // make key const
@@ -2223,7 +2200,10 @@ namespace detail
         }
 
         // public for copy constructor only : Iterator -> ConstIterator
-        pointer_mutable getCurrent()const{ return _current; }
+        pointer_mutable getCurrent()const
+        {
+            return _current;
+        }
 
     private:
         pointer_mutable _current;
@@ -2491,12 +2471,7 @@ namespace detail
 
                 currentInStorage.setOnNotErased( currentInErased, container );
 
-                if( data() == currentInStorage.data() ){
-                    return true;
-                }
-                else{
-                    return false;
-                }
+                return data() == currentInStorage.data();
             }
 
             bool is_not_rbegin( _Container const * container )const
@@ -2506,12 +2481,7 @@ namespace detail
 
             bool is_rend( _Container const * container )const
             {
-                if( _current == container->storage().begin() - 1 ){
-                    return true;
-                }
-                else{
-                    return false;
-                }
+                return _current == container->storage().begin() - 1;
             }
 
             bool is_not_rend( _Container const * container )const
@@ -2584,6 +2554,15 @@ namespace detail
                 , _Container const * container
             )
             {
+                if( is_rend( container ) )
+                {
+                    if( !currentInErased ){
+                        currentInErased = container->erased().begin() - 1;
+                    }
+
+                    return;
+                }
+
                 if( !currentInErased )
                 {
                     currentInErased = util::last_less_equal(
@@ -2594,7 +2573,8 @@ namespace detail
                     );
                 }
 
-                if( _dir == -1 ){
+                if( _dir == -1 )
+                {
                     _dir = 1;
                     currentInErased.try_increment( container );
                 }
@@ -2615,13 +2595,16 @@ namespace detail
                 , _Container const * container
             )
             {
-                if( _dir == 1 ){
+                AV_CHECK( is_not_rend( container ) );
+
+                if( _dir == 1 )
+                {
                     _dir = -1;
                     currentInErased.try_decrement( container );
                 }
 
                 while(
-                       is_not_rend( container )
+                       is_not_rbegin( container )
                     && currentInErased.is_not_rend( container )
                     && data() == currentInErased.get( container )
                 )
@@ -2668,6 +2651,7 @@ namespace detail
 
         private:
             int _dir;
+
             pointer_mutable _current;
         };
 
@@ -2848,11 +2832,13 @@ namespace detail
             return * this;
         }
 
-        bool operator==( AssocVectorReverseIterator const & other )const{
+        bool operator==( AssocVectorReverseIterator const & other )const
+        {
             return equal( *this, other );
         }
 
-        bool operator!=( AssocVectorReverseIterator const & other )const{
+        bool operator!=( AssocVectorReverseIterator const & other )const
+            {
             return ! ( ( * this ) == other );
         }
 
@@ -2910,51 +2896,34 @@ namespace detail
                 return * this;
             }
 
-            if(1)
-            {
-                _RCurrentInStorage currentInStorage = _currentInStorage;
-                _RCurrentInBuffer currentInBuffer = _currentInBuffer;
+            _RCurrentInStorage currentInStorage = _currentInStorage;
+            _RCurrentInBuffer currentInBuffer = _currentInBuffer;
 
-                _RCurrentInErased currentInErased = _currentInErased;
+            _RCurrentInErased currentInErased = _currentInErased;
 
-                currentInStorage.decrement( currentInErased, _container );
-                currentInBuffer.decrement( _container );
+            currentInStorage.decrement( currentInErased, _container );
+            currentInBuffer.decrement( _container );
 
-                if(
-                    _container->value_comp()(
-                          currentInBuffer.get( _container )
-                        , currentInStorage.get( _container )
-                    )
+            if(
+                _container->value_comp()(
+                      currentInBuffer.get( _container )
+                    , currentInStorage.get( _container )
                 )
-                {
-                    _currentInBuffer = currentInBuffer;
-
-                    _current = _currentInBuffer;
-                }
-                else
-                {
-                    _currentInStorage = currentInStorage;
-                    _currentInErased = currentInErased;
-
-                    _current = _currentInStorage;
-                }
-
-                //AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
-                return * this;
-            }
-
-            if(0)
+            )
             {
-                if( _current == _currentInStorage ){
-                    _currentInStorage.decrement( _currentInErased, _container );
-                }
-                else if( _current == _currentInBuffer ){
-                    _currentInBuffer.decrement( _container );
-                }
+                _currentInBuffer = currentInBuffer;
 
-                _current.setGreater( _currentInStorage, _currentInBuffer, _container );
+                _current = _currentInBuffer;
+            }
+            else
+            {
+                _currentInStorage = currentInStorage;
+                _currentInErased = currentInErased;
+
+                _current = _currentInStorage;
             }
 
+            //AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
             return * this;
         }
 
@@ -2967,15 +2936,18 @@ namespace detail
             return result;
         }
 
-        reference operator*()const{
+        reference operator*()const
+        {
             return * base();
         }
 
-        pointer operator->()const{
+        pointer operator->()const
+        {
             return base();
         }
 
-        pointer base()const{
+        pointer base()const
+        {
             return
                 reinterpret_cast< pointer >(
                     const_cast< void * >(
@@ -2992,45 +2964,6 @@ namespace detail
         typename _Container::_Erased::const_iterator getRCurrentInErased()const{ return _currentInErased.data(); }
 
         pointer_mutable getCurrent()const{ return _current.data(); }
-
-    private:
-        _RCurrent
-        calculateCurrentReverse()
-        {
-           while(
-                   _currentInErased.is_not_rend( _container )
-                && _currentInStorage.is_not_rend( _container )
-                && _currentInStorage.data() == _currentInErased.get( _container )
-            )
-            {
-                _currentInStorage.decrement( _container );
-                _currentInErased.decrement( _container );
-            }
-
-            if( _currentInStorage.is_rend( _container ) )
-            {
-                if( _currentInBuffer.is_rend( _container ) ){
-                    return _RCurrent( 0 );
-                }
-
-                return _RCurrent( _currentInBuffer );
-            }
-            else if( _currentInBuffer.is_rend( _container ) )
-            {
-                return _RCurrent( _currentInStorage );
-            }
-            else if(
-                _container->value_comp()(
-                      _currentInStorage.get( _container )
-                    , _currentInBuffer.get( _container )
-                ) == false
-            )
-            {
-                return _RCurrent( _currentInStorage );
-            }
-
-            return _RCurrent(_currentInBuffer );
-        }
 
     private:
         _Container const * _container;
@@ -3052,9 +2985,7 @@ namespace detail
         , AssocVectorReverseIterator< _Iterator, _Container > const & iter
     )
     {
-        out
-            << "S: "
-            << iter.getRCurrentInStorage();
+        out << "S: " << iter.getRCurrentInStorage();
 
         if( iter.getRCurrentInStorage() == 0 ){
             out << " (null)";
@@ -3066,9 +2997,7 @@ namespace detail
             out << " " << * iter.getRCurrentInStorage();
         }
 
-        out
-            << "\n"
-            << "B: " << iter.getRCurrentInBuffer();
+        out << "\nB: " << iter.getRCurrentInBuffer();
 
         if( iter.getRCurrentInBuffer() == 0 ){
                 out << " (null)";
@@ -3080,9 +3009,7 @@ namespace detail
             out << " " << * iter.getRCurrentInBuffer();
         }
 
-        out
-            << "\n"
-            << "E: " << iter.getRCurrentInErased();
+        out << "\nE: " << iter.getRCurrentInErased();
 
         if( iter.getRCurrentInErased() == 0 ){
             out << " (null)";
@@ -3096,9 +3023,7 @@ namespace detail
             out << " " << * * iter.getRCurrentInErased();
         }
 
-        out
-            << "\n"
-            << "C: " << iter.getCurrent();
+        out << "\nC: " << iter.getCurrent();
 
         if( iter.getCurrent() == 0 ){
             out << " (null)";
@@ -3198,13 +3123,15 @@ private:
 
         bool validate()const
         {
-            if( _current == 0 ){
+            if( _current == 0 )
+            {
                 AV_CHECK( false );
 
                 return false;
             }
 
-            if( _inStorage == 0 && ( _inBuffer == 0 || _inErased == 0 ) ){
+            if( _inStorage == 0 && ( _inBuffer == 0 || _inErased == 0 ) )
+            {
                 AV_CHECK( false );
 
                 return false;
@@ -3301,8 +3228,15 @@ public:
     //
     // observers
     //
-    key_compare key_comp()const{ return _cmp; }
-    value_compare value_comp()const{ return value_compare( _cmp ); }
+    key_compare key_comp()const
+    {
+        return _cmp;
+    }
+
+    value_compare value_comp()const
+    {
+        return value_compare( _cmp );
+    }
 
 #ifdef AV_ENABLE_EXTENSIONS
     public:
@@ -3464,7 +3398,8 @@ template<
 bool operator!=(
       AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & lhs
     , AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & rhs
-){
+)
+{
     return ! ( lhs == rhs );
 }
 
@@ -3856,14 +3791,13 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
 
     _InsertImplResult const result = insertImpl( value );
 
-    return
-        iterator(
-              this
-            , result._inStorage
-            , result._inBuffer
-            , result._inErased
-            , result._current
-        );
+    return iterator(
+          this
+        , result._inStorage
+        , result._inBuffer
+        , result._inErased
+        , result._current
+    );
 }
 
 template<
@@ -3921,11 +3855,13 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
             _InsertImplResult result;
             result._isInserted = findOrInsertToBufferResult._isInserted;
 
-            if( findOrInsertToBufferResult._isReallocated ){
+            if( findOrInsertToBufferResult._isReallocated )
+            {
                 result._inStorage = 0;
                 result._inErased = _erased.end();
             }
-            else{
+            else
+            {
                 result._inStorage = greaterEqualInStorage;
                 result._inErased = 0;
             }
@@ -4072,7 +4008,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToRemoveStorageBack(
     typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
 )
 {
-    if( pos + 1 != _storage.end() ){
+    if( pos + 1 != _storage.end() )
+    {
         _TryToRemoveBackResult result;
         result._anyItemRemoved = false;
         result._erasedItemRemoved = false;
@@ -4087,7 +4024,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToRemoveStorageBack(
     if(
            _erased.empty() == false
         && _erased.back() == pos
-    ){
+    )
+    {
         _erased.setSize( _erased.size() - 1 );
 
         _TryToRemoveBackResult result;
@@ -4193,8 +4131,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
 
             bool const itemNotMarkedAsErased
                 = greaterEqualInErased == _erased.end()
-                || std::less< typename _Storage::const_iterator >()
-                        ( greaterEqualInStorage, * greaterEqualInErased );
+                || std::less< typename _Storage::const_iterator >()( greaterEqualInStorage, * greaterEqualInErased );
 
             if( itemNotMarkedAsErased )
             {
@@ -4363,7 +4300,8 @@ template<
     , typename _Allocator
 >
 std::size_t
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::count( key_type const & k )const{
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::count( key_type const & k )const
+{
     return _find( k ) ? 1 : 0;
 }
 
@@ -4608,8 +4546,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
     , _Mapped const & m
 )
 {
-    typename _Storage::iterator const greaterEqualInBuffer =
-        std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
+    typename _Storage::iterator const greaterEqualInBuffer
+        = std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
 
     if( greaterEqualInBuffer != _buffer.end() )
     {
@@ -4702,16 +4640,19 @@ template<
 void AssocVector< _Key, _Mapped, _Cmp, _Allocator >::dump()const
 {
     std::cout << "storage: ";
-    for( int i = 0 ; i < _storage.size() ; ++ i )
+    for( int i = 0 ; i < _storage.size() ; ++ i ){
         std::cout << " (" << _storage[i].first << "," << _storage[i].second << ")";
+    }
 
     std::cout << std::endl << "buffer: ";
-    for( int i = 0 ; i < _buffer.size() ; ++ i )
+    for( int i = 0 ; i < _buffer.size() ; ++ i ){
         std::cout << " (" << _buffer[i].first << "," << _buffer[i].second << ")";
+    }
 
     std::cout << std::endl << "erased: ";
-    for( int i = 0 ; i < _erased.size() ; ++ i )
+    for( int i = 0 ; i < _erased.size() ; ++ i ){
         std::cout << " (" << (*_erased[i]).first << "," << (*_erased[i]).second << ")";
+    }
 
     std::cout << "." << std::endl;
 }
