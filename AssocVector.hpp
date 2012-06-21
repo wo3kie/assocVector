@@ -1164,7 +1164,7 @@ namespace detail
             // storage: ^1 3 5 7$
             // erased :
 
-            // Case 2: item from front erased
+            // Case 2: item erased from front
             // storage: 1 ^3 5 7$
             // erased : 1
 
@@ -1172,7 +1172,7 @@ namespace detail
             // storage: ^1 3 5 7$
             // erased : 7
 
-            // Case 4: item erased either from front or back
+            // Case 4: item erased from front and back
             // storage: 1 ^3 5 7$
             // erased : 1 7
 
@@ -2438,6 +2438,26 @@ namespace detail
 
         struct _RCurrentInStorage
         {
+            // rbegin is always set at last not erased item, marked with          ^
+            // rend is always set one item before front of container, marked with $
+            // _ item before a container, not a valid item of a container
+
+            // Case 1: no item erased
+            // storage: $_ 1 3 5 ^7
+            // erased :
+
+            // Case 2: item erased from front
+            // storage: $_ 1 3 5 ^7
+            // erased : 1
+
+            // Case 3: item erased from back
+            // storage: $_ 1 3 ^5 7
+            // erased : 7
+
+            // Case 4: item erased from front and back
+            // storage: $_ 1 3 ^5 7
+            // erased : 1 7
+
             _RCurrentInStorage( pointer_mutable current )
                 : _dir( 1 )
                 , _current( current )
@@ -3282,7 +3302,7 @@ private:
     //
     // insert
     //
-    bool tryToPushBack( key_type const & k, mapped_type const & m );
+    bool tryPushBack( key_type const & k, mapped_type const & m );
 
     _FindOrInsertToBufferResult
     findOrInsertToBuffer( key_type const & k, mapped_type const & m );
@@ -3297,7 +3317,7 @@ private:
     // erase
     //
     _TryToRemoveBackResult
-    tryToRemoveStorageBack( typename _Storage::iterator pos );
+    tryRemoveStorageBack( typename _Storage::iterator pos );
 
     //
     // tryToEraseFromStorage
@@ -3825,7 +3845,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
     _Mapped const & m = value.second;
 
     {//push back to storage
-        if( tryToPushBack( k, m ) )
+        if( tryPushBack( k, m ) )
         {
             _InsertImplResult result;
             result._isInserted = true;
@@ -3948,7 +3968,7 @@ template<
     , typename _Allocator
 >
 bool
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToPushBack( _Key const & k, _Mapped const & m )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( _Key const & k, _Mapped const & m )
 {
     bool pushBackToStorage = false;
 
@@ -4004,7 +4024,7 @@ template<
     , typename _Allocator
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryToRemoveBackResult
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryToRemoveStorageBack(
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryRemoveStorageBack(
     typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
 )
 {
@@ -4336,7 +4356,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
     }
 
     {//erase from back
-        _TryToRemoveBackResult const result = tryToRemoveStorageBack( foundInStorage );
+        _TryToRemoveBackResult const result = tryRemoveStorageBack( foundInStorage );
 
         if( result._anyItemRemoved )
         {
@@ -4396,7 +4416,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     {//erase from back
         _Key const key = pos->first;
 
-        _TryToRemoveBackResult const result = tryToRemoveStorageBack( posBase );
+        _TryToRemoveBackResult const result = tryRemoveStorageBack( posBase );
 
         if( result._anyItemRemoved )
         {
@@ -4468,7 +4488,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_erase( iterator pos )
     }
 
     {//erase from back
-        _TryToRemoveBackResult const result = tryToRemoveStorageBack( posBase );
+        _TryToRemoveBackResult const result = tryRemoveStorageBack( posBase );
 
         if( result._anyItemRemoved ){
             return true;
