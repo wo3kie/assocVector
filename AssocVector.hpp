@@ -3170,17 +3170,32 @@ private:
 
 public:
     //
-    // Memory Management
+    // constructor
     //
     explicit AssocVector( _Cmp const & cmp = _Cmp(), _Allocator const & allocator = _Allocator() );
-
+    explicit AssocVector( _Allocator const & allocator );
     AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other );
+
+    template< typename __InputIterator >
+    AssocVector(
+          __InputIterator first
+        , __InputIterator last
+        , _Cmp const & cmp = _Cmp()
+        , _Allocator const & allocator = _Allocator()
+    );
 
 #ifdef AV_CXX11X_RVALUE_REFERENCE
     AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other );
 #endif
 
+    //
+    // destructor
+    //
     inline ~AssocVector();
+
+    //
+    // clear
+    //
     inline void clear();
 
     AssocVector & operator=( AssocVector const & other );
@@ -3455,6 +3470,24 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector( _Allocator const & allocator )
+    : _allocator( allocator )
+{
+    array::reset( _storage );
+    array::reset( _buffer );
+    array::reset( _erased );
+
+    std::size_t const defaultSize = 2*(2*2);
+
+    reserve( defaultSize );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other
 )
@@ -3469,6 +3502,37 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
 
     array::reset( _erased );
     array::create< typename _Storage::const_iterator >( _erased, other._erased, getAllocator( _erased ) );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+template<
+    typename __InputIterator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+      __InputIterator first
+    , __InputIterator last
+    , _Cmp const & cmp
+    , _Allocator const & allocator
+)
+    : _cmp( cmp )
+    , _allocator( allocator )
+{
+    array::reset( _storage );
+    array::reset( _buffer );
+    array::reset( _erased );
+
+    std::size_t const defaultSize = 2*(2*2);
+
+    reserve( defaultSize );
+
+    for( /*empty*/ ; first != last ; ++ first ){
+        insert( * first );
+    }
 }
 
 #ifdef AV_CXX11X_RVALUE_REFERENCE

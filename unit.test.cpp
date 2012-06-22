@@ -2186,6 +2186,54 @@ void test_user_type()
 }
 
 //
+// test_constructor
+//
+void test_constructor()
+{
+    typedef std::vector< std::pair< std::string, int > > Vector;
+
+    Vector v;
+    v.push_back( std::make_pair( "1", 1 ) );
+    v.push_back( std::make_pair( "2", 2 ) );
+    v.push_back( std::make_pair( "3", 3 ) );
+    v.push_back( std::make_pair( "4", 4 ) );
+    v.push_back( std::make_pair( "5", 5 ) );
+
+    typedef AssocVector< std::string, int > AssocVector;
+    
+    AssocVector av( v.begin(), v.end() );
+    
+    AV_ASSERT_EQUAL( av.size(), 5 );
+    
+    AssocVector::const_iterator found;
+    
+    found = av.find( "1" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "1" );
+    AV_ASSERT_EQUAL( found->second, 1 );
+    
+    found = av.find( "2" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "2" );
+    AV_ASSERT_EQUAL( found->second, 2 );
+    
+    found = av.find( "3" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "3" );
+    AV_ASSERT_EQUAL( found->second, 3 );
+    
+    found = av.find( "4" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "4" );
+    AV_ASSERT_EQUAL( found->second, 4 );
+    
+    found = av.find( "5" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "5" );
+    AV_ASSERT_EQUAL( found->second, 5 );
+}
+
+//
 // test_copy_constructor
 //
 void test_copy_constructor()
@@ -3550,6 +3598,7 @@ int main()
     {
         std::cout << "Core tests..."; std::flush( std::cout );
 
+        test_constructor();
         test_copy_constructor();
         test_assign_operator();
         test_clear();
