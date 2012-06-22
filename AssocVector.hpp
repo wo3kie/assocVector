@@ -298,6 +298,71 @@ last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp cmp )
 
 }
 
+namespace util
+{
+
+template<
+      typename _InputIterator
+    , typename _Cmp
+>
+bool is_sorted(
+      _InputIterator first
+    , _InputIterator const last
+    , _Cmp const & cmp
+)
+{
+    if( std::distance( first, last ) < 2 ){
+        return true;
+    }
+
+    _InputIterator second = first;
+
+    for( ++ second ; second != last ; ++ first, ++ second )
+    {
+        if( cmp( * first, * second ) == false ){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+}
+
+namespace util
+{
+
+template<
+      typename _InputIterator1
+    , typename _InputIterator2
+    , typename _Cmp
+>
+bool has_intersection(
+      _InputIterator1 first1
+    , _InputIterator1 const last1
+    , _InputIterator2 first2
+    , _InputIterator2 const last2
+    , _Cmp const & cmp
+)
+{
+    while( first1 != last1 && first2 != last2 )
+    {
+        if( cmp( * first1, * first2 ) ){
+            ++first1;
+        }
+        else if( cmp( * first2, * first1 ) ){
+            ++first2;
+        }
+        else{
+            return true;
+        }
+    }
+
+    return false;
+}
+
+}
+
 namespace array
 {
     //
@@ -3307,6 +3372,10 @@ public:
     bool _erase( iterator pos );
 
 private:
+    bool validateStorage()const;
+    bool validateBuffer()const;
+    bool validateErased()const;
+    bool validate()const;
 
     //
     // merge
@@ -3533,6 +3602,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     for( /*empty*/ ; first != last ; ++ first ){
         insert( * first );
     }
+
+    AV_POSTCONDITION( validate() );
 }
 
 #ifdef AV_CXX11X_RVALUE_REFERENCE
@@ -3688,7 +3759,9 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reserve( std::size_t newStorageC
         _buffer.setCapacity( newBufferCapacity );
     }
 
-    AV_CHECK( _buffer.empty() );
+    AV_POSTCONDITION( _buffer.empty() );
+
+    AV_POSTCONDITION( validate() );
 }
 
 template<
@@ -3919,6 +3992,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
             result._current = ( _storage.end() - 1 );
 
             AV_POSTCONDITION( result.validate() );
+            AV_POSTCONDITION( validate() );
 
             return result;
         }
@@ -3954,6 +4028,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
             result._current = findOrInsertToBufferResult._inBuffer;
 
             AV_POSTCONDITION( result.validate() );
+            AV_POSTCONDITION( validate() );
 
             return result;
         }
@@ -3982,6 +4057,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
             result._current = greaterEqualInStorage;
 
             AV_POSTCONDITION( result.validate() );
+            AV_POSTCONDITION( validate() );
 
             return result;
         }
@@ -4001,6 +4077,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
 
             result._current = greaterEqualInStorage;
 
+            AV_POSTCONDITION( validate() );
             AV_POSTCONDITION( result.validate() );
 
             return result;
@@ -4078,6 +4155,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( _Key const & k, _Ma
         _storage.setSize( _storage.size() + 1 );
     }
 
+    validate();
+
     return true;
 }
 
@@ -4116,12 +4195,16 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryRemoveStorageBack(
         result._anyItemRemoved = true;
         result._erasedItemRemoved = true;
 
+        AV_POSTCONDITION( validate() );
+
         return result;
     }
 
     _TryRemoveBackResult result;
     result._anyItemRemoved = true;
     result._erasedItemRemoved = false;
+
+    AV_POSTCONDITION( validate() );
 
     return result;
 }
@@ -4153,6 +4236,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryEraseFromStorage(
         result._isErased = true;
         result._isMerged = true;
 
+        AV_POSTCONDITION( validate() );
+
         return result;
     }
     else
@@ -4161,6 +4246,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryEraseFromStorage(
         result._inErased = insertInSortedResult.first;
         result._isErased = insertInSortedResult.second;
         result._isMerged = false;
+
+        AV_POSTCONDITION( validate() );
 
         return result;
     }
@@ -4351,11 +4438,112 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateStorage()const
+{
+    if( util::is_sorted( _storage.begin(), _storage.end(), value_comp() ) == false )
+    {
+        AV_CHECK( false );
+
+        return false;
+    }
+
+    return true;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateBuffer()const
+{
+    if( util::is_sorted( _buffer.begin(), _buffer.end(), value_comp() ) == false )
+    {
+        AV_CHECK( false );
+
+        return false;
+    }
+
+    if(
+        util::has_intersection(
+              _buffer.begin()
+            , _buffer.end()
+            , _storage.begin()
+            , _storage.end()
+            , value_comp()
+        )
+    )
+    {
+        AV_CHECK( false );
+
+        return false;
+    }
+
+    return true;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateErased()const
+{
+    if( _erased.empty() ){
+        return true;
+    }
+
+    if(
+        util::is_sorted(
+              _erased.begin()
+            , _erased.end()
+            , std::less< typename _Storage::const_iterator >()
+        ) == false
+    )
+    {
+        AV_CHECK( false );
+
+        return false;
+    }
+
+    AV_CHECK( _erased.front() >= _storage.begin() );
+    AV_CHECK( _erased.back() < _storage.end() );
+
+
+    return true;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validate()const
+{
+    return validateStorage() && validateBuffer() && validateErased();
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
 void
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::merge()
 {
-    if( size() > _storage.capacity() ){
-        return reserve( calculateNewStorageCapacity( _storage.capacity() ) );
+    if( size() > _storage.capacity() )
+    {
+        reserve( calculateNewStorageCapacity( _storage.capacity() ) );
+
+        return;
     }
 
     if( _erased.empty() == false ){
@@ -4407,12 +4595,17 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
             typename _Storage::iterator const foundInBuffer
                 = array::find_in_sorted( _buffer.begin(), _buffer.end(), k, value_comp() );
 
-            if( foundInBuffer == _buffer.end() ){
+            if( foundInBuffer == _buffer.end() )
+            {
+                AV_POSTCONDITION( validate() );
+
                 return 0;
             }
             else
             {
                 array::erase( _buffer, foundInBuffer );
+
+                AV_POSTCONDITION( validate() );
 
                 return 1;
             }
@@ -4424,17 +4617,27 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
 
         if( result._anyItemRemoved )
         {
-            if( result._erasedItemRemoved ){
+            if( result._erasedItemRemoved )
+            {
+                AV_POSTCONDITION( validate() );
+
                 return 0;
             }
-            else{
+            else
+            {
+                AV_POSTCONDITION( validate() );
+
                 return 1;
             }
         }
     }
 
     {//erase from _storage
-        return tryEraseFromStorage( foundInStorage )._isErased ? 1 : 0;
+        bool const result = tryEraseFromStorage( foundInStorage )._isErased ? 1 : 0;
+
+        AV_POSTCONDITION( validate() );
+
+        return result;
     }
 }
 
@@ -4467,6 +4670,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
                 ? pos.getCurrentInStorage()
                 : std::lower_bound( _storage.begin(), _storage.end(), key, value_comp() );
 
+            AV_POSTCONDITION( validate() );
+
             return iterator( this, greaterEqualInStorage, posBase, 0, 0 );
         }
     }
@@ -4489,10 +4694,16 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
                 ? pos.getCurrentInBuffer()
                 : std::lower_bound( _buffer.begin(), _buffer.end(), key, value_comp() );
 
-            if( greaterEqualInBuffer == _buffer.end() ){
+            if( greaterEqualInBuffer == _buffer.end() )
+            {
+                AV_POSTCONDITION( validate() );
+
                 return end();
             }
-            else{
+            else
+            {
+                AV_POSTCONDITION( validate() );
+
                 return iterator( this, _storage.end(), greaterEqualInBuffer, 0, 0 );
             }
         }
@@ -4512,12 +4723,17 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
             ? pos.getCurrentInBuffer()
             : std::lower_bound( _buffer.begin(), _buffer.end(), key, value_comp() );
 
-        if( result._isMerged == false ){
+        if( result._isMerged == false )
+        {
+            AV_POSTCONDITION( validate() );
+
             return iterator( this, posBase + 1, greaterEqualInBuffer, result._inErased + 1, 0 );
         }
 
         typename _Storage::iterator const greaterEqualInStorage
             = std::lower_bound( _storage.begin(), _storage.end(), key, value_comp() );
+
+        AV_POSTCONDITION( validate() );
 
         return iterator( this, greaterEqualInStorage, greaterEqualInBuffer, _erased.end(), 0 );
     }
@@ -4541,6 +4757,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_erase( iterator pos )
         {
             array::erase( _buffer, posBase );
 
+            AV_POSTCONDITION( validate() );
+
             return true;
         }
     }
@@ -4554,13 +4772,20 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_erase( iterator pos )
     {//erase from back
         _TryRemoveBackResult const result = tryRemoveStorageBack( posBase );
 
-        if( result._anyItemRemoved ){
+        if( result._anyItemRemoved )
+        {
+            AV_POSTCONDITION( validate() );
+
             return true;
         }
     }
 
     {//erase from _storage
-        return tryEraseFromStorage( posBase )._isErased;
+        bool const result = tryEraseFromStorage( posBase )._isErased;
+
+        AV_POSTCONDITION( validate() );
+
+        return result;
     }
 }
 
@@ -4593,11 +4818,16 @@ template<
 void
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::mergeStorageWithBuffer()
 {
+    AV_PRECONDITION( _erased.empty() );
+
     array::move_merge( _storage, _buffer, value_comp() );
 
     util::destroy_range( _buffer.begin(), _buffer.end() );
 
     _buffer.setSize( 0 );
+
+    AV_POSTCONDITION( _buffer.empty() );
+    AV_POSTCONDITION( validateStorage() );
 }
 
 template<
@@ -4616,6 +4846,9 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::mergeStorageWithErased()
     util::destroy_range( _storage.end(), end );
 
     _erased.setSize( 0 );
+
+    AV_POSTCONDITION( _erased.empty() );
+    AV_POSTCONDITION( validateStorage() );
 }
 
 template<
@@ -4661,6 +4894,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
         result._isInserted = true;
         result._isReallocated = true;
 
+        AV_POSTCONDITION( validate() );
+
         return result;
     }
     else
@@ -4671,6 +4906,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
         result._inBuffer = greaterEqualInBuffer;
         result._isInserted = true;
         result._isReallocated = false;
+
+        AV_POSTCONDITION( validate() );
 
         return result;
     }
