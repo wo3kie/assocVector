@@ -4460,6 +4460,10 @@ template<
 bool
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateBuffer()const
 {
+    if( _buffer.empty() ){
+        return true;
+    }
+
     if( util::is_sorted( _buffer.begin(), _buffer.end(), value_comp() ) == false )
     {
         AV_CHECK( false );
@@ -4513,7 +4517,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateErased()const
 
     AV_CHECK( _erased.front() >= _storage.begin() );
     AV_CHECK( _erased.back() < _storage.end() );
-
 
     return true;
 }
