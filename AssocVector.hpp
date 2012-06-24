@@ -3309,6 +3309,9 @@ public:
     iterator find( key_type const & k );
     const_iterator find( key_type const & k )const;
 
+    iterator lower_bound( key_type const & k );
+    const_iterator lower_bound( key_type const & k )const;
+    
     //
     // count
     //
@@ -3324,7 +3327,7 @@ public:
     //
     std::size_t erase( key_type const & k );
     iterator erase( iterator pos );
-
+    
     //
     // observers
     //
@@ -4404,6 +4407,38 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::find( _Key const & k )const
     typedef AssocVector< _Key, _Mapped, _Cmp, _Allocator > * NonConstThis;
 
     return const_cast< NonConstThis >( this )->find( k );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::lower_bound( _Key const & k )
+{
+    typename _Storage::iterator const greaterEqualInStorage
+        = std::lower_bound( _storage.begin(), _storage.end(), k, value_comp() );
+        
+    typename _Storage::iterator const greaterEqualInBuffer
+        = std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
+        
+    return iterator( this, greaterEqualInStorage, greaterEqualInBuffer, 0, 0 );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::lower_bound( _Key const & k )const
+{
+    typedef AssocVector< _Key, _Mapped, _Cmp, _Allocator > * NonConstThis;
+
+    return const_cast< NonConstThis >( this )->lower_bound( k );
 }
 
 template<

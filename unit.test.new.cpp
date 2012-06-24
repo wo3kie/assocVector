@@ -584,7 +584,7 @@ struct InsertRange
     >
     void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
     {
-        for( _K k = _range.start() ; k < _range.end() ; k += _range.step() )
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
             std::pair< typename AssocVector< __K, __M >::iterator, bool > inAV;
             std::pair< typename std::map< __K, __M >::iterator, bool > inMAP;
@@ -639,7 +639,7 @@ struct EraseRange
     >
     void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
     {
-        for( _K k = _range.start() ; k < _range.end() ; k += _range.step() )
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
             bool inAV;
             bool inMAP;
@@ -704,7 +704,7 @@ struct FindRange
         typename AssocVector< __K, __M >::iterator inAV;
         typename std::map< __K, __M >::iterator inMAP;
 
-        for( _K k = _range.start() ; k < _range.end() ; k += _range.step() )
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
             {// do test
                 inAV = av.find( k );
@@ -765,7 +765,7 @@ struct FindErase
         typename AssocVector< __K, __M >::iterator inAV;
         typename std::map< __K, __M >::iterator inMAP;
 
-        for( _K k = _range.start() ; k < _range.end() ; k += _range.step() )
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
             {// do test
                 inAV = erase( av, av.find( k ) );
@@ -826,7 +826,7 @@ struct CountRange
         typename AssocVector< __K, __M >::iterator inAV;
         typename std::map< __K, __M >::iterator inMAP;
 
-        for( _K k = _range.start() ; k < _range.end() ; k += _range.step() )
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
             {// do test
                 AV_ASSERT_EQUAL( av.count( k ), map.count( k ) );
@@ -856,6 +856,67 @@ CountRange< _K, _M >
 count( Range< _K > const & range )
 {
     return CountRange< _K, _M >( range );
+}
+
+//
+// LowerBound
+//
+template<
+      typename _K
+    , typename _M
+>
+struct LowerBound
+{
+    LowerBound( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    {
+        typename AssocVector< __K, __M >::iterator inAV;
+        typename std::map< __K, __M >::iterator inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                inAV = av.lower_bound( k );
+                inMAP = map.lower_bound( k );
+            }
+
+            {// validate
+                checkEqual( av.begin(), inAV, map.begin(), inMAP );
+                checkEqual( inAV, av.end(), inMAP, map.end() );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+LowerBound< _K, _M >
+lower_bound( _K k )
+{
+    return LowerBound< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+LowerBound< _K, _M >
+lower_bound( Range< _K > const & range )
+{
+    return LowerBound< _K, _M >( range );
 }
 
 //
@@ -894,7 +955,7 @@ template<
     typename _K
 >
 IndexGet< _K >
-indexGet( _K k )
+index_get( _K k )
 {
     return IndexGet< _K >( k );
 }
@@ -940,7 +1001,7 @@ template<
     , typename _M = _K
 >
 IndexPut< _K, _M >
-indexPut( _K k, _M m = _M() )
+index_put( _K k, _M m = _M() )
 {
     return IndexPut< _K, _M >( k, m );
 }
@@ -1972,19 +2033,19 @@ void test_insert_erase_insert()
 
     test
         >> insert( Range<>( 0, 50, 2 ) )
-        >> insert( Range<>( 1, 50, 2 ) )
+        >> insert( Range<>( 1, 51, 2 ) )
 
         >> erase( Range<>( 30, 40, 2 ) )
-        >> erase( Range<>( 31, 40, 2 ) )
+        >> erase( Range<>( 31, 41, 2 ) )
 
         >> insert( Range<>( 30, 40, 2 ) )
-        >> insert( Range<>( 31, 40, 2 ) )
+        >> insert( Range<>( 31, 41, 2 ) )
 
         >> erase( Range<>( 10, 20, 2 ) )
-        >> erase( Range<>( 11, 20, 2 ) )
+        >> erase( Range<>( 11, 21, 2 ) )
 
         >> insert( Range<>( 10, 20, 2 ) )
-        >> insert( Range<>( 11, 20, 2 ) );
+        >> insert( Range<>( 11, 21, 2 ) );
 }
 
 //
@@ -2000,7 +2061,7 @@ void test_find()
     test
         >> insert( Range<>( 0, 32, 2 ) )
         >> find( Range<>( 0, 32, 2 ) )
-        >> find( Range<>( 1, 32, 2 ) );
+        >> find( Range<>( 1, 33, 2 ) );
 }
 
 //
@@ -2085,6 +2146,26 @@ void test_count()
 }
 
 //
+// test_lower_bound
+//
+void test_lower_bound()
+{
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
+
+    TestCase< S3, S3 > test( av, map );
+
+    test
+        >> insert( Range<>( 30, 10, -1 ) )
+        >> erase( 11 )
+        >> erase( 20 )
+        >> erase( 28 )
+        
+        >> lower_bound( Range<>( 0, 40, 2 ) )
+        >> lower_bound( Range<>( 1, 41, 2 ) );
+}
+
+//
 // test_operator_index
 //
 void test_operator_index()
@@ -2095,17 +2176,17 @@ void test_operator_index()
     TestCase< S3, S3 > test( av, map );
 
     test
-        >> indexPut( 1, 1 )
-        >> indexPut( 1, 11 )
-        >> indexPut( 1, 111 )
+        >> index_put( 1, 1 )
+        >> index_put( 1, 11 )
+        >> index_put( 1, 111 )
 
-        >> indexGet( 2 )
+        >> index_get( 2 )
 
         >> insert( 3, 33 )
-        >> indexGet( 3 )
+        >> index_get( 3 )
 
         >> erase( 3 )
-        >> indexGet( 3 );
+        >> index_get( 3 );
 }
 
 //
@@ -2448,7 +2529,7 @@ void black_box_test( int rep )
     int const numberOfRepetitions = rep * 1024;
 
     {//draw simple progress bar
-        std::cout << "["; std::flush( std::cout );
+        std::cout << "[0%.."; std::flush( std::cout );
     }
 
     for( int i = 0 ; i < numberOfRepetitions ; ++ i )
@@ -2461,11 +2542,12 @@ void black_box_test( int rep )
 
         unsigned const maxKeyValue = 128;
 
-        int operation = rand() % 5;
+        int operation = rand() % 7;
 
         switch( operation )
         {
             case 0:
+            case 1:
                 {
                     int const key = rand() % maxKeyValue;
                     _T const value = _T();
@@ -2475,7 +2557,7 @@ void black_box_test( int rep )
 
                 break;
 
-            case 1:
+            case 2:
                 {
                     int const key = rand() % maxKeyValue;
 
@@ -2484,7 +2566,7 @@ void black_box_test( int rep )
 
                 break;
 
-            case 2:
+            case 3:
                 {
                     int const key = rand() % maxKeyValue;
 
@@ -2493,7 +2575,7 @@ void black_box_test( int rep )
 
                 break;
 
-            case 3:
+            case 4:
                 {
                     int const key = rand() % maxKeyValue;
 
@@ -2502,16 +2584,25 @@ void black_box_test( int rep )
 
                 break;
 
-            case 4:
+            case 5:
                 {
                     int const key = rand() % maxKeyValue;
                     _T const value = _T();
 
-                    test >> indexPut( key, value );
+                    test >> index_put( key, value );
                 }
 
                 break;
 
+            case 6:
+                {
+                    int const key = rand() % maxKeyValue;
+
+                    test >> lower_bound( key );
+                }
+
+                break;
+                
             default:
                 AV_ASSERT( false );
         }
@@ -2820,25 +2911,6 @@ void mem_leak_test_assign_operator()
 
 int main( int argc, char * argv[] )
 {
-    AssocVector< int, int > av;
-    
-    for( int i = 10 ; i < 1024 ; ++ i ){
-        av[i]=i;
-    }
-    
-    av.erase( 65 );
-    av.erase( 35 );
-    av.erase( 95 );
-    av.erase( 635 );
-    av.erase( 535 );
-    av.erase( 835 );
-    
-    for( int i = 0 ; i < 9 ; ++ i ){
-        av[i]=i;
-    }
-    
-    av.dump( 5 );
-
     {// new unit test framework
         {
             AssocVector< S1, S1 > av;
@@ -2907,6 +2979,7 @@ int main( int argc, char * argv[] )
         test_find_erase_find_insert_find();
 
         test_count();
+        test_lower_bound();
 
         test_operator_index();
 
