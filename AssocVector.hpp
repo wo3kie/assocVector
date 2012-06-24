@@ -3430,7 +3430,7 @@ private:
     {return typename _Allocator::template rebind< typename _Storage::const_iterator >::other( _allocator );}
 
 public: // public for unit tests only
-    void dump()const;
+    void dump( int width = -1 )const;
 
     std::size_t bufferSize()const{ return _buffer.size(); }
     std::size_t bufferCapacity()const{ return _buffer.capacity(); }
@@ -4961,20 +4961,35 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-void AssocVector< _Key, _Mapped, _Cmp, _Allocator >::dump()const
+void AssocVector< _Key, _Mapped, _Cmp, _Allocator >::dump( int width )const
 {
     std::cout << "storage: ";
-    for( int i = 0 ; i < _storage.size() ; ++ i ){
+    for( unsigned i = 0 ; i < _storage.size() ; ++ i )
+    {
+        if( i > 0 && width > 0 && ( i % width == 0 ) ){
+            std::cout << "\n         ";
+        }
+        
         std::cout << " (" << _storage[i].first << "," << _storage[i].second << ")";
     }
 
-    std::cout << std::endl << "buffer: ";
-    for( int i = 0 ; i < _buffer.size() ; ++ i ){
+    std::cout << std::endl << "buffer:  ";
+    for( unsigned i = 0 ; i < _buffer.size() ; ++ i )
+    {
+        if( i > 0 && width > 0 && ( i % width == 0 ) ){
+            std::cout << "\n         ";
+        }
+        
         std::cout << " (" << _buffer[i].first << "," << _buffer[i].second << ")";
     }
 
-    std::cout << std::endl << "erased: ";
-    for( int i = 0 ; i < _erased.size() ; ++ i ){
+    std::cout << std::endl << "erased:  ";
+    for( unsigned i = 0 ; i < _erased.size() ; ++ i )
+    {
+        if( i > 0 && width > 0 && ( i % width == 0 ) ){
+            std::cout << "\n         ";
+        }
+
         std::cout << " (" << (*_erased[i]).first << "," << (*_erased[i]).second << ")";
     }
 
