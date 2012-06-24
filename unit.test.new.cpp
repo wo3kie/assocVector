@@ -500,7 +500,17 @@ struct TestCase
         return _av;
     }
 
+    AssocVector< _K, _M > const & av()const
+    {
+        return _av;
+    }
+
     std::map< _K, _M > & map()
+    {
+        return _map;
+    }
+
+    std::map< _K, _M > const & map()const
     {
         return _map;
     }
@@ -699,10 +709,10 @@ struct FindRange
           typename __K
         , typename __M
     >
-    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
     {
-        typename AssocVector< __K, __M >::iterator inAV;
-        typename std::map< __K, __M >::iterator inMAP;
+        typename AssocVector< __K, __M >::const_iterator inAV;
+        typename std::map< __K, __M >::const_iterator inMAP;
 
         for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
@@ -821,10 +831,10 @@ struct CountRange
           typename __K
         , typename __M
     >
-    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
     {
-        typename AssocVector< __K, __M >::iterator inAV;
-        typename std::map< __K, __M >::iterator inMAP;
+        typename AssocVector< __K, __M >::const_iterator inAV;
+        typename std::map< __K, __M >::const_iterator inMAP;
 
         for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
@@ -876,10 +886,10 @@ struct LowerBound
           typename __K
         , typename __M
     >
-    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
     {
-        typename AssocVector< __K, __M >::iterator inAV;
-        typename std::map< __K, __M >::iterator inMAP;
+        typename AssocVector< __K, __M >::const_iterator inAV;
+        typename std::map< __K, __M >::const_iterator inMAP;
 
         for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
@@ -917,6 +927,134 @@ LowerBound< _K, _M >
 lower_bound( Range< _K > const & range )
 {
     return LowerBound< _K, _M >( range );
+}
+
+//
+// UpperBound
+//
+template<
+      typename _K
+    , typename _M
+>
+struct UpperBound
+{
+    UpperBound( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
+    {
+        typename AssocVector< __K, __M >::const_iterator inAV;
+        typename std::map< __K, __M >::const_iterator inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                inAV = av.upper_bound( k );
+                inMAP = map.upper_bound( k );
+            }
+
+            {// validate
+                checkEqual( av.begin(), inAV, map.begin(), inMAP );
+                checkEqual( inAV, av.end(), inMAP, map.end() );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+UpperBound< _K, _M >
+upper_bound( _K k )
+{
+    return UpperBound< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+UpperBound< _K, _M >
+upper_bound( Range< _K > const & range )
+{
+    return UpperBound< _K, _M >( range );
+}
+
+//
+// EqualRange
+//
+template<
+      typename _K
+    , typename _M
+>
+struct EqualRange
+{
+    EqualRange( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
+    {
+        typedef typename AssocVector< __K, __M >::const_iterator AVConstIterator;
+        typedef typename std::map< __K, __M >::const_iterator MAPConstIterator;
+
+        std::pair< AVConstIterator, AVConstIterator > inAV;
+        std::pair< MAPConstIterator, MAPConstIterator > inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                inAV = av.equal_range( k );
+                inMAP = map.equal_range( k );
+            }
+
+            {// validate
+                checkEqual( av.begin(), inAV.first, map.begin(), inMAP.first );
+                checkEqual( av.begin(), inAV.second, map.begin(), inMAP.second );
+
+                checkEqual( inAV.first, av.end(), inMAP.first, map.end() );
+                checkEqual( inAV.second, av.end(), inMAP.second, map.end() );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+EqualRange< _K, _M >
+equal_range( _K k )
+{
+    return EqualRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+EqualRange< _K, _M >
+equal_range( Range< _K > const & range )
+{
+    return EqualRange< _K, _M >( range );
 }
 
 //
@@ -2160,9 +2298,49 @@ void test_lower_bound()
         >> erase( 11 )
         >> erase( 20 )
         >> erase( 28 )
-        
+
         >> lower_bound( Range<>( 0, 40, 2 ) )
         >> lower_bound( Range<>( 1, 41, 2 ) );
+}
+
+//
+// test_upper_bound
+//
+void test_upper_bound()
+{
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
+
+    TestCase< S3, S3 > test( av, map );
+
+    test
+        >> insert( Range<>( 30, 10, -1 ) )
+        >> erase( 11 )
+        >> erase( 20 )
+        >> erase( 28 )
+
+        >> upper_bound( Range<>( 0, 40, 2 ) )
+        >> upper_bound( Range<>( 1, 41, 2 ) );
+}
+
+//
+// test_equal_range
+//
+void test_equal_range()
+{
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
+
+    TestCase< S3, S3 > test( av, map );
+
+    test
+        >> insert( Range<>( 30, 10, -1 ) )
+        >> erase( 11 )
+        >> erase( 20 )
+        >> erase( 28 )
+
+        >> equal_range( Range<>( 0, 40, 2 ) )
+        >> equal_range( Range<>( 1, 41, 2 ) );
 }
 
 //
@@ -2542,12 +2720,13 @@ void black_box_test( int rep )
 
         unsigned const maxKeyValue = 128;
 
-        int operation = rand() % 7;
+        int operation = rand() % 10;
 
         switch( operation )
         {
             case 0:
             case 1:
+            case 2:
                 {
                     int const key = rand() % maxKeyValue;
                     _T const value = _T();
@@ -2557,7 +2736,7 @@ void black_box_test( int rep )
 
                 break;
 
-            case 2:
+            case 3:
                 {
                     int const key = rand() % maxKeyValue;
 
@@ -2566,7 +2745,7 @@ void black_box_test( int rep )
 
                 break;
 
-            case 3:
+            case 4:
                 {
                     int const key = rand() % maxKeyValue;
 
@@ -2575,7 +2754,7 @@ void black_box_test( int rep )
 
                 break;
 
-            case 4:
+            case 5:
                 {
                     int const key = rand() % maxKeyValue;
 
@@ -2584,7 +2763,7 @@ void black_box_test( int rep )
 
                 break;
 
-            case 5:
+            case 6:
                 {
                     int const key = rand() % maxKeyValue;
                     _T const value = _T();
@@ -2594,7 +2773,7 @@ void black_box_test( int rep )
 
                 break;
 
-            case 6:
+            case 7:
                 {
                     int const key = rand() % maxKeyValue;
 
@@ -2602,7 +2781,25 @@ void black_box_test( int rep )
                 }
 
                 break;
-                
+
+            case 8:
+                {
+                    int const key = rand() % maxKeyValue;
+
+                    test >> upper_bound( key );
+                }
+
+                break;
+
+            case 9:
+                {
+                    int const key = rand() % maxKeyValue;
+
+                    test >> equal_range( key );
+                }
+
+                break;
+
             default:
                 AV_ASSERT( false );
         }
@@ -2980,6 +3177,8 @@ int main( int argc, char * argv[] )
 
         test_count();
         test_lower_bound();
+        test_upper_bound();
+        test_equal_range();
 
         test_operator_index();
 

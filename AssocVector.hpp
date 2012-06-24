@@ -1736,6 +1736,8 @@ namespace detail
             {
                 // not found in storage, insert to buffer
                 // erase from buffer + find in storage
+                // lower_bound
+                // upper_bound
 
                 // _currentInStorage <- fix against '!_currentInErased'
                 _currentInStorage.setOnNotErased( _currentInErased, _container );
@@ -2046,6 +2048,8 @@ namespace detail
             {
                 // not found in storage, insert to buffer
                 // erase from buffer + find in storage
+                // lower_bound
+                // upper_bound
 
                 AV_CHECK( _currentInStorage.validate( _container ) );
                 AV_CHECK( _currentInBuffer.validate( _container ) );
@@ -3311,7 +3315,13 @@ public:
 
     iterator lower_bound( key_type const & k );
     const_iterator lower_bound( key_type const & k )const;
-    
+
+    iterator upper_bound( key_type const & k );
+    const_iterator upper_bound( key_type const & k )const;
+
+    std::pair< iterator, iterator > equal_range( key_type const & k );
+    std::pair< const_iterator, const_iterator > equal_range( key_type const & k )const;
+
     //
     // count
     //
@@ -3327,7 +3337,7 @@ public:
     //
     std::size_t erase( key_type const & k );
     iterator erase( iterator pos );
-    
+
     //
     // observers
     //
@@ -4420,10 +4430,10 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::lower_bound( _Key const & k )
 {
     typename _Storage::iterator const greaterEqualInStorage
         = std::lower_bound( _storage.begin(), _storage.end(), k, value_comp() );
-        
+
     typename _Storage::iterator const greaterEqualInBuffer
         = std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
-        
+
     return iterator( this, greaterEqualInStorage, greaterEqualInBuffer, 0, 0 );
 }
 
@@ -4439,6 +4449,103 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::lower_bound( _Key const & k )con
     typedef AssocVector< _Key, _Mapped, _Cmp, _Allocator > * NonConstThis;
 
     return const_cast< NonConstThis >( this )->lower_bound( k );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::upper_bound( _Key const & k )
+{
+    typename _Storage::iterator const greaterInStorage
+        = std::upper_bound( _storage.begin(), _storage.end(), k, value_comp() );
+
+    typename _Storage::iterator const greaterInBuffer
+        = std::upper_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
+
+    return iterator( this, greaterInStorage, greaterInBuffer, 0, 0 );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::upper_bound( _Key const & k )const
+{
+    typedef AssocVector< _Key, _Mapped, _Cmp, _Allocator > * NonConstThis;
+
+    return const_cast< NonConstThis >( this )->upper_bound( k );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+std::pair<
+      typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+    , typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::equal_range( _Key const & k )
+{
+    typename _Storage::iterator const greaterEqualInStorage
+        = std::lower_bound( _storage.begin(), _storage.end(), k, value_comp() );
+
+    bool const notPresentInStorage
+        = greaterEqualInStorage == _storage.end()
+        || key_comp()( k, greaterEqualInStorage->first );
+
+    typename _Storage::iterator const greaterEqualInBuffer
+        = std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
+
+    bool const notPresentInBuffer
+        = greaterEqualInBuffer == _buffer.end()
+        || key_comp()( k, greaterEqualInBuffer->first );
+
+    if( notPresentInStorage == false )
+    {
+        return std::make_pair(
+              iterator( this, greaterEqualInStorage, greaterEqualInBuffer, 0, 0 )
+            , iterator( this, greaterEqualInStorage + 1, greaterEqualInBuffer, 0, 0 )
+        );
+    }
+
+    if( notPresentInBuffer == false )
+    {
+        return std::make_pair(
+              iterator( this, greaterEqualInStorage, greaterEqualInBuffer, 0, 0 )
+            , iterator( this, greaterEqualInStorage, greaterEqualInBuffer + 1, 0, 0 )
+        );
+    }
+
+    return std::make_pair(
+          iterator( this, greaterEqualInStorage, greaterEqualInBuffer, 0, 0 )
+        , iterator( this, greaterEqualInStorage, greaterEqualInBuffer, 0, 0 )
+    );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+std::pair<
+      typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+    , typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::equal_range( _Key const & k )const
+{
+    typedef AssocVector< _Key, _Mapped, _Cmp, _Allocator > * NonConstThis;
+
+    return const_cast< NonConstThis >( this )->equal_range( k );
 }
 
 template<
@@ -5004,7 +5111,7 @@ void AssocVector< _Key, _Mapped, _Cmp, _Allocator >::dump( int width )const
         if( i > 0 && width > 0 && ( i % width == 0 ) ){
             std::cout << "\n         ";
         }
-        
+
         std::cout << " (" << _storage[i].first << "," << _storage[i].second << ")";
     }
 
@@ -5014,7 +5121,7 @@ void AssocVector< _Key, _Mapped, _Cmp, _Allocator >::dump( int width )const
         if( i > 0 && width > 0 && ( i % width == 0 ) ){
             std::cout << "\n         ";
         }
-        
+
         std::cout << " (" << _buffer[i].first << "," << _buffer[i].second << ")";
     }
 
