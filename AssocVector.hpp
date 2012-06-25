@@ -40,10 +40,12 @@
     #define AV_PRECONDITION( condition )    if( (bool)( condition ) == false ){int*i=0;*i=0;}
     #define AV_CHECK( condition )           if( (bool)( condition ) == false ){int*i=0;*i=0;}
     #define AV_POSTCONDITION( condition )   if( (bool)( condition ) == false ){int*i=0;*i=0;}
+    #define AV_ERROR()                      if( true )                        {int*i=0;*i=0;}
 #else
     #define AV_PRECONDITION( condition )    (void)( 0 );
     #define AV_CHECK( condition )           (void)( 0 );
     #define AV_POSTCONDITION( condition )   (void)( 0 );
+    #define AV_ERROR()                      (void)( 0 );
 #endif
 
 namespace util
@@ -229,8 +231,6 @@ namespace util
         , _OutputPtr first2
     )
     {
-        AV_PRECONDITION( first <= last );
-
         if( first < first2 ){
             util::move_backward( first, last, first2 + ( last - first ) );
         }
@@ -1073,7 +1073,7 @@ namespace detail
                     return true;
                 }
 
-                AV_CHECK( false );
+                AV_ERROR();
 
                 return false;
             }
@@ -1193,7 +1193,7 @@ namespace detail
                     return true;
                 }
 
-                AV_CHECK( false );
+                AV_ERROR();
 
                 return false;
             }
@@ -1484,7 +1484,7 @@ namespace detail
                     return true;
                 }
 
-                AV_CHECK( false );
+                AV_ERROR();
 
                 return false;
             }
@@ -1592,7 +1592,7 @@ namespace detail
                         return true;
                     }
 
-                    AV_CHECK( false );
+                    AV_ERROR();
 
                     return false;
                 }
@@ -1603,7 +1603,7 @@ namespace detail
                         return true;
                     }
 
-                    AV_CHECK( false );
+                    AV_ERROR();
 
                     return false;
                 }
@@ -1616,7 +1616,7 @@ namespace detail
                     return true;
                 }
 
-                AV_CHECK( false );
+                AV_ERROR();
 
                 return false;
             }
@@ -1825,7 +1825,7 @@ namespace detail
                 _currentInBuffer.try_increment( _container );
             }
             else{
-                AV_CHECK( false );
+                AV_ERROR();
             }
 
             _current.setLower( _currentInStorage, _currentInBuffer, _container );
@@ -1856,6 +1856,7 @@ namespace detail
             )
             {
                 AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
                 return * this;
             }
 
@@ -1866,6 +1867,7 @@ namespace detail
                 _current = _currentInBuffer;
 
                 AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
                 return * this;
             }
 
@@ -1876,6 +1878,7 @@ namespace detail
                 _current = _currentInStorage;
 
                 AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
                 return * this;
             }
 
@@ -1907,6 +1910,7 @@ namespace detail
             }
 
             AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
             return * this;
         }
 
@@ -2028,7 +2032,7 @@ namespace detail
             else
             if( _currentInStorage && !_currentInBuffer && _currentInErased && !_current )
             {
-                AV_CHECK( false );
+                AV_ERROR();
 
                 return false;
             }
@@ -2089,7 +2093,7 @@ namespace detail
             }
             else
             {
-                AV_CHECK( false );
+                AV_ERROR();
 
                 return false;
             }
@@ -2944,7 +2948,7 @@ namespace detail
                 _currentInBuffer.increment( _container );
             }
             else{
-                AV_CHECK( false );
+                AV_ERROR();
             }
 
             _current.setGreater( _currentInStorage, _currentInBuffer, _container );
@@ -3014,6 +3018,7 @@ namespace detail
             }
 
             //AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+
             return * this;
         }
 
@@ -3215,14 +3220,14 @@ private:
         {
             if( _current == 0 )
             {
-                AV_CHECK( false );
+                AV_ERROR();
 
                 return false;
             }
 
             if( _inStorage == 0 && ( _inBuffer == 0 || _inErased == 0 ) )
             {
-                AV_CHECK( false );
+                AV_ERROR();
 
                 return false;
             }
@@ -3774,7 +3779,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reserve( std::size_t newStorageC
     }
 
     AV_POSTCONDITION( _buffer.empty() );
-
     AV_POSTCONDITION( validate() );
 }
 
@@ -4586,7 +4590,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateStorage()const
 {
     if( util::is_sorted( _storage.begin(), _storage.end(), value_comp() ) == false )
     {
-        AV_CHECK( false );
+        AV_ERROR();
 
         return false;
     }
@@ -4609,7 +4613,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateBuffer()const
 
     if( util::is_sorted( _buffer.begin(), _buffer.end(), value_comp() ) == false )
     {
-        AV_CHECK( false );
+        AV_ERROR();
 
         return false;
     }
@@ -4624,7 +4628,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateBuffer()const
         )
     )
     {
-        AV_CHECK( false );
+        AV_ERROR();
 
         return false;
     }
@@ -4653,7 +4657,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateErased()const
         ) == false
     )
     {
-        AV_CHECK( false );
+        AV_ERROR();
 
         return false;
     }
