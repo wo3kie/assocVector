@@ -19,15 +19,15 @@
 
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
     #if ( __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 )
-      #define AV_CXX11X_RVALUE_REFERENCE
-      #define AV_MAP_ERASE_RETURNS_ITERATOR
+        #define AV_CXX11X_RVALUE_REFERENCE
+        #define AV_MAP_ERASE_RETURNS_ITERATOR
     #endif
 #endif
 
 #ifdef AV_CXX11X_RVALUE_REFERENCE
-  #define AV_MOVE std::move
+    #define AV_MOVE std::move
 #else
-  #define AV_MOVE
+    #define AV_MOVE
 #endif
 
 // configuration.end
@@ -37,13 +37,13 @@
 #endif
 
 #ifdef AV_DEBUG
-    #define AV_PRECONDITION( condition ) if( (bool)( condition ) == false ){int*i=0;*i=0;}
-    #define AV_CHECK( condition ) if( (bool)( condition ) == false ){int*i=0;*i=0;}
-    #define AV_POSTCONDITION( condition ) if( (bool)( condition ) == false ){int*i=0;*i=0;}
+    #define AV_PRECONDITION( condition )    if( (bool)( condition ) == false ){int*i=0;*i=0;}
+    #define AV_CHECK( condition )           if( (bool)( condition ) == false ){int*i=0;*i=0;}
+    #define AV_POSTCONDITION( condition )   if( (bool)( condition ) == false ){int*i=0;*i=0;}
 #else
-    #define AV_PRECONDITION( condition ) (void)( condition );
-    #define AV_CHECK( condition ) (void)( condition );
-    #define AV_POSTCONDITION( condition ) (void)( condition );
+    #define AV_PRECONDITION( condition )    (void)( 0 );
+    #define AV_CHECK( condition )           (void)( 0 );
+    #define AV_POSTCONDITION( condition )   (void)( 0 );
 #endif
 
 namespace util
@@ -200,7 +200,8 @@ namespace util
     {
         AV_PRECONDITION( first <= last );
 
-        while( first != last ){
+        while( first != last )
+        {
             -- output;
             -- last;
 
@@ -4168,7 +4169,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( _Key const & k, _Ma
         _storage.setSize( _storage.size() + 1 );
     }
 
-    validate();
+    AV_POSTCONDITION( validate() );
 
     return true;
 }
