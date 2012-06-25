@@ -83,72 +83,73 @@ void dump( _Iterator begin, _Iterator end, std::ostream & out = std::cout )
     out << "]";
 }
 
+template<
+      typename _Iterator1
+    , typename _Iterator2
+>
+void checkEqual(
+      _Iterator1 first1
+    , _Iterator1 const last1
+    , _Iterator2 first2
+    , _Iterator2 const last2
+)
+{
+    AV_ASSERT_EQUAL( std::distance( first1, last1 ), std::distance( first2, last2 ) );
+    AV_CHECK( std::equal( first1, last1, first2 ) );
+}
+
+template<
+      typename _Iterator1
+    , typename _Iterator2
+>
+void checkEqualBackward(
+      _Iterator1 const first1
+    , _Iterator1 last1
+    , _Iterator2 const first2
+    , _Iterator2 last2
+)
+{
+    std::size_t const dist1 = std::distance( first1, last1 );
+    std::size_t const dist2 = std::distance( first2, last2 );
+
+    AV_ASSERT_EQUAL( dist1, dist2 );
+
+    if( dist1 == 0 ){
+        return;
+    }
+
+    do
+    {
+        -- last1;
+        -- last2;
+
+        AV_ASSERT_EQUAL( * last1, * last2 );
+    }
+    while( last1 != first1 );
+
+    AV_ASSERT_EQUAL( * last1, * last2 );
+}
+
 //
-// isEqual
+// checkEqual
 //
 template<
       typename _T1
     , typename _T2
 >
-bool isEqual(
+void checkEqual(
       AssocVector< _T1, _T2 > const & av
     , std::map< _T1, _T2 > const & map
 )
 {
-    if( av.size() != map.size() ){
-        return false;
-    }
+    AV_ASSERT_EQUAL( av.empty(), map.empty() );
+    AV_ASSERT_EQUAL( av.size(), map.size() );
 
-    bool const result1 = std::equal( av.begin(), av.end(), map.begin() );
-    bool const result2 = std::equal( av.rbegin(), av.rend(), map.rbegin() );
+    checkEqual( av.begin(), av.end(), map.begin(), map.end() );
+    checkEqual( av.rbegin(), av.rend(), map.rbegin(), map.rend() );
 
-    AV_ASSERT_EQUAL( result1, result2 );
-
-    if( av.empty() ){
-        return result1;
-    }
-
-    {
-        typename AssocVector< _T1, _T2 >::const_iterator currentAV = av.end();
-        typename AssocVector< _T1, _T2 >::const_iterator const beginAV = av.begin();
-
-        typename std::map< _T1, _T2 >::const_iterator currentMAP = map.end();
-        typename std::map< _T1, _T2 >::const_iterator const beginMAP = map.begin();
-
-        do
-        {
-            -- currentAV;
-            -- currentMAP;
-
-            AV_ASSERT_EQUAL( * currentAV, * currentMAP );
-        }
-        while( currentMAP != beginMAP );
-
-        AV_ASSERT_EQUAL( currentAV, beginAV );
-
-        AV_ASSERT_EQUAL( * currentAV, * currentMAP );
-    }
-
-    {
-        typename AssocVector< _T1, _T2 >::const_reverse_iterator currentAV = av.rend();
-        typename AssocVector< _T1, _T2 >::const_reverse_iterator const rbeginAV = av.rbegin();
-
-        typename std::map< _T1, _T2 >::const_reverse_iterator currentMAP = map.rend();
-        typename std::map< _T1, _T2 >::const_reverse_iterator const rbeginMAP = map.rbegin();
-
-        do
-        {
-            -- currentAV;
-            -- currentMAP;
-
-            AV_ASSERT_EQUAL( * currentAV, * currentMAP );
-        }
-        while( currentMAP != rbeginMAP );
-
-        AV_ASSERT_EQUAL( currentAV, rbeginAV );
-    }
-
-    return true;
+    checkEqualBackward( av.begin(), av.end(), map.begin(), map.end() );
+    checkEqualBackward( av.rbegin(), av.rend(), map.rbegin(), map.rend() );
 }
 
 //
@@ -156,29 +157,39 @@ bool isEqual(
 //
 struct S1
 {
+    S1( int i = 0 )
+        : _i( i )
+    {
+    }
+
     S1 & operator=( S1 const & other )
     {
-        i = other.i;
+        _i = other._i;
 
         return * this;
     }
 
     bool operator==( S1 const & other )const
     {
-        return i == other.i;
+        return _i == other._i;
+    }
+
+    bool operator!=( S1 const & other )const
+    {
+        return ! operator==( other );
     }
 
     bool operator<( S1 const & other )const
     {
-        return i < other.i;
+        return _i < other._i;
     }
 
-    int i;
+    int _i;
 };
 
 std::ostream & operator<<( std::ostream & out, S1 const & s1 )
 {
-    return out << s1.i;
+    return out << s1._i;
 }
 
 //
@@ -186,28 +197,28 @@ std::ostream & operator<<( std::ostream & out, S1 const & s1 )
 //
 struct S2
 {
-    S2()
+    S2( int i = 0 )
     {
-        b = 0;
-        s = 0;
-        i = 0;
-        u = 0;
-        c = 0;
-        f = 0;
-        d = 0;
-        v = 0;
+        _b = i;
+        _s = i;
+        _i = i;
+        _u = i;
+        _c = i;
+        _f = i;
+        _d = i;
+        _v = (void*)(i);
     }
 
     S2 & operator=( S2 const & other )
     {
-        b = other.b;
-        s = other.s;
-        i = other.i;
-        u = other.u;
-        c = other.c;
-        f = other.f;
-        d = other.d;
-        v = other.v;
+        _b = other._b;
+        _s = other._s;
+        _i = other._i;
+        _u = other._u;
+        _c = other._c;
+        _f = other._f;
+        _d = other._d;
+        _v = other._v;
 
         return * this;
     }
@@ -215,30 +226,35 @@ struct S2
     bool operator==( S2 const & other )const
     {
         return
-               b == other.b
-            && s == other.s
-            && i == other.i
-            && u == other.u
-            && c == other.c
-            && f == other.f
-            && d == other.d
-            && v == other.v;
+               _b == other._b
+            && _s == other._s
+            && _i == other._i
+            && _u == other._u
+            && _c == other._c
+            && _f == other._f
+            && _d == other._d
+            && _v == other._v;
     }
 
-    bool b;
-    short s;
-    int i;
-    unsigned u;
-    char c;
-    float f;
-    double d;
-    void * v;
+    bool operator!=( S2 const & other )const
+    {
+        return ! operator==( other );
+    }
+
+    bool _b;
+    short _s;
+    int _i;
+    unsigned _u;
+    char _c;
+    float _f;
+    double _d;
+    void * _v;
 };
 
 std::ostream & operator<<( std::ostream & out, S2 const & s2 )
 {
-    return out << s2.b << ", " << s2.s << ", " << s2.i << ", " << s2.u << ", "
-        << s2.c << ", " << s2.f << ", " << s2.d << ", " << s2.v;
+    return out << s2._b << ", " << s2._s << ", " << s2._i << ", " << s2._u << ", "
+        << s2._c << ", " << s2._f << ", " << s2._d << ", " << s2._v;
 }
 
 //
@@ -246,11 +262,13 @@ std::ostream & operator<<( std::ostream & out, S2 const & s2 )
 //
 struct S3
 {
-    S3()
+    S3( int i = 0 )
     {
         ++ createdObjects;
 
-        for( int i = 0 ; i < 10 ; ++ i ){
+        array.push_back( i );
+
+        for( int i = 1 ; i < 4 ; ++ i ){
             array.push_back( rand() );
         }
     }
@@ -299,12 +317,17 @@ struct S3
 
     bool operator==( S3 const & other )const
     {
-        return array == other.array;
+        return array[0] == other.array[0];
+    }
+
+    bool operator!=( S3 const & other )const
+    {
+        return ! operator==( other );
     }
 
     bool operator<( S3 const & other )const
     {
-        return array < other.array;
+        return array[0] < other.array[0];
     }
 
     void swap( S3 & other )
@@ -422,6 +445,724 @@ std::ostream & operator<<( std::ostream & out, std::pair< _T1, _T2 > const & pai
 }
 
 }
+
+//
+// Range
+//
+template< typename _T = int >
+struct Range
+{
+    Range( _T start, _T end, _T step = _T( 1 ) )
+        : _start( start )
+        , _end( end )
+        , _step( step )
+    {
+    }
+
+    _T start()const
+    {
+        return _start;
+    }
+
+    _T end()const
+    {
+        return _end;
+    }
+
+    _T step()const
+    {
+        return _step;
+    }
+
+private:
+    _T _start;
+    _T _end;
+    _T _step;
+};
+
+//
+// Unit Test Framework
+//
+template<
+      typename _K
+    , typename _M
+>
+struct TestCase
+{
+    TestCase( AssocVector< _K, _M > & av, std::map< _K, _M > & map )
+        : _av( av )
+        , _map( map )
+    {
+    }
+
+    AssocVector< _K, _M > & av()
+    {
+        return _av;
+    }
+
+    AssocVector< _K, _M > const & av()const
+    {
+        return _av;
+    }
+
+    std::map< _K, _M > & map()
+    {
+        return _map;
+    }
+
+    std::map< _K, _M > const & map()const
+    {
+        return _map;
+    }
+
+private:
+    AssocVector< _K, _M > & _av;
+    std::map< _K, _M > & _map;
+};
+
+//
+// Insert
+//
+template<
+      typename _K
+    , typename _M
+>
+struct Insert
+{
+    Insert( _K k, _M m )
+        : _k( k )
+        , _m( m )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    {
+        std::pair< typename AssocVector< __K, __M >::iterator, bool > inAV;
+        std::pair< typename std::map< __K, __M >::iterator, bool > inMAP;
+
+        {// do test
+            inAV = av.insert( typename AssocVector< __K, __M >::value_type( _k, _m ) );
+            inMAP = map.insert( typename std::map< __K, __M >::value_type( _k, _m ) );
+        }
+
+        {// validate
+            AV_ASSERT_EQUAL( inAV.second, inMAP.second );
+
+            checkEqual( av.begin(), inAV.first, map.begin(), inMAP.first );
+            checkEqual( inAV.first, av.end(), inMAP.first, map.end() );
+
+            checkEqual( av, map );
+        }
+    }
+
+private:
+    _K _k;
+    _M _m;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+Insert< _K, _M >
+insert( _K k, _M m = _M() )
+{
+    return Insert< _K, _M >( k, m );
+}
+
+//
+// InsertRange
+//
+template<
+      typename _K
+    , typename _M
+>
+struct InsertRange
+{
+    InsertRange( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    {
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            std::pair< typename AssocVector< __K, __M >::iterator, bool > inAV;
+            std::pair< typename std::map< __K, __M >::iterator, bool > inMAP;
+
+            {// do test
+                inAV = av.insert( typename AssocVector< __K, __M >::value_type( k, k ) );
+                inMAP = map.insert( typename std::map< __K, __M >::value_type( k, k ) );
+            }
+
+            {// validate
+                AV_ASSERT_EQUAL( inAV.second, inMAP.second );
+
+                checkEqual( av.begin(), inAV.first, map.begin(), inMAP.first );
+                checkEqual( inAV.first, av.end(), inMAP.first, map.end() );
+
+                checkEqual( av, map );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+InsertRange< _K, _M >
+insert( Range< _K > const & range )
+{
+    return InsertRange< _K, _M >( range );
+}
+
+//
+// EraseRange
+//
+template<
+      typename _K
+    , typename _M
+>
+struct EraseRange
+{
+    EraseRange( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    {
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            bool inAV;
+            bool inMAP;
+
+            {// do test
+                inAV = av.erase( k );
+                inMAP = map.erase( k );
+            }
+
+            {// validate
+                AV_ASSERT_EQUAL( inAV, inMAP );
+
+                checkEqual( av, map );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+EraseRange< _K, _M >
+erase( _K k )
+{
+    return EraseRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+EraseRange< _K, _M >
+erase( Range< _K > const & range )
+{
+    return EraseRange< _K, _M >( range );
+}
+
+//
+// FindRange
+//
+template<
+      typename _K
+    , typename _M
+>
+struct FindRange
+{
+    FindRange( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
+    {
+        typename AssocVector< __K, __M >::const_iterator inAV;
+        typename std::map< __K, __M >::const_iterator inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                inAV = av.find( k );
+                inMAP = map.find( k );
+            }
+
+            {// validate
+                checkEqual( av.begin(), inAV, map.begin(), inMAP );
+                checkEqual( inAV, av.end(), inMAP, map.end() );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+FindRange< _K, _M >
+find( _K k )
+{
+    return FindRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+FindRange< _K, _M >
+find( Range< _K > const & range )
+{
+    return FindRange< _K, _M >( range );
+}
+
+//
+// Find & Erase
+//
+template<
+      typename _K
+    , typename _M
+>
+struct FindErase
+{
+    FindErase( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    {
+        typename AssocVector< __K, __M >::iterator inAV;
+        typename std::map< __K, __M >::iterator inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                inAV = erase( av, av.find( k ) );
+                inMAP = erase( map, map.find( k ) );
+            }
+
+            {// validate
+                checkEqual( av.begin(), inAV, map.begin(), inMAP );
+                checkEqual( inAV, av.end(), inMAP, map.end() );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+FindErase< _K, _M >
+findErase( _K k )
+{
+    return FindErase< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+FindErase< _K, _M >
+findErase( Range< _K > const & range )
+{
+    return FindErase< _K, _M >( range );
+}
+
+//
+// CountRange
+//
+template<
+      typename _K
+    , typename _M
+>
+struct CountRange
+{
+    CountRange( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
+    {
+        typename AssocVector< __K, __M >::const_iterator inAV;
+        typename std::map< __K, __M >::const_iterator inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                AV_ASSERT_EQUAL( av.count( k ), map.count( k ) );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+CountRange< _K, _M >
+count( _K k )
+{
+    return CountRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+CountRange< _K, _M >
+count( Range< _K > const & range )
+{
+    return CountRange< _K, _M >( range );
+}
+
+//
+// LowerBound
+//
+template<
+      typename _K
+    , typename _M
+>
+struct LowerBound
+{
+    LowerBound( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
+    {
+        typename AssocVector< __K, __M >::const_iterator inAV;
+        typename std::map< __K, __M >::const_iterator inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                inAV = av.lower_bound( k );
+                inMAP = map.lower_bound( k );
+            }
+
+            {// validate
+                checkEqual( av.begin(), inAV, map.begin(), inMAP );
+                checkEqual( inAV, av.end(), inMAP, map.end() );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+LowerBound< _K, _M >
+lower_bound( _K k )
+{
+    return LowerBound< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+LowerBound< _K, _M >
+lower_bound( Range< _K > const & range )
+{
+    return LowerBound< _K, _M >( range );
+}
+
+//
+// UpperBound
+//
+template<
+      typename _K
+    , typename _M
+>
+struct UpperBound
+{
+    UpperBound( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
+    {
+        typename AssocVector< __K, __M >::const_iterator inAV;
+        typename std::map< __K, __M >::const_iterator inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                inAV = av.upper_bound( k );
+                inMAP = map.upper_bound( k );
+            }
+
+            {// validate
+                checkEqual( av.begin(), inAV, map.begin(), inMAP );
+                checkEqual( inAV, av.end(), inMAP, map.end() );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+UpperBound< _K, _M >
+upper_bound( _K k )
+{
+    return UpperBound< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+UpperBound< _K, _M >
+upper_bound( Range< _K > const & range )
+{
+    return UpperBound< _K, _M >( range );
+}
+
+//
+// EqualRange
+//
+template<
+      typename _K
+    , typename _M
+>
+struct EqualRange
+{
+    EqualRange( Range< _K > const & range )
+        : _range( range )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > const & av, std::map< __K, __M > const & map )const
+    {
+        typedef typename AssocVector< __K, __M >::const_iterator AVConstIterator;
+        typedef typename std::map< __K, __M >::const_iterator MAPConstIterator;
+
+        std::pair< AVConstIterator, AVConstIterator > inAV;
+        std::pair< MAPConstIterator, MAPConstIterator > inMAP;
+
+        for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
+        {
+            {// do test
+                inAV = av.equal_range( k );
+                inMAP = map.equal_range( k );
+            }
+
+            {// validate
+                checkEqual( av.begin(), inAV.first, map.begin(), inMAP.first );
+                checkEqual( av.begin(), inAV.second, map.begin(), inMAP.second );
+
+                checkEqual( inAV.first, av.end(), inMAP.first, map.end() );
+                checkEqual( inAV.second, av.end(), inMAP.second, map.end() );
+            }
+        }
+    }
+
+private:
+    Range< _K > _range;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+EqualRange< _K, _M >
+equal_range( _K k )
+{
+    return EqualRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+}
+
+template<
+      typename _K
+    , typename _M = _K
+>
+EqualRange< _K, _M >
+equal_range( Range< _K > const & range )
+{
+    return EqualRange< _K, _M >( range );
+}
+
+//
+// IndexGet
+//
+template<
+    typename _K
+>
+struct IndexGet
+{
+    IndexGet( _K k )
+        : _k( k )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    {
+        {// do test
+            AV_ASSERT_EQUAL( av[ _k ], map[ _k ] );
+        }
+
+        {// validate
+            checkEqual( av, map );
+        }
+    }
+
+private:
+    _K _k;
+};
+
+template<
+    typename _K
+>
+IndexGet< _K >
+index_get( _K k )
+{
+    return IndexGet< _K >( k );
+}
+
+//
+// IndexPut
+//
+template<
+      typename _K
+    , typename _M
+>
+struct IndexPut
+{
+    IndexPut( _K k, _M m )
+        : _k( k )
+        , _m( m )
+    {
+    }
+
+    template<
+          typename __K
+        , typename __M
+    >
+    void run( AssocVector< __K, __M > & av, std::map< __K, __M > & map )const
+    {
+        {// do test
+            av[ _k ] = _m;
+            map[ _k ] = _m;
+        }
+
+        {// validate
+            checkEqual( av, map );
+        }
+    }
+
+private:
+    _K _k;
+    _M _m;
+};
+
+template<
+      typename _K
+    , typename _M = _K
+>
+IndexPut< _K, _M >
+index_put( _K k, _M m = _M() )
+{
+    return IndexPut< _K, _M >( k, m );
+}
+
+//
+// operator>>
+//
+template<
+      typename _K1
+    , typename _M1
+    , typename _TestItem
+>
+TestCase< _K1, _M1 > &
+operator>> ( TestCase< _K1, _M1 > & test, _TestItem const & item )
+{
+    item.run( test.av(), test.map() );
+
+    return test;
+}
+
+//
+// Unit tests
+//
 
 //
 // test_CmpByFirst
@@ -1244,193 +1985,17 @@ void test_merge_7()
 }
 
 //
-// test_push_back
-//
-void test_push_back()
-{
-    typedef AssocVector< std::string, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector av;
-
-    av.insert( AssocVector::value_type( "1", 1 ) );
-    av.insert( AssocVector::value_type( "2", 2 ) );
-    av.insert( AssocVector::value_type( "3", 3 ) );
-    av.insert( AssocVector::value_type( "4", 4 ) );
-    av.insert( AssocVector::value_type( "5", 5 ) );
-
-    AV_ASSERT_EQUAL( av[ "1" ], 1 );
-    AV_ASSERT_EQUAL( av[ "2" ], 2 );
-    AV_ASSERT_EQUAL( av[ "3" ], 3 );
-    AV_ASSERT_EQUAL( av[ "4" ], 4 );
-    AV_ASSERT_EQUAL( av[ "5" ], 5 );
-}
-
-//
-// test_insert_in_random_order
-//
-void test_insert_in_random_order()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector av;
-    std::pair< Iterator, bool > p;
-
-    p = av.insert( AssocVector::value_type( 10, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 10 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 9, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 9 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 8, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 8 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 16, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 16 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 17, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 17 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    {
-        p = av.insert( AssocVector::value_type( 17, 0 ) );
-        AV_ASSERT( p.first != av.end() );
-        AV_ASSERT_EQUAL( p.first->first, 17 );
-        AV_ASSERT_EQUAL( p.second, false );
-    }
-
-    p = av.insert( AssocVector::value_type( 18, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 18 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 7, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 7 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    {
-        p = av.insert( AssocVector::value_type( 7, 0 ) );
-        AV_ASSERT( p.first != av.end() );
-        AV_ASSERT_EQUAL( p.first->first, 7 );
-        AV_ASSERT_EQUAL( p.second, false );
-    }
-
-    p = av.insert( AssocVector::value_type( 6, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 6 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 5, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 5 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 4, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 4 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 11, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 11 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    {
-        p = av.insert( AssocVector::value_type( 11, 0 ) );
-        AV_ASSERT( p.first != av.end() );
-        AV_ASSERT_EQUAL( p.first->first, 11 );
-        AV_ASSERT_EQUAL( p.second, false );
-    }
-
-    p = av.insert( AssocVector::value_type( 12, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 12 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 13, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 13 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 3, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 3 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 2, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 2 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 1, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 1 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 0, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 0 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 14, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 14 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 15, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 15 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    p = av.insert( AssocVector::value_type( 19, 0 ) );
-    AV_ASSERT( p.first != av.end() );
-    AV_ASSERT_EQUAL( p.first->first, 19 );
-    AV_ASSERT_EQUAL( p.second, true );
-
-    AV_ASSERT_EQUAL( av.size(), 20 );
-
-    for( unsigned i = 0 ; i < av.size() ; ++ i ){
-        AV_ASSERT( av.find( i ) != av.end() );
-        AV_ASSERT_EQUAL( av.find( i )->first, i );
-    }
-}
-
-//
 // test_insert_in_increasing_order
 //
 void test_insert_in_increasing_order()
 {
-    std::size_t const counter = 10;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
+    TestCase< S3, S3 > test( av, map );
 
-    AssocVector av;
-    std::pair< Iterator, bool > p;
-
-    for( std::size_t i = 0 ; i < counter ; ++ i ){
-        p = av.insert( AssocVector::value_type( i, 0 ) );
-
-        AV_ASSERT( p.first != av.end() );
-        AV_ASSERT_EQUAL( p.first->first, i );
-        AV_ASSERT_EQUAL( p.second, true );
-    }
-
-    for( std::size_t i = 0 ; i < counter ; ++ i ){
-        AV_ASSERT( av.find( i ) != av.end() );
-        AV_ASSERT_EQUAL( av.find( i )->first, i );
-    }
+    test
+        >> insert( Range<>( 0, 32 ) );
 }
 
 //
@@ -1438,469 +2003,255 @@ void test_insert_in_increasing_order()
 //
 void test_insert_in_decreasing_order()
 {
-    std::size_t const counter = 10;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
+    TestCase< S3, S3 > test( av, map );
 
-    AssocVector av;
-    std::pair< Iterator, bool > p;
-
-    for( std::size_t i = counter ; i > 0 ; -- i ){
-        p = av.insert( AssocVector::value_type( i, 0 ) );
-
-        AV_ASSERT( p.first != av.end() );
-        AV_ASSERT_EQUAL( p.first->first, i );
-        AV_ASSERT_EQUAL( p.second, true );
-    }
-
-    for( std::size_t i = counter ; i > 0 ; -- i ){
-        AV_ASSERT( av.find( i ) != av.end() );
-        AV_ASSERT_EQUAL( av.find( i )->first, i );
-    }
+    test
+        >> insert( Range<>( 32, -1, -1 ) );
 }
 
 //
-// test_insert_check_iterator_1
+// test_insert_in_random_order
 //
-void test_insert_check_iterator_1()
+void test_insert_in_random_order()
 {
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator AVIterator;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    typedef std::map< int, int > Map;
-    typedef Map::iterator MapIterator;
+    TestCase< S3, S3 > test( av, map );
 
-    AssocVector av;
-    Map map;
-
-    for( int i = 1 ; i < 32 ; i += 2 )
-    {
-        av.insert( AssocVector::value_type( i, i ) );
-        map.insert( Map::value_type( i, i ) );
-    }
-
-    AV_ASSERT( isEqual( av, map ) );
-
-    {// insert at the beginnig
-        AVIterator const avInserted = av.insert( AssocVector::value_type( 0, 0 ) ).first;
-        MapIterator const mapInserted = map.insert( Map::value_type( 0, 0 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-    }
-
-    {// insert at the end
-        AVIterator const avInserted = av.insert( AssocVector::value_type( 33, 33 ) ).first;
-        MapIterator const mapInserted = map.insert( Map::value_type( 33, 33 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-    }
-
-    {// insert in middle
-        AVIterator const avInserted = av.insert( AssocVector::value_type( 1, 1 ) ).first;
-        MapIterator const mapInserted = map.insert( Map::value_type( 1, 1 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-    }
-
-    {//insert in middle
-        AVIterator const avInserted = av.insert( AssocVector::value_type( 11, 11 ) ).first;
-        MapIterator const mapInserted = map.insert( Map::value_type( 11, 11 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-    }
-
-    {//insert in middle
-        AVIterator const avInserted = av.insert( AssocVector::value_type( 21, 21 ) ).first;
-        MapIterator const mapInserted = map.insert( Map::value_type( 21, 21 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-    }
+    test
+        >> insert( 10 )
+        >> insert( 9 )
+        >> insert( 8 )
+        >> insert( 16 )
+        >> insert( 17 )
+        >> insert( 17 )
+        >> insert( 18 )
+        >> insert( 7 )
+        >> insert( 7 )
+        >> insert( 6 )
+        >> insert( 4 )
+        >> insert( 3 )
+        >> insert( 11 )
+        >> insert( 12 )
+        >> insert( 13 )
+        >> insert( 2 )
+        >> insert( 1 )
+        >> insert( 0 )
+        >> insert( 14 )
+        >> insert( 15 )
+        >> insert( 19 )
+        >> insert( 5 );
 }
 
 //
-// test_insert_check_iterator_2
+// test_erase_in_increasing_order
 //
-void test_insert_check_iterator_2()
+void test_erase_in_increasing_order()
 {
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator AVIterator;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    typedef std::map< int, int > Map;
-    typedef Map::iterator MapIterator;
+    TestCase< S3, S3 > test( av, map );
 
-    AssocVector av;
-    Map map;
-
-    {// fill storage (push_back) (1,3,5,...,31)
-        for( int i = 1 ; i < 32 ; i += 2 )
-        {
-            av.insert( AssocVector::value_type( i, i ) );
-            map.insert( Map::value_type( i, i ) );
-        }
-    }
-
-    {// fill buffer (0,2,4)
-        for( int i = 0 ; i < 5 ; i += 2 )
-        {
-            av.insert( AssocVector::value_type( i, i ) );
-            map.insert( Map::value_type( i, i ) );
-        }
-    }
-
-    {// overflow buffer and enforce merge
-        AVIterator avInserted = av.insert( AssocVector::value_type( 6, 6 ) ).first;
-        MapIterator mapInserted = map.insert( Map::value_type( 6, 6 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-
-        avInserted = av.insert( AssocVector::value_type( 8, 8 ) ).first;
-        mapInserted = map.insert( Map::value_type( 8, 8 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-
-        avInserted = av.insert( AssocVector::value_type( 10, 10 ) ).first;
-        mapInserted = map.insert( Map::value_type( 10, 10 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-
-        avInserted = av.insert( AssocVector::value_type( 12, 12 ) ).first;
-        mapInserted = map.insert( Map::value_type( 12, 12 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-    }
-
-    {// erase item and put it back again
-        av.erase( 12 );
-        map.erase( 12 );
-
-        AVIterator const avInserted = av.insert( AssocVector::value_type( 12, 12 ) ).first;
-        MapIterator const mapInserted = map.insert( Map::value_type( 12, 12 ) ).first;
-
-        AV_ASSERT_EQUAL(
-             std::distance( av.begin(), avInserted )
-           , std::distance( map.begin(), mapInserted )
-        );
-
-        AV_ASSERT_EQUAL(
-             std::distance( avInserted, av.end() )
-           , std::distance( mapInserted,map.end() )
-        );
-
-        AV_ASSERT( std::equal( av.begin(), avInserted, map.begin() ) );
-        AV_ASSERT( std::equal( avInserted, av.end(), mapInserted ) );
-    }
-
+    test
+        >> insert( Range<>( 0, 32 ) )
+        >> erase( Range<>( 0, 32 ) );
 }
 
 //
-// test_insert_erase_insert_1
+// test_erase_in_decreasing_order
 //
-void test_insert_erase_insert_1()
+void test_erase_in_decreasing_order()
 {
-    typedef AssocVector< int, int > AssocVector;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    AssocVector av;
+    TestCase< S3, S3 > test( av, map );
 
-    av[ 1 ] = 1;
-    av[ 2 ] = 2;
-    av[ 3 ] = 3;
-    av[ 4 ] = 4;
-    av[ 5 ] = 5;
-
-    AV_ASSERT_EQUAL( av.erase( 3 ), 1 );
-
-    AV_ASSERT_EQUAL( av.insert( AssocVector::value_type( 3, 33 ) ).second, true );
-
-    AV_ASSERT_EQUAL( av.size(), 5 );
-
-    AV_ASSERT_EQUAL( av[ 1 ], 1 );
-    AV_ASSERT_EQUAL( av[ 2 ], 2 );
-    AV_ASSERT_EQUAL( av[ 3 ], 33 );
-    AV_ASSERT_EQUAL( av[ 4 ], 4 );
-    AV_ASSERT_EQUAL( av[ 5 ], 5 );
+    test
+        >> insert( Range<>( 32, -1, -1 ) )
+        >> erase( Range<>( 32, -1, -1 ) );
 }
 
 //
-// test_insert_erase_insert_2
+// test_erase_in_random_order
 //
-void test_insert_erase_insert_2()
+void test_erase_in_random_order()
 {
-    typedef AssocVector< int, int > AssocVector;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    AssocVector av;
+    TestCase< S3, S3 > test( av, map );
 
-    av[ 1 ] = 1;
-    av[ 2 ] = 2;
-    av[ 3 ] = 3;
-    av[ 4 ] = 4;
-    av[ 5 ] = 5;
-
-    AV_ASSERT_EQUAL( av.erase( 5 ), 1 );
-
-    AV_ASSERT_EQUAL( av.insert( AssocVector::value_type( 5, 55 ) ).second, true );
-
-    AV_ASSERT_EQUAL( av.size(), 5 );
-
-    AV_ASSERT_EQUAL( av[ 1 ], 1 );
-    AV_ASSERT_EQUAL( av[ 2 ], 2 );
-    AV_ASSERT_EQUAL( av[ 3 ], 3 );
-    AV_ASSERT_EQUAL( av[ 4 ], 4 );
-    AV_ASSERT_EQUAL( av[ 5 ], 55 );
+    test
+        >> insert( Range<>( 0, 21 ) )
+        >> erase( 10 )
+        >> erase( 9 )
+        >> erase( 8 )
+        >> erase( 16 )
+        >> erase( 17 )
+        >> erase( 17 )
+        >> erase( 18 )
+        >> erase( 7 )
+        >> erase( 7 )
+        >> erase( 6 )
+        >> erase( 4 )
+        >> erase( 3 )
+        >> erase( 11 )
+        >> erase( 12 )
+        >> erase( 13 )
+        >> erase( 2 )
+        >> erase( 1 )
+        >> erase( 0 )
+        >> erase( 14 )
+        >> erase( 15 )
+        >> erase( 19 )
+        >> erase( 5 );
 }
 
 //
-// test_insert_erase_insert_3
+// test_insert_insert
 //
-void test_insert_erase_insert_3()
+void test_insert_insert()
 {
-    typedef AssocVector< int, int > AssocVector;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    AssocVector av;
+    TestCase< S3, S3 > test( av, map );
 
-    av[ 1 ] = 1;
-    av[ 2 ] = 2;
-    av[ 3 ] = 3;
-    av[ 4 ] = 4;
-    av[ 5 ] = 5;
+    test
+        >> insert( 1, 11 )
+        >> insert( 2, 22 )
+        >> insert( 3, 33 )
+        >> insert( 4, 44 )
 
-    AV_ASSERT_EQUAL( av.erase( 3 ), 1 );
-
-    av[ 3 ] = 33;
-
-    AV_ASSERT_EQUAL( av.size(), 5 );
-
-    AV_ASSERT_EQUAL( av[ 1 ], 1 );
-    AV_ASSERT_EQUAL( av[ 2 ], 2 );
-    AV_ASSERT_EQUAL( av[ 3 ], 33 );
-    AV_ASSERT_EQUAL( av[ 4 ], 4 );
-    AV_ASSERT_EQUAL( av[ 5 ], 5 );
+        >> insert( 1, 111 )
+        >> insert( 2, 222 )
+        >> insert( 3, 333 )
+        >> insert( 4, 444 );
 }
 
 //
-// test_insert_erase_insert_4
+// test_insert_erase_erase
 //
-void test_insert_erase_insert_4()
+void test_insert_erase_erase()
 {
-    typedef AssocVector< int, int > AssocVector;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    AssocVector av;
+    TestCase< S3, S3 > test( av, map );
 
-    av[ 1 ] = 1;
-    av[ 2 ] = 2;
-    av[ 3 ] = 3;
-    av[ 4 ] = 4;
-    av[ 5 ] = 5;
+    test
+        >> insert( Range<>( 0, 50 ) )
 
-    AV_ASSERT_EQUAL( av.erase( 5 ), 1 );
+        >> erase( Range<>( 40, 45 ) )
+        >> erase( Range<>( 35, 50 ) )
 
-    av[ 5 ] = 55;
+        >> erase( Range<>( 5, 15 ) )
+        >> erase( Range<>( 0, 20 ) )
 
-    AV_ASSERT_EQUAL( av.size(), 5 );
+        >> erase( Range<>( 25, 30 ) )
 
-    AV_ASSERT_EQUAL( av[ 1 ], 1 );
-    AV_ASSERT_EQUAL( av[ 2 ], 2 );
-    AV_ASSERT_EQUAL( av[ 3 ], 3 );
-    AV_ASSERT_EQUAL( av[ 4 ], 4 );
-    AV_ASSERT_EQUAL( av[ 5 ], 55 );
+        >> erase( Range<>( 0, 50 ) );
 }
 
 //
-// test_find_1
+// test_insert_erase_insert
 //
-void test_find_1()
+void test_insert_erase_insert()
 {
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    AssocVector av;
+    TestCase< S3, S3 > test( av, map );
 
-    AV_ASSERT( av.find( 2 ) == av.end() );
+    test
+        >> insert( Range<>( 0, 50, 2 ) )
+        >> insert( Range<>( 1, 51, 2 ) )
 
-    av.insert( AssocVector::value_type( 2, 3 ) );
+        >> erase( Range<>( 30, 40, 2 ) )
+        >> erase( Range<>( 31, 41, 2 ) )
 
-    AV_ASSERT( av.find( 2 ) != av.end() );
-    AV_ASSERT_EQUAL( av.find( 2 )->second, 3 );
+        >> insert( Range<>( 30, 40, 2 ) )
+        >> insert( Range<>( 31, 41, 2 ) )
+
+        >> erase( Range<>( 10, 20, 2 ) )
+        >> erase( Range<>( 11, 21, 2 ) )
+
+        >> insert( Range<>( 10, 20, 2 ) )
+        >> insert( Range<>( 11, 21, 2 ) );
 }
 
 //
-// test_find_2
+// test_find
 //
-void test_find_2()
+void test_find()
 {
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    AssocVector av;
+    TestCase< S3, S3 > test( av, map );
 
-    for( int i = 32 ; i < 32 + 64 ; ++ i ){
-        av.insert( AssocVector::value_type( i, i * i ) );
-    }
-
-    for( int i = 0 ; i < 32 ; ++ i ){
-        AV_ASSERT( av.find( i ) == av.end() );
-    }
-
-    for( int i = 32 ; i < 32 + 64 ; ++ i ){
-        AV_ASSERT( av.find( i ) != av.end() );
-        AV_ASSERT_EQUAL( av.find( i )->second, i * i );
-    }
-
-    for( int i = 32 + 64 ; i < 32 + 64 + 32; ++ i ){
-        AV_ASSERT( av.find( i ) == av.end() );
-    }
+    test
+        >> insert( Range<>( 0, 32, 2 ) )
+        >> find( Range<>( 0, 32, 2 ) )
+        >> find( Range<>( 1, 33, 2 ) );
 }
 
 //
-// test_find_check_iterator
+// test_find_erase_find
 //
-void test_find_check_iterator()
+void test_find_erase_find()
 {
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator AVIterator;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    typedef std::map< int, int > Map;
-    typedef Map::iterator MapIterator;
+    TestCase< S3, S3 > test( av, map );
 
-    AssocVector av;
-    Map map;
+    test
+        >> insert( Range<>( 0, 32, 2 ) )
 
-    for( int i = 32 ; i > 0 ; -- i ){
-        av.insert( AssocVector::value_type( i, i ) );
-        map.insert( Map::value_type( i, i ) );
-    }
+        >> erase( 31 )
+        >> find( 31 )
 
-    {
-        AVIterator const avIterator = av.find( 1 );
-        MapIterator const mapIterator = map.find( 1 );
+        >> erase( 1 )
+        >> find( 1 )
 
-        AV_ASSERT_EQUAL( std::distance( av.begin(), avIterator ), std::distance( map.begin(), mapIterator ) );
-        AV_ASSERT_EQUAL( std::distance( avIterator, av.end() ), std::distance( mapIterator, map.end() ) );
+        >> erase( Range<>( 15, 25 ) )
+        >> find( Range<>( 15, 25 ) );
+}
 
-        AV_ASSERT( std::equal( av.begin(), avIterator, map.begin() ) );
-        AV_ASSERT( std::equal( avIterator, av.end(), mapIterator ) );
-    }
+//
+// test_find_erase_find_insert_find
+//
+void test_find_erase_find_insert_find()
+{
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    {
-        AVIterator const avIterator = av.find( 16 );
-        MapIterator const mapIterator = map.find( 16 );
+    TestCase< S3, S3 > test( av, map );
 
-        AV_ASSERT_EQUAL( std::distance( av.begin(), avIterator ), std::distance( map.begin(), mapIterator ) );
-        AV_ASSERT_EQUAL( std::distance( avIterator, av.end() ), std::distance( mapIterator, map.end() ) );
+    test
+        >> insert( Range<>( 0, 30, 2 ) )
 
-        AV_ASSERT( std::equal( av.begin(), avIterator, map.begin() ) );
-        AV_ASSERT( std::equal( avIterator, av.end(), mapIterator ) );
-    }
+        >> find( Range<>( 0, 10 ) )
+        >> erase( Range<>( 0, 10 ) )
+        >> insert( Range<>( 0, 10 ) )
+        >> find( Range<>( 0, 10 ) )
 
-    {
-        AVIterator const avIterator = av.find( 32 );
-        MapIterator const mapIterator = map.find( 32 );
+        >> find( Range<>( 10, 20 ) )
+        >> erase( Range<>( 10, 20 ) )
+        >> insert( Range<>( 10, 20 ) )
+        >> find( Range<>( 10, 20 ) )
 
-        AV_ASSERT_EQUAL( std::distance( av.begin(), avIterator ), std::distance( map.begin(), mapIterator ) );
-        AV_ASSERT_EQUAL( std::distance( avIterator, av.end() ), std::distance( mapIterator, map.end() ) );
-
-        AV_ASSERT( std::equal( av.begin(), avIterator, map.begin() ) );
-        AV_ASSERT( std::equal( avIterator, av.end(), mapIterator ) );
-    }
+        >> find( Range<>( 20, 30 ) )
+        >> erase( Range<>( 20, 30 ) )
+        >> insert( Range<>( 20, 30 ) )
+        >> find( Range<>( 20, 30 ) );
 }
 
 //
@@ -1908,267 +2259,112 @@ void test_find_check_iterator()
 //
 void test_count()
 {
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    av.insert( AssocVector::value_type( 1, 1 ) );
-    av.insert( AssocVector::value_type( 3, 2 ) );
+    TestCase< S3, S3 > test( av, map );
 
-    AV_ASSERT_EQUAL( av.count( 1 ), 1 );
-    AV_ASSERT_EQUAL( av.count( 2 ), 0 );
-    AV_ASSERT_EQUAL( av.count( 3 ), 1 );
-    AV_ASSERT_EQUAL( av.count( 4 ), 0 );
+    test
+        >> insert( Range<>( 0, 30, 2 ) )
+
+        >> count( Range<>( 0, 10 ) )
+        >> erase( Range<>( 0, 10 ) )
+        >> insert( Range<>( 0, 10 ) )
+        >> count( Range<>( 0, 10 ) )
+
+        >> count( Range<>( 10, 20 ) )
+        >> erase( Range<>( 10, 20 ) )
+        >> insert( Range<>( 10, 20 ) )
+        >> count( Range<>( 10, 20 ) )
+
+        >> count( Range<>( 20, 30 ) )
+        >> erase( Range<>( 20, 30 ) )
+        >> insert( Range<>( 20, 30 ) )
+        >> count( Range<>( 20, 30 ) );
 }
 
 //
-// test_erase_1
+// test_lower_bound
 //
-void test_erase_1()
+void test_lower_bound()
 {
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    std::size_t const counter = 128;
+    TestCase< S3, S3 > test( av, map );
 
-    for( std::size_t i = 0 ; i < counter ; ++ i ){
-        av.insert( AssocVector::value_type( i, i ) );
-    }
+    test
+        >> insert( Range<>( 30, 10, -1 ) )
+        >> erase( 11 )
+        >> erase( 20 )
+        >> erase( 28 )
 
-    AV_ASSERT_EQUAL( av.size(), counter );
-
-    for( std::size_t i = 0 ; i < counter ; i += 2 ){
-        AV_ASSERT_EQUAL( av.erase( i ), 1 );
-    }
-
-    AV_ASSERT_EQUAL( av.size(), counter / 2 );
-
-    for( std::size_t i = 0 ; i < counter ; i += 2 ){
-        AV_ASSERT( av.find( i ) == av.end() );
-    }
-
-    for( std::size_t i = 1 ; i < counter ; i += 2 ){
-        AV_ASSERT_EQUAL( av.erase( i ), 1 );
-    }
-
-    AV_ASSERT( av.empty() );
+        >> lower_bound( Range<>( 0, 40, 2 ) )
+        >> lower_bound( Range<>( 1, 41, 2 ) );
 }
 
 //
-// test_erase_2
+// test_upper_bound
 //
-void test_erase_2()
+void test_upper_bound()
 {
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    int const counter = 10;
+    TestCase< S3, S3 > test( av, map );
 
-    for( int i = 0 ; i < counter ; ++ i ){
-        av.insert( AssocVector::value_type( i, i ) );
-    }
+    test
+        >> insert( Range<>( 30, 10, -1 ) )
+        >> erase( 11 )
+        >> erase( 20 )
+        >> erase( 28 )
 
-    for( int i = 0 ; i < counter ; ++ i ){
-        AV_ASSERT( av.find( i ) != av.end() );
-        av.erase( av.find( i ) );
-        AV_ASSERT_EQUAL( av.size(), counter - i - 1 );
-    }
-
-    AV_ASSERT( av.empty() );
+        >> upper_bound( Range<>( 0, 40, 2 ) )
+        >> upper_bound( Range<>( 1, 41, 2 ) );
 }
 
 //
-// test_erase_3
+// test_equal_range
 //
-void test_erase_3()
+void test_equal_range()
 {
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    av.insert( AssocVector::value_type( 1, 1 ) );
+    TestCase< S3, S3 > test( av, map );
 
-    AV_ASSERT_EQUAL( av.erase( 1 ), 1 );
-    AV_ASSERT_EQUAL( av.erase( 1 ), 0 );
+    test
+        >> insert( Range<>( 30, 10, -1 ) )
+        >> erase( 11 )
+        >> erase( 20 )
+        >> erase( 28 )
 
-    av.insert( AssocVector::value_type( 1, 1 ) );
-
-    AV_ASSERT_EQUAL( av.erase( 1 ), 1 );
-    AV_ASSERT_EQUAL( av.erase( 1 ), 0 );
- }
-
-//
-// test_erase_from_back_already_erased
-//
-void test_erase_from_back_already_erased()
-{
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
-
-    av.insert( AssocVector::value_type( 4, 4 ) );
-    av.insert( AssocVector::value_type( 5, 5 ) );
-    av.insert( AssocVector::value_type( 6, 6 ) );
-
-    av.insert( AssocVector::value_type( 2, 2 ) );
-    av.insert( AssocVector::value_type( 1, 1 ) );
-
-    AV_ASSERT_EQUAL( av.erase( 5 ), 1 );
-    AV_ASSERT_EQUAL( av.erase( 6 ), 1 );
-    AV_ASSERT_EQUAL( av.erase( 5 ), 0 );
- }
-
-//
-// test_erase_iterator_1
-//
-void test_erase_iterator_1()
-{
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
-
-    av[ 2 ] = 2;
-    av[ 4 ] = 4;
-    av[ 1 ] = 1;
-    av[ 6 ] = 6;
-    av[ 3 ] = 3;
-    av[ 8 ] = 8;
-
-    AssocVector::iterator pos;
-
-    pos = av.erase( av.begin() );
-    AV_ASSERT( pos == av.begin() );
-
-    pos = av.erase( av.begin() );
-    AV_ASSERT( pos == av.begin() );
-
-    pos = av.erase( av.begin() );
-    AV_ASSERT( pos == av.begin() );
-
-    pos = av.erase( av.begin() );
-    AV_ASSERT( pos == av.begin() );
-
-    pos = av.erase( av.begin() );
-    AV_ASSERT( pos == av.begin() );
-
-    pos = av.erase( av.begin() );
-    AV_ASSERT( pos == av.begin() );
-
-    AV_ASSERT( av.begin() == av.end() );
-    AV_ASSERT( av.empty() );
-}
-
-//
-// test_erase_iterator_2
-//
-void test_erase_iterator_2()
-{
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
-
-    av[ 2 ] = 2;
-    av[ 4 ] = 4;
-    av[ 1 ] = 1;
-    av[ 6 ] = 6;
-    av[ 3 ] = 3;
-    av[ 8 ] = 8;
-
-    AssocVector::iterator pos;
-
-    pos = av.end();
-    -- pos;
-    pos = av.erase( pos );
-    AV_ASSERT( pos == av.end() );
-
-    pos = av.end();
-    -- pos;
-    pos = av.erase( pos );
-    AV_ASSERT( pos == av.end() );
-
-    pos = av.end();
-    -- pos;
-    pos = av.erase( pos );
-    AV_ASSERT( pos == av.end() );
-
-    pos = av.end();
-    -- pos;
-    pos = av.erase( pos );
-    AV_ASSERT( pos == av.end() );
-
-    pos = av.end();
-    -- pos;
-    pos = av.erase( pos );
-    AV_ASSERT( pos == av.end() );
-
-    pos = av.end();
-    -- pos;
-    pos = av.erase( pos );
-    AV_ASSERT( pos == av.end() );
-
-    AV_ASSERT( av.begin() == av.end() );
-    AV_ASSERT( av.empty() );
-}
-
-//
-// test_erase_iterator_3
-//
-void test_erase_iterator_3()
-{
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
-
-    //s: 1357
-    //b: 46
-    av[ 1 ] = 1;
-    av[ 3 ] = 3;
-    av[ 5 ] = 5;
-    av[ 7 ] = 7;
-    av[ 4 ] = 4;
-    av[ 6 ] = 6;
-
-    AssocVector::iterator pos;
-
-    pos = av.erase( av.find( 7 ) );
+        >> equal_range( Range<>( 0, 40, 2 ) )
+        >> equal_range( Range<>( 1, 41, 2 ) );
 }
 
 //
 // test_operator_index
 //
-void test_operator_index_1()
+void test_operator_index()
 {
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
+    AssocVector< S3, S3 > av;
+    std::map< S3, S3 > map;
 
-    AV_ASSERT( av.empty() );
+    TestCase< S3, S3 > test( av, map );
 
-    av[ 1 ] = 1;
-    AV_ASSERT_EQUAL( av.size(), 1 );
-    AV_ASSERT( av.find( 1 ) != av.end() );
-    AV_ASSERT_EQUAL( av.find( 1 )->second, 1 );
+    test
+        >> index_put( 1, 1 )
+        >> index_put( 1, 11 )
+        >> index_put( 1, 111 )
 
-    av[ 1 ] = 11;
-    AV_ASSERT_EQUAL( av[ 1 ], 11 );
+        >> index_get( 2 )
 
-    av[ 3 ] = 33;
-    AV_ASSERT_EQUAL( av[ 3 ], 33 );
+        >> insert( 3, 33 )
+        >> index_get( 3 )
 
-    av[ 2 ] = 22;
-    AV_ASSERT_EQUAL( av[ 2 ], 22 );
-}
-
-//
-// test_operator_index_2
-//
-void test_operator_index_2()
-{
-    int const counter = 20000;
-
-    std::vector< int > randomValues( counter, 0 );
-    std::generate( randomValues.begin(), randomValues.end(), & rand );
-
-    typedef AssocVector< int, int > AssocVector;
-    AssocVector av;
-
-    for( int i = 0 ; i < counter ; ++ i ){
-        av[ randomValues[ i ] ] = i;
-        AV_ASSERT_EQUAL( av[ randomValues[ i ] ], i );
-    }
+        >> erase( 3 )
+        >> index_get( 3 );
 }
 
 //
@@ -2200,33 +2396,33 @@ void test_constructor()
     v.push_back( std::make_pair( "5", 5 ) );
 
     typedef AssocVector< std::string, int > AssocVector;
-    
+
     AssocVector av( v.begin(), v.end() );
-    
+
     AV_ASSERT_EQUAL( av.size(), 5 );
-    
+
     AssocVector::const_iterator found;
-    
+
     found = av.find( "1" );
     AV_ASSERT( found != av.end() );
     AV_ASSERT_EQUAL( found->first, "1" );
     AV_ASSERT_EQUAL( found->second, 1 );
-    
+
     found = av.find( "2" );
     AV_ASSERT( found != av.end() );
     AV_ASSERT_EQUAL( found->first, "2" );
     AV_ASSERT_EQUAL( found->second, 2 );
-    
+
     found = av.find( "3" );
     AV_ASSERT( found != av.end() );
     AV_ASSERT_EQUAL( found->first, "3" );
     AV_ASSERT_EQUAL( found->second, 3 );
-    
+
     found = av.find( "4" );
     AV_ASSERT( found != av.end() );
     AV_ASSERT_EQUAL( found->first, "4" );
     AV_ASSERT_EQUAL( found->second, 4 );
-    
+
     found = av.find( "5" );
     AV_ASSERT( found != av.end() );
     AV_ASSERT_EQUAL( found->first, "5" );
@@ -2316,76 +2512,6 @@ void test_iterator_to_const_iterator_conversion()
 }
 
 //
-// test_iterators_equal
-//
-void test_iterators_equal()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector assocVector1024;
-    assocVector1024.reserve( 1024 );
-
-    AssocVector assocVector8;
-    assocVector8.reserve( 8 );
-
-    std::vector< int > randomValues( 1024, 0 );
-    std::generate( randomValues.begin(), randomValues.end(), & rand );
-
-    for( std::size_t i = 0 ; i < randomValues.size() ; ++ i )
-    {
-        assocVector8.insert( AssocVector::value_type( randomValues[i], i ) );
-        assocVector1024.insert( AssocVector::value_type( randomValues[i], i ) );
-    }
-
-    AV_ASSERT(
-        (
-            std::equal(
-                  assocVector8.begin()
-                , assocVector8.end()
-                , assocVector1024.begin()
-                , std::equal_to< std::pair< int, int > >()
-            )
-        )
-    );
-}
-
-//
-// test_reverse_iterators_equal
-//
-void test_reverse_iterators_equal()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector assocVector1024;
-    assocVector1024.reserve( 1024 );
-
-    AssocVector assocVector8;
-    assocVector8.reserve( 8 );
-
-    std::vector< int > randomValues( 1024, 0 );
-    std::generate( randomValues.begin(), randomValues.end(), & rand );
-
-    for( std::size_t i = 0 ; i < randomValues.size() ; ++ i )
-    {
-        assocVector8.insert( AssocVector::value_type( randomValues[ i ], i ) );
-        assocVector1024.insert( AssocVector::value_type( randomValues[ i ], i ) );
-    }
-
-    AV_ASSERT(
-        (
-            std::equal(
-                  assocVector8.rbegin()
-                , assocVector8.rend()
-                , assocVector1024.rbegin()
-                , std::equal_to< std::pair< int, int > >()
-            )
-        )
-    );
-}
-
-//
 // test_iterators_distance
 //
 void test_iterators_distance()
@@ -2462,6 +2588,33 @@ void test_reverse_iterators_begin_equal_end_in_empty_storage()
 }
 
 //
+// test_iterators_iterate_not_empty_storage_empty_cache
+//
+void test_iterators_iterate_not_empty_storage_empty_cache()
+{
+    typedef AssocVector< int, int > AssocVector;
+    typedef AssocVector::iterator Iterator;
+
+    AssocVector av;
+    av.reserve( 32 );
+
+    for( std::size_t i = 0 ; i < 1024 ; ++ i ){
+        av.insert( AssocVector::value_type(  i, 0 ) );
+    }
+
+    AV_ASSERT_EQUAL( av.size(), 1024 );
+    AV_ASSERT_EQUAL( av.bufferSize(), 0 );
+    AV_ASSERT_EQUAL( av.storageSize(), 1024 );
+
+    Iterator current = av.begin();
+    Iterator const end = av.end();
+
+    for( int i = 0 ; current != end ; ++ current, ++i ){
+        AV_ASSERT_EQUAL( current->first, i );
+    }
+}
+
+//
 // test_iterators_increment_decrement_1
 //
 void test_iterators_increment_decrement_1()
@@ -2534,558 +2687,10 @@ void test_iterators_increment_decrement_2()
 }
 
 //
-// test_iterator_1
-//
-void test_iterator_1()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector av;
-
-    for( int i = 0 ; i < 7 ; ++ i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
-    }
-
-    Iterator current = av.begin();
-
-    AV_ASSERT_EQUAL( current->first, 0 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 1 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 2 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 3 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 4 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 5 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 6 );
-    ++current;
-    AV_ASSERT( current == av.end() );
-}
-
-//
-// test_iterator_erased_1
-//
-void test_iterator_erased_1()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector av;
-
-    for( int i = 0 ; i < 7 ; ++ i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
-    }
-
-    {
-        av.erase( 0 );
-
-        Iterator current = av.begin();
-
-        AV_ASSERT_EQUAL( current->first, 1 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 2 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 3 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 4 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 5 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 6 );
-        ++current;
-        AV_ASSERT( current == av.end() );
-    }
-
-    {
-        av.erase( 1 );
-
-        Iterator current = av.begin();
-
-        AV_ASSERT_EQUAL( current->first, 2 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 3 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 4 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 5 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 6 );
-        ++current;
-        AV_ASSERT( current == av.end() );
-    }
-
-    {
-        av.erase( 3 );
-
-        Iterator current = av.begin();
-
-        AV_ASSERT_EQUAL( current->first, 2 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 4 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 5 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 6 );
-        ++current;
-        AV_ASSERT( current == av.end() );
-    }
-
-    {
-        av.erase( 2 );
-
-        Iterator current = av.begin();
-
-        AV_ASSERT_EQUAL( current->first, 4 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 5 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 6 );
-        ++current;
-        AV_ASSERT( current == av.end() );
-    }
-
-    {
-        av.erase( 5 );
-
-        Iterator current = av.begin();
-
-        AV_ASSERT_EQUAL( current->first, 4 );
-        ++current;
-        AV_ASSERT_EQUAL( current->first, 6 );
-        ++current;
-        AV_ASSERT( current == av.end() );
-    }
-
-    {
-        av.erase( 6 );
-
-        Iterator current = av.begin();
-
-        AV_ASSERT_EQUAL( current->first, 4 );
-        ++current;
-        AV_ASSERT( current == av.end() );
-    }
-
-    {
-        av.erase( 4 );
-
-        AV_ASSERT( av.begin() == av.end() );
-    }
-}
-
-//
-// test_iterator_erased_2
-//
-void test_iterator_erased_2()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector av;
-
-    for( int i = 0 ; i < 7 ; ++ i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
-    }
-
-    {
-        av.erase( 0 );
-
-        Iterator current = av.end();
-
-        --current;
-        AV_ASSERT_EQUAL( current->first, 6 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 5 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 4 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 3 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 2 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 1 );
-        AV_ASSERT( current == av.begin() );
-    }
-
-    {
-        av.erase( 1 );
-
-        Iterator current = av.end();
-
-        --current;
-        AV_ASSERT_EQUAL( current->first, 6 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 5 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 4 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 3 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 2 );
-        AV_ASSERT( current == av.begin() );
-    }
-
-    {
-        av.erase( 6 );
-
-        Iterator current = av.end();
-
-        --current;
-        AV_ASSERT_EQUAL( current->first, 5 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 4 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 3 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 2 );
-        AV_ASSERT( current == av.begin() );
-    }
-
-    {
-        av.erase( 5 );
-
-        Iterator current = av.end();
-
-        --current;
-        AV_ASSERT_EQUAL( current->first, 4 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 3 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 2 );
-        AV_ASSERT( current == av.begin() );
-    }
-
-    {
-        av.erase( 2 );
-
-        Iterator current = av.end();
-
-        --current;
-        AV_ASSERT_EQUAL( current->first, 4 );
-        --current;
-        AV_ASSERT_EQUAL( current->first, 3 );
-        AV_ASSERT( current == av.begin() );
-    }
-
-    {
-        av.erase( 4 );
-
-        Iterator current = av.end();
-
-        --current;
-        AV_ASSERT_EQUAL( current->first, 3 );
-        AV_ASSERT( current == av.begin() );
-    }
-
-    {
-        av.erase( 3 );
-        AV_ASSERT( av.begin() == av.end() );
-    }
-}
-
-//
-// test_iterator_begin
-//
-void test_iterator_begin()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector av;
-
-    for( int i = 2; i < 5 ; ++ i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
-    }
-
-    for( int i = 0 ; i < 2 ; ++ i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
-    }
-
-
-    AV_ASSERT_EQUAL( av.begin()->first, 0 );
-
-    av.erase( 0 );
-    AV_ASSERT_EQUAL( av.begin()->first, 1 );
-
-    av.erase( 1 );
-    AV_ASSERT_EQUAL( av.begin()->first, 2 );
-
-    av.erase( 2 );
-    AV_ASSERT_EQUAL( av.begin()->first, 3 );
-
-    av.erase( 3 );
-    AV_ASSERT_EQUAL( av.begin()->first, 4 );
-
-    av.erase( 4 );
-    AV_ASSERT( av.begin() == av.end() );
-}
-
-//
-// test_reverse_iterator_1
-//
-void test_reverse_iterator_1()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::reverse_iterator RIterator;
-
-    AssocVector av;
-
-    for( int i = 0 ; i < 7 ; ++ i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
-    }
-
-    RIterator current = av.rbegin();
-
-    AV_ASSERT_EQUAL( current->first, 6 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 5 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 4 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 3 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 2 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 1 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 0 );
-    ++ current;
-    AV_ASSERT( current == av.rend() );
-}
-
-//
-// test_reverse_iterator_2
-//
-void test_reverse_iterator_2()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::reverse_iterator RIterator;
-
-    AssocVector av;
-
-    for( int i = 0 ; i < 7 ; ++ i ){
-        av.insert( AssocVector::value_type( i, 0 ) );
-    }
-
-    AV_ASSERT_EQUAL( av.erase( 1 ), 1 );
-    AV_ASSERT_EQUAL( av.erase( 3 ), 1 );
-
-    RIterator current = av.rbegin();
-
-    AV_ASSERT_EQUAL( current->first, 6 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 5 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 4 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 2 );
-    ++current;
-    AV_ASSERT_EQUAL( current->first, 0 );
-    ++ current;
-    AV_ASSERT( current == av.rend() );
-}
-
-//
-// test_iterators_iterate_not_empty_storage_empty_cache
-//
-void test_iterators_iterate_not_empty_storage_empty_cache()
-{
-    typedef AssocVector< int, int > AssocVector;
-    typedef AssocVector::iterator Iterator;
-
-    AssocVector av;
-    av.reserve( 32 );
-
-    for( std::size_t i = 0 ; i < 1024 ; ++ i ){
-        av.insert( AssocVector::value_type(  i, 0 ) );
-    }
-
-    AV_ASSERT_EQUAL( av.size(), 1024 );
-    AV_ASSERT_EQUAL( av.bufferSize(), 0 );
-    AV_ASSERT_EQUAL( av.storageSize(), 1024 );
-
-    Iterator current = av.begin();
-    Iterator const end = av.end();
-
-    for( int i = 0 ; current != end ; ++ current, ++i ){
-        AV_ASSERT_EQUAL( current->first, i );
-    }
-}
-
-//
-// test_erase_iterator
-//
-void test_erase_iterator()
-{
-    typedef AssocVector< int, int > AVII;
-
-    AVII av;
-
-    av[ 1 ] = 11;
-    av[ 2 ] = 22;
-    av[ 3 ] = 33;
-    av[ 4 ] = 44;
-
-    av.merge();
-
-    {
-        AV_ASSERT_EQUAL( av.erase( 5 ), 0 );
-
-        AVII::iterator current = av.begin();
-
-        AV_ASSERT( ( * current ).first == 1 && ( * current ).second == 11 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 4 && ( * current ).second == 44 );
-
-        ++ current;
-        AV_ASSERT( current == av.end() );
-    }
-    {
-        AV_ASSERT_EQUAL( av.erase( 4 ), 1 );
-
-        AVII::iterator current = av.begin();
-
-        AV_ASSERT( ( * current ).first == 1 && ( * current ).second == 11 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
-
-        ++ current;
-        AV_ASSERT( current == av.end() );
-    }
-    {
-        AV_ASSERT_EQUAL( av.erase( 1 ), 1 );
-
-        AVII::iterator current = av.begin();
-
-        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
-
-        ++ current;
-        AV_ASSERT( current == av.end() );
-    }
-    {
-        AV_ASSERT_EQUAL( av.erase( 2 ), 1 );
-
-        AVII::iterator current = av.begin();
-
-        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
-
-        ++ current;
-        AV_ASSERT( current == av.end() );
-    }
-    {
-        AV_ASSERT_EQUAL( av.erase( 3 ), 1 );
-
-        AVII::iterator current = av.begin();
-
-        AV_ASSERT( current == av.end() );
-    }
-}
-
-//
-// test_erase_reverse_iterator
-//
-void test_erase_reverse_iterator()
-{
-    typedef AssocVector< int, int > AVII;
-
-    AVII av;
-
-    av[ 1 ] = 11;
-    av[ 2 ] = 22;
-    av[ 3 ] = 33;
-    av[ 4 ] = 44;
-
-    av.merge();
-
-    {
-        AV_ASSERT_EQUAL( av.erase( 5 ), 0 );
-
-        AVII::reverse_iterator current = av.rbegin();
-
-        AV_ASSERT( ( * current ).first == 4 && ( * current ).second == 44 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 1 && ( * current ).second == 11 );
-
-        ++ current;
-        AV_ASSERT( current == av.rend() );
-    }
-    {
-        AV_ASSERT_EQUAL( av.erase( 4 ), 1 );
-
-        AVII::reverse_iterator current = av.rbegin();
-
-        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 1 && ( * current ).second == 11 );
-
-        ++ current;
-        AV_ASSERT( current == av.rend() );
-    }
-    {
-        AV_ASSERT_EQUAL( av.erase( 1 ), 1 );
-
-        AVII::reverse_iterator current = av.rbegin();
-        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
-
-        ++ current;
-        AV_ASSERT( ( * current ).first == 2 && ( * current ).second == 22 );
-
-        ++ current;
-        AV_ASSERT( current == av.rend() );
-    }
-    {
-        AV_ASSERT_EQUAL( av.erase( 2 ), 1 );
-
-        AVII::reverse_iterator current = av.rbegin();
-
-        AV_ASSERT( ( * current ).first == 3 && ( * current ).second == 33 );
-
-        ++ current;
-        AV_ASSERT( current == av.rend() );
-    }
-    {
-        AV_ASSERT_EQUAL( av.erase( 3 ), 1 );
-
-        AVII::reverse_iterator current = av.rbegin();
-
-        AV_ASSERT( current == av.rend() );
-    }
-}
-
-//
 // black_box_test
 //
 template< typename _T >
-void black_box_test()
+void black_box_test( int rep )
 {
     typedef AssocVector< int, _T > AV;
     AV av;
@@ -3093,101 +2698,40 @@ void black_box_test()
     typedef std::map< int, _T > MAP;
     MAP map;
 
-    AV_ASSERT( isEqual( av, map ) );
+    TestCase< int, _T > test( av, map );
+
+    checkEqual( av, map );
 
     int percentage = 1;
     int const progressStep = 20;
-    int const numberOfRepetitions = 16 * 1024;
+    int const numberOfRepetitions = rep * 1024;
 
     {//draw simple progress bar
-        std::cout << "["; std::flush( std::cout );
+        std::cout << "[0%.."; std::flush( std::cout );
     }
 
     for( int i = 0 ; i < numberOfRepetitions ; ++ i )
     {
         {//draw simple progress bar
-            if( 100 * i / numberOfRepetitions >= progressStep * percentage ){
+            if( 100.0 * i / numberOfRepetitions >= progressStep * percentage ){
                 std::cout << progressStep * (percentage++) << "%.."; std::flush( std::cout );
             }
         }
 
         unsigned const maxKeyValue = 128;
 
-        int operation = rand() % 6;
+        int operation = rand() % 10;
 
         switch( operation )
         {
             case 0:
+            case 1:
+            case 2:
                 {
                     int const key = rand() % maxKeyValue;
                     _T const value = _T();
 
-                    std::pair< typename AV::iterator, bool> insertedAV
-                        = av.insert( typename AV::value_type( key, value ) );
-
-                    std::pair< typename MAP::iterator, bool> insertedMap =
-                        map.insert( typename MAP::value_type( key, value ) );
-
-                    AV_ASSERT( insertedAV.second == insertedMap.second );
-                    AV_ASSERT( * insertedAV.first == * insertedMap.first );
-
-                    AV_ASSERT_EQUAL(
-                          std::distance( av.begin(), insertedAV.first )
-                        , std::distance( map.begin(), insertedMap.first )
-                    );
-
-                    AV_ASSERT( std::equal( av.begin(), insertedAV.first, map.begin() ) );
-
-                    AV_ASSERT_EQUAL(
-                          std::distance( insertedAV.first, av.end() )
-                        , std::distance( insertedMap.first, map.end() )
-                    );
-
-                    AV_ASSERT( std::equal( insertedAV.first, av.end(), insertedMap.first ) );
-
-                    AV_ASSERT( isEqual( av, map ) );
-                }
-
-                break;
-
-            case 1:
-                {
-                    int const key = rand() % maxKeyValue;
-
-                    typename AV::iterator foundAV = av.find( key );
-                    typename MAP::iterator foundMap = map.find( key );
-
-                    AV_ASSERT(
-                           ( foundAV == av.end() && foundMap == map.end() )
-                        || ( * foundAV == * foundMap )
-                    );
-
-                    AV_ASSERT_EQUAL(
-                          std::distance( av.begin(), foundAV )
-                        , std::distance( map.begin(), foundMap )
-                    );
-
-                    AV_ASSERT( std::equal( av.begin(), foundAV, map.begin() ) );
-
-                    AV_ASSERT_EQUAL(
-                          std::distance( foundAV, av.end() )
-                        , std::distance( foundMap, map.end() )
-                    );
-
-                    AV_ASSERT( std::equal( foundAV, av.end(), foundMap ) );
-
-                    AV_ASSERT( isEqual( av, map ) );
-                }
-
-                break;
-
-            case 2:
-                {
-                    int const key = rand() % maxKeyValue;
-
-                    AV_ASSERT_EQUAL( av.erase( key ), map.erase( key ) );
-
-                    AV_ASSERT( isEqual( av, map ) );
+                    test >> insert( key, value );
                 }
 
                 break;
@@ -3196,29 +2740,7 @@ void black_box_test()
                 {
                     int const key = rand() % maxKeyValue;
 
-#ifdef AV_MAP_ERASE_RETURNS_ITERATOR
-                    typename AV::iterator avIterator = erase( av, av.find( key ) );
-                    typename MAP::iterator mapIterator = erase( map, map.find( key ) );
-
-                    AV_ASSERT_EQUAL(
-                          std::distance( av.begin(), avIterator )
-                        , std::distance( map.begin(), mapIterator )
-                    );
-
-                    AV_ASSERT( std::equal( av.begin(), avIterator, map.begin() ) );
-
-                    AV_ASSERT_EQUAL(
-                          std::distance( avIterator, av.end() )
-                        , std::distance( mapIterator, map.end() )
-                    );
-
-                    AV_ASSERT( std::equal( avIterator, av.end(), mapIterator ) );
-#else
-                    erase( av, av.find( key ) );
-                    erase( map, map.find( key ) );
-#endif
-
-                    AV_ASSERT( isEqual( av, map ) );
+                    test >> find( key );
                 }
 
                 break;
@@ -3227,20 +2749,7 @@ void black_box_test()
                 {
                     int const key = rand() % maxKeyValue;
 
-                    typename AV::iterator foundAV = av.find( key );
-                    typename MAP::iterator foundMap = map.find( key );
-
-                    if( foundAV == av.end() && foundMap == map.end() )
-                    {
-                        // empty
-                    }
-                    else
-                    {
-                        av.erase( foundAV );
-                        map.erase( foundMap );
-                    }
-
-                    AV_ASSERT( isEqual( av, map ) );
+                    test >> erase( key );
                 }
 
                 break;
@@ -3248,12 +2757,45 @@ void black_box_test()
             case 5:
                 {
                     int const key = rand() % maxKeyValue;
+
+                    test >> findErase( key );
+                }
+
+                break;
+
+            case 6:
+                {
+                    int const key = rand() % maxKeyValue;
                     _T const value = _T();
 
-                    av[ key ] = value;
-                    map[ key ] = value;
+                    test >> index_put( key, value );
+                }
 
-                    AV_ASSERT( isEqual( av, map ) );
+                break;
+
+            case 7:
+                {
+                    int const key = rand() % maxKeyValue;
+
+                    test >> lower_bound( key );
+                }
+
+                break;
+
+            case 8:
+                {
+                    int const key = rand() % maxKeyValue;
+
+                    test >> upper_bound( key );
+                }
+
+                break;
+
+            case 9:
+                {
+                    int const key = rand() % maxKeyValue;
+
+                    test >> equal_range( key );
                 }
 
                 break;
@@ -3564,8 +3106,22 @@ void mem_leak_test_assign_operator()
 
 #endif
 
-int main()
+int main( int argc, char * argv[] )
 {
+    {// new unit test framework
+        {
+            AssocVector< S1, S1 > av;
+            std::map< S1, S1 > map;
+
+            TestCase< S1, S1 > test( av, map );
+
+            test
+                >> insert( Range<>( 0, 10 + 1 ) )
+                >> erase( Range<>( 0, 5 + 1 ) )
+                >> erase( Range<>( 5, 10 + 1 ) );
+        }
+    }
+
     {
         std::cout << "Util tests..."; std::flush( std::cout );
 
@@ -3603,32 +3159,28 @@ int main()
         test_assign_operator();
         test_clear();
 
-        test_push_back();
-
-        test_insert_in_random_order();
         test_insert_in_increasing_order();
         test_insert_in_decreasing_order();
-        test_insert_check_iterator_1();
-        test_insert_check_iterator_2();
+        test_insert_in_random_order();
 
-        test_insert_erase_insert_1();
-        test_insert_erase_insert_2();
-        test_insert_erase_insert_3();
-        test_insert_erase_insert_4();
+        test_erase_in_increasing_order();
+        test_erase_in_decreasing_order();
+        test_erase_in_random_order();
 
-        test_find_1();
-        test_find_2();
-        test_find_check_iterator();
+        test_insert_insert();
+        test_insert_erase_erase();
+        test_insert_erase_insert();
+
+        test_find();
+        test_find_erase_find();
+        test_find_erase_find_insert_find();
 
         test_count();
+        test_lower_bound();
+        test_upper_bound();
+        test_equal_range();
 
-        test_erase_1();
-        test_erase_2();
-        test_erase_3();
-        test_erase_from_back_already_erased();
-
-        test_operator_index_1();
-        test_operator_index_2();
+        test_operator_index();
 
         test_user_type();
 
@@ -3638,17 +3190,7 @@ int main()
     {
         std::cout << "Iterator tests..."; std::flush( std::cout );
 
-        test_erase_iterator_1();
-        test_erase_iterator_2();
-        test_erase_iterator_3();
-
-        test_erase_iterator();
-        test_erase_reverse_iterator();
-
         test_iterator_to_const_iterator_conversion();
-
-        test_iterators_equal();
-        test_reverse_iterators_equal();
 
         test_iterators_distance();
         test_reverse_iterators_distance();
@@ -3656,20 +3198,10 @@ int main()
         test_iterators_begin_equals_end_in_empty_container();
         test_reverse_iterators_begin_equal_end_in_empty_storage();
 
+        test_iterators_iterate_not_empty_storage_empty_cache();
+
         test_iterators_increment_decrement_1();
         test_iterators_increment_decrement_2();
-
-        test_iterator_1();
-
-        test_iterator_erased_1();
-        test_iterator_erased_2();
-
-        test_iterator_begin();
-
-        test_reverse_iterator_1();
-        test_reverse_iterator_2();
-
-        test_iterators_iterate_not_empty_storage_empty_cache();
 
         std::cout << "OK." << std::endl;
     }
@@ -3700,9 +3232,11 @@ int main()
     {
         std::cout << "BlackBox tests..."; std::flush( std::cout );
 
-        black_box_test< S1 >();
-        black_box_test< S2 >();
-        black_box_test< S3 >();
+        int rep = argc == 2 ? atoi( argv[1] ) : 16;
+
+        black_box_test< S1 >( rep );
+        black_box_test< S2 >( rep );
+        black_box_test< S3 >( rep );
 
         std::cout << "OK." << std::endl;
     }

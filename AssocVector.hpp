@@ -4131,34 +4131,36 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( _Key const & k, _Ma
 {
     bool pushBackToStorage = false;
 
-    if( _storage.empty() )
-    {
-        if( _buffer.empty() ){
-            pushBackToStorage = true;
-        }
-        else
+    {// should be pushed back
+        if( _storage.empty() )
         {
-            if( _cmp( _buffer.back().first, k ) ){
+            if( _buffer.empty() ){
                 pushBackToStorage = true;
             }
-        }
-    }
-    else
-    {
-        if( _buffer.empty() )
-        {
-            if( _cmp( _storage.back().first, k ) ){
-                pushBackToStorage = true;
+            else
+            {
+                if( _cmp( _buffer.back().first, k ) ){
+                    pushBackToStorage = true;
+                }
             }
         }
         else
         {
-            if( _cmp( _storage.back().first, k ) && _cmp( _buffer.back().first,k ) ){
-                pushBackToStorage = true;
+            if( _buffer.empty() )
+            {
+                if( _cmp( _storage.back().first, k ) ){
+                    pushBackToStorage = true;
+                }
+            }
+            else
+            {
+                if( _cmp( _storage.back().first, k ) && _cmp( _buffer.back().first,k ) ){
+                    pushBackToStorage = true;
+                }
             }
         }
     }
-
+    
     if( pushBackToStorage == false ){
         return false;
     }
