@@ -2,7 +2,7 @@
 # AssocVector...
 ################################################################################
 
-The AssocVector is a container similar to Loki::AssocVector created by Andrei Alexandrescu. However 'insert' operation in significantly optimised. All the others operations should not be slower.
+The AssocVector is a container similar to Loki::AssocVector created by Andrei Alexandrescu. However 'insert' and 'erase' operations in significantly optimized {O(sqrt(N)) vs. O(N)}. All the others operations should not be slower.
 
 
 
@@ -11,6 +11,8 @@ The AssocVector is a container similar to Loki::AssocVector created by Andrei Al
 ################################################################################
 
 http://lukaszczerwinski.pl/assoc_vector.en.html
+
+https://github.com/wo3kie/AssocVector
 
 
 
@@ -65,7 +67,12 @@ There is absolutely no guarantee that AssocVector will work without any errors a
 # How it works...
 ################################################################################
 
-AssocVector is composed of two arrays, first called storage, second called buffer. Both arrays are keep sorted all the time. Insert operation puts new items into buffer. Since buffer is much shorter than storage it is quite effective. When buffer is completely full it is merged into storage. This operation may be longer however it is performed only sometimes.
+AssocVector is composed of three arrays,
+* first called 'storage', with objects
+* second called 'buffer', with objects
+* third called 'erased', with pointers to erased objects
+
+Every arrays are keep sorted all the time. Insert operation puts new items into 'buffer'. Since 'buffer' is much shorter than 'storage' it is quite effective. When 'buffer' is completely full it is merged into 'storage'. This operation may be longer however it is performed only sometimes.
 
 +---+---+---+---+---+---+---+---+---+---+---+---+---+
 | 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
@@ -107,13 +114,84 @@ After insert 5
 
 After AssocVector::merge called
 
-+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 49| 50|
-+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 49| 50|   |   |
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+...
 |   |   |   |
 +---+---+---+
 
-All the time size of buffer is kept as sqrt(storage.size()) which is an optimal coefficient for it.
+All the time size of 'buffer' is kept as sqrt('storage'.size()) which is an optimal coefficient for it.
+
+Erasing items is implemented in two ways. Items present in 'buffer' are erased immediately. Items in 'storage' are not erased immediately, but they are marked as erased using 'erased' table. If 'erased' table is filled in completely such items are really removed from 'storage'. Size of 'erased' is the same as size of 'buffer' and equal sqrt('storage'.size()).
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 2 | 3 | 49|
++---+---+---+
+|   |   |   |
++---+---+---+
+
+After erase 6
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 2 | 3 | 49|
++---+---+---+
+|*6 |   |   |
++---+---+---+
+
+After erase 2
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 3 | 49|   |
++---+---+---+
+|*6 |   |   |
++---+---+---+
+
+
+After erase 49
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 3 |   |   |
++---+---+---+
+|*6 |   |   |
++---+---+---+
+
+After erase 0
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 3 |   |   |
++---+---+---+
+|*0 |*6 |   |
++---+---+---+
+
+After erase 11
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 3 |   |   |
++---+---+---+
+|*0 |*6 |*11|
++---+---+---+
+
+After erase 50
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+| 1 | 3 | 4 | 8 | 9 | 13| 32| 35| 47| 48|   |   |   |
++---+---+---+---+---+---+---+---+---+---+---+---+---+
+|   |   |   |
++---+---+---+
+|   |   |   |
++---+---+---+
 
 
 
@@ -138,11 +216,12 @@ There are no bugs. There are "features".
 ################################################################################
 
 Fixing all potential bugs
-Support for move semantic (and other C++11 features)
+Full support for C++11:
+- AssocVector::AssocVector( value_type && )
+- AssocVector::::emplace
+- AssocVector::cbegin / cend / crbegin / crend
+- AssocVector::insert( value_type && )
+- AssocVector::at( key_type )
+...
 
-
-
-################################################################################
-# GitHub...
-################################################################################
-https://github.com/wo3kie/AssocVector
+(more details: http://en.cppreference.com/w/cpp/container/map)

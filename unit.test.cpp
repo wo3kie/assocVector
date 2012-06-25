@@ -1,3 +1,23 @@
+/*
+ * Author: Lukasz Czerwinski
+ * GitHub: https://github.com/wo3kie/AssocVector
+ * Website: http://www.lukaszczerwinski.pl/assoc_vector.en.html
+ */
+
+/*
+ * AssocVector is developed under the BSD license. It is allowed to
+ * distribute source, use it and modify without any limitations either
+ * for personal or commercial goal. Whilst distributing source code
+ * using AssocVector it is obligate to mark the author
+ */
+
+ /*
+ * There is absolutely no guarantee that AssocVector will work without
+ * any errors and that is free of any bugs. AssocVector author is not
+ * responsible for any damages, mind and financial loses related with
+ * AssocVector using.
+ */
+
 #include <cassert>
 #include <iostream>
 #include <map>
