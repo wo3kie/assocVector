@@ -215,7 +215,10 @@ There are no bugs. There are "features".
 # Support and further development...
 ################################################################################
 
-Fixing all potential bugs
+• 1 August, version 1.0.0
+Fixing all potential bugs found in 0.9.9.
+
+• 1 October, version 1.1.0
 Full support for C++11:
 - AssocVector::AssocVector( value_type && )
 - AssocVector::::emplace
