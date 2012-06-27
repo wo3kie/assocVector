@@ -35,12 +35,14 @@
 #if( _MSC_VER >= 1600 )
     #define AV_CXX11X_RVALUE_REFERENCE
     #define AV_MAP_ERASE_RETURNS_ITERATOR
+    #define AV_HAS_TRIVIAL_DESTRUCTOR
 #endif
 
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
     #if ( __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 )
         #define AV_CXX11X_RVALUE_REFERENCE
         #define AV_MAP_ERASE_RETURNS_ITERATOR
+        #define AV_HAS_TRIVIAL_DESTRUCTOR
     #endif
 #endif
 
@@ -170,7 +172,13 @@ namespace util
     {
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
-        detail::DestroyRangeImpl< __has_trivial_destructor( T ) >::destroy( first, last );
+        detail::DestroyRangeImpl<
+#ifdef AV_HAS_TRIVIAL_DESTRUCTOR
+            __has_trivial_destructor( T )
+#else
+            false
+#endif
+        >::destroy( first, last );
     }
 }
 

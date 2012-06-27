@@ -39,7 +39,7 @@
 
     unsigned const REPS = 1000000;
 
-    unsigned const AV_TIMEOUT = 60;
+    unsigned const AV_TIMEOUT = 100;
 #endif
 
 // configuration.end
@@ -65,17 +65,22 @@
 
 #include <ctime>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
 #define AV_ENABLE_EXTENSIONS
 #include "AssocVector.hpp"
 
+#ifdef AV_DEBUG
+    #error Are you trying to run perf tests with assertions enabled ?
+#endif
+
 // includes.end
 
 #define AV_BREAK_IF_TIMEOUT( _timeout_ ) \
     { \
-        if( ( counter & ( 512 - 1 ) ) == 0 ) \
+        if( ( counter & ( 128 - 1 ) ) == 0 ) \
         { \
             if( std::difftime( std::clock(), start_suite )/((double)CLOCKS_PER_SEC) > ( _timeout_ ) ){ \
                 timeout = true; \
@@ -96,7 +101,7 @@ int random()
 #endif
 }
 
-unsigned const MessageAlignment = 60;
+unsigned const MessageAlignment = 58;
 
 std::string make_padding( std::string const & message, int length )
 {
@@ -264,7 +269,7 @@ void printSummary(
         << "-"
         << rep
         << " - "
-        << ( timeout ? 999.0 : total_time/((double)CLOCKS_PER_SEC) )
+        << ( timeout ? 99.9 : total_time/((double)CLOCKS_PER_SEC) )
         << '\n';
 }
 
@@ -1102,33 +1107,57 @@ void random_operations()
 
 std::string getTestMode()
 {
-    std::string mode;
-
     #ifdef AV_UNIT_TESTS
-        mode = "Unit Tests";
+        return "Unit Tests";
     #else
-        mode = "Perf Tests";
+        return "Perf Tests";
     #endif
+}
 
+std::string getCxx11Support()
+{
     #ifdef AV_CXX11X_RVALUE_REFERENCE
-        mode += " C++11";
+        return "C++11";
+    #else
+        return "no C++11";
+    #endif
+}
+
+std::string getCompilerName()
+{
+    std::ostringstream out;
+
+    #if defined __GNUC__
+        out << "g++ " << __VERSION__;
+    #elif defined _MSC_VER
+        out << "msvc " << ( -6 + _MSC_VER / 100 );
+    #else
+        out << "? compiler";
     #endif
 
-    return mode;
+    return out.str();
+}
+
+void printHeader()
+{
+
+    std::cout
+        << std::string( 5, '*' )
+        << " "
+        << getTestMode()
+        << " * "
+        << getCxx11Support()
+        << " * "
+        << getCompilerName()
+        << " "
+        << std::string( 5, '*' )
+        << "\n"
+        << std::endl;
 }
 
 int main()
 {
-    {
-        std::cout
-            << std::string( 10, '*' )
-            << ' '
-            << getTestMode()
-            << ' '
-            << std::string( 10, '*' )
-            << "\n"
-            << std::endl;
-    }
+    printHeader();
 
     insert_increasing< S1 >();
     insert_increasing< S2 >();

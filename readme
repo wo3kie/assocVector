@@ -41,7 +41,7 @@ There is absolutely no guarantee that AssocVector will work without any errors a
     assert( av.count( "java" ) == 1 );
     assert( av.find( "scala" ) != av.end() );
 
-2) Insert operation is buffered that's why may be much faster
+2) 'insert' and 'erase' operations are buffered that's why may be much faster
 
     AssocVector< std::string, int > av;
 
@@ -49,7 +49,7 @@ There is absolutely no guarantee that AssocVector will work without any errors a
         av.insert( AssocVector::value_type( key, value ) );
     }
 
-3) merge operation enforce merging buffer with main storage, after it AssocVector is like an array
+3) 'merge' operation enforce merging 'buffer' with 'erased' and main 'storage', after it AssocVector is like one sorted array
 
     AssocVector< std::string, int > av;
 
@@ -59,7 +59,7 @@ There is absolutely no guarantee that AssocVector will work without any errors a
 
     av.merge();
 
-4) Of course AssocVector works fine even if merge operation is never called.
+4) Of course AssocVector works fine even if 'merge' operation is never called.
 
 
 
@@ -72,7 +72,7 @@ AssocVector is composed of three arrays,
 * second called 'buffer', with objects
 * third called 'erased', with pointers to erased objects
 
-Every arrays are keep sorted all the time. Insert operation puts new items into 'buffer'. Since 'buffer' is much shorter than 'storage' it is quite effective. When 'buffer' is completely full it is merged into 'storage'. This operation may be longer however it is performed only sometimes.
+All arrays are kept sorted all the time. Insert operation puts new items into 'buffer'. Since 'buffer' is much shorter than 'storage' it is quite effective. When 'buffer' is completely full it is merged into 'storage'. This operation may be longer however it is performed only sometimes.
 
 +---+---+---+---+---+---+---+---+---+---+---+---+---+
 | 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|
