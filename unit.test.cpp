@@ -3261,5 +3261,9 @@ int main( int argc, char * argv[] )
         std::cout << "OK." << std::endl;
     }
 
+#if defined _MSC_VER
+    system( "pause" );
+#endif
+
     return 0;
 }

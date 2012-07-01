@@ -5103,7 +5103,7 @@ std::size_t AssocVector< _Key, _Mapped, _Cmp, _Allocator >::calculateNewBufferCa
     std::size_t storageSize
 )
 {
-    return static_cast< std::size_t >( sqrt( storageSize ));
+    return static_cast< std::size_t >( 1.0 * sqrt( storageSize ));
 }
 
 template<
