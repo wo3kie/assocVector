@@ -1,24 +1,13 @@
 /*
- * Author: Lukasz Czerwinski
+ * Copyright (C) 2012 £ukasz Czerwiñski
+ *
  * GitHub: https://github.com/wo3kie/AssocVector
  * Website: http://www.lukaszczerwinski.pl/assoc_vector.en.html
+ *
+ * Distributed under the BDS Software License (see file License)
  */
 
-/*
- * AssocVector is developed under the BSD license. It is allowed to
- * distribute source, use it and modify without any limitations either
- * for personal or commercial goal. Whilst distributing source code
- * using AssocVector it is obligate to mark the author
- */
-
- /*
- * There is absolutely no guarantee that AssocVector will work without
- * any errors and that is free of any bugs. AssocVector author is not
- * responsible for any damages, mind and financial loses related with
- * AssocVector using.
- */
-
- //#define AV_UNIT_TESTS
+//#define AV_UNIT_TESTS
 
 // configuration.begin
 
