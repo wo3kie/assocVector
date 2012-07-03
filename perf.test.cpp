@@ -4,7 +4,7 @@
  * GitHub: https://github.com/wo3kie/AssocVector
  * Website: http://www.lukaszczerwinski.pl/assoc_vector.en.html
  *
- * Distributed under the BDS Software License (see file License)
+ * Distributed under the BSD Software License (see file License)
  */
 
 //#define AV_UNIT_TESTS
