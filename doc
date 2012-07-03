@@ -1,4 +1,4 @@
-# Welcome to the AssocVector wiki!
+# Welcome to the AssocVector documentation!
 
 ## FAQ
 
@@ -6,10 +6,12 @@
 AssocVector functionally is like a map, but it is implemented with an array for low memory consumption and fast search. Searching in a sorted array has _O(log(n))_ complexity, the same as in balanced tree however it is faster by a constant factor.
 AssocVector was inspired by Loki::AssocVector written by Andrei Alexandrescu, with _insert_ and _erase_ methods significantly improved (_O(sqrt(N))_ vs. _O(N)_). All the other methods should not be slower.
 
+
 **Most important links:**  
-GitHub source code: https://github.com/wo3kie/AssocVector  
-GitHub wiki page  : https://github.com/wo3kie/AssocVector/wiki  
-Author's web page : http://www.lukaszczerwinski.pl/assoc_vector.en.html  
+GitHub source code  : https://github.com/wo3kie/AssocVector  
+GitHub wiki page    : https://github.com/wo3kie/AssocVector/wiki  
+GitHub wiki changes : https://github.com/wo3kie/AssocVector/wiki/changes  
+Author's web page   : http://www.lukaszczerwinski.pl/assoc_vector.en.html  
   
   
 ### Under what licence _AssocVector_ is distributed?
