@@ -1103,12 +1103,12 @@ std::string getTestMode()
     #endif
 }
 
-std::string getCxx11Support()
+std::string getRValueReferenceSupport()
 {
     #ifdef AV_CXX11X_RVALUE_REFERENCE
-        return "C++11";
+        return "T&&";
     #else
-        return "no C++11";
+        return "";
     #endif
 }
 
@@ -1135,7 +1135,7 @@ void printHeader()
         << " "
         << getTestMode()
         << " * "
-        << getCxx11Support()
+        << getRValueReferenceSupport()
         << " * "
         << getCompilerName()
         << " "
