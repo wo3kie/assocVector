@@ -51,6 +51,10 @@ No it does not depend on any other libraries (except STL) but **C++11 Standard**
 If you need to run AssocVector with other compiler please use AssocVector 1.0.x version instead.
   
   
+### How to build code?
+* g++ -Wall --pedantic --std=c++0x -O1 unit.test.cpp -o unit.test
+* g++ -Wall --pedantic --std=c++0x -O3 perf.test.cpp -o perf.test -I _path to Loki/Boost libraries_
+  
 ### Are there any performance tests for it?
 Yes, you may found them with source code. There are tests for some different architectures. Code is built with g++ -O3 -DNDEBUG options.
   
