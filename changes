@@ -3,7 +3,7 @@
 ## Version 1.1.0 differs from 1.0.0 in the following ways
 
 ### Backward compatibility break
-* From AssocVector 1.1.0, C++11 is required.
+* C++11 is required.
 
 ### Bug fixes
 

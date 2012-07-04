@@ -4382,8 +4382,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
 
             return result;
         }
-        
-        (void)(isHiggsBosonFound);    
     }
 }
 
