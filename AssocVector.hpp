@@ -10,35 +10,27 @@
 #ifndef ASSOC_VECTOR_HPP
 #define ASSOC_VECTOR_HPP
 
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
+    #error C++11 is required to run this code, please use AssocVector 1.0.x instead.
+#endif
+
 // includes.begin
 
 #include <algorithm>
-#include <cassert>
 #include <functional>
+#include <type_traits>
+
+#include <cassert>
 #include <cmath>
 
 // includes.end
 
 // configuration.begin
 
-#if( _MSC_VER >= 1600 )
-    #define AV_CXX11X_RVALUE_REFERENCE
-    #define AV_MAP_ERASE_RETURNS_ITERATOR
-    #define AV_HAS_TRIVIAL_DESTRUCTOR
-#endif
-
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-    #if ( __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 )
-        #define AV_CXX11X_RVALUE_REFERENCE
-        #define AV_MAP_ERASE_RETURNS_ITERATOR
-        #define AV_HAS_TRIVIAL_DESTRUCTOR
-    #endif
-#endif
-
-#ifdef AV_CXX11X_RVALUE_REFERENCE
-    #define AV_MOVE std::move
+#if ( __GNUC__ >= 4 && __GNUC_MINOR__ >= 8 )
+    #define AV_HAS_TRIVIAL_DESTRUCTOR( type ) std::is_trivially_destructible< type >::value
 #else
-    #define AV_MOVE
+    #define AV_HAS_TRIVIAL_DESTRUCTOR( type ) __has_trivial_destructor( type )
 #endif
 
 // configuration.end
@@ -161,13 +153,7 @@ namespace util
     {
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
-        detail::DestroyRangeImpl<
-#ifdef AV_HAS_TRIVIAL_DESTRUCTOR
-            __has_trivial_destructor( T )
-#else
-            false
-#endif
-        >::destroy( first, last );
+        detail::DestroyRangeImpl< AV_HAS_TRIVIAL_DESTRUCTOR( T ) >::destroy( first, last );
     }
 }
 
@@ -183,7 +169,7 @@ namespace util
         AV_PRECONDITION( first <= last );
 
         for( /*empty*/ ; first != last ; ++ output , ++ first ){
-            * output = AV_MOVE( * first );
+            * output = std::move( * first );
         }
 
         return output;
@@ -204,7 +190,7 @@ namespace util
             AV_CHECK( output != 0 );
 
             new ( static_cast< void * >(  output ) )
-                typename std::iterator_traits< _OutputPtr >::value_type( AV_MOVE( * first ) );
+                typename std::iterator_traits< _OutputPtr >::value_type( std::move( * first ) );
         }
 
         return output;
@@ -224,7 +210,7 @@ namespace util
             -- output;
             -- last;
 
-            * output = AV_MOVE( * last );
+            * output = std::move( * last );
         }
 
         return output;
@@ -792,7 +778,7 @@ namespace array
             }
             else
             {
-              ( * whereInsertInStorage ) = AV_MOVE( * currentInStorage );
+              ( * whereInsertInStorage ) = std::move( * currentInStorage );
 
               ++ whereInsertInStorage;
               ++ currentInStorage;
@@ -844,14 +830,14 @@ namespace array
             )
             {
                 new ( static_cast< void * >( rWhereInsertInStorage ) )
-                    _T( AV_MOVE( * rCurrentInBuffer ) );
+                    _T( std::move( * rCurrentInBuffer ) );
 
                 -- rCurrentInBuffer;
             }
             else
             {
                 new ( static_cast< void * >( rWhereInsertInStorage ) )
-                    _T( AV_MOVE( * rCurrentInStorage ) );
+                    _T( std::move( * rCurrentInStorage ) );
 
                 -- rCurrentInStorage;
             }
@@ -873,13 +859,13 @@ namespace array
                 || cmp( * rCurrentInStorage, * rCurrentInBuffer )
             )
             {
-                * rWhereInsertInStorage = AV_MOVE( * rCurrentInBuffer );
+                * rWhereInsertInStorage = std::move( * rCurrentInBuffer );
 
                 -- rCurrentInBuffer;
             }
             else
             {
-                * rWhereInsertInStorage = AV_MOVE( * rCurrentInStorage );
+                * rWhereInsertInStorage = std::move( * rCurrentInStorage );
 
                 -- rCurrentInStorage;
             }
@@ -922,7 +908,7 @@ move_merge_into_uninitialized(
         if( cmp( * first1, * first2 ) )
         {
             new ( static_cast< void * >( output ) )
-                typename std::iterator_traits< _OutputPtr >::value_type( AV_MOVE( * first1 ) );
+                typename std::iterator_traits< _OutputPtr >::value_type( std::move( * first1 ) );
 
             ++ output;
             ++ first1;
@@ -930,7 +916,7 @@ move_merge_into_uninitialized(
         else
         {
             new ( static_cast< void * >( output ) )
-                typename std::iterator_traits< _OutputPtr >::value_type( AV_MOVE( * first2 ) );
+                typename std::iterator_traits< _OutputPtr >::value_type( std::move( * first2 ) );
 
             ++ output;
             ++ first2;
@@ -3276,9 +3262,7 @@ public:
         , _Allocator const & allocator = _Allocator()
     );
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other );
-#endif
 
     //
     // destructor
@@ -3290,12 +3274,15 @@ public:
     //
     inline void clear();
 
+    //
+    // operator=
+    //
     AssocVector & operator=( AssocVector const & other );
-
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     AssocVector & operator=( AssocVector && other );
-#endif
 
+    //
+    // methods
+    //
     void reserve( std::size_t newCapacity );
     void swap( AssocVector & other );
 
@@ -3642,8 +3629,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     AV_POSTCONDITION( validate() );
 }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
-
 template<
       typename _Key
     , typename _Mapped
@@ -3663,8 +3648,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     array::reset( other._buffer );
     array::reset( other._erased );
 }
-
-#endif
 
 template<
       typename _Key
@@ -3713,8 +3696,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator=( AssocVector const & o
     return * this;
 }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
-
 template<
       typename _Key
     , typename _Mapped
@@ -3724,13 +3705,11 @@ template<
 AssocVector< _Key, _Mapped, _Cmp, _Allocator > &
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator=( AssocVector && other )
 {
-    AssocVector temp( AV_MOVE( other ) );
+    AssocVector temp( std::move( other ) );
     temp.swap( * this );
 
     return * this;
 }
-
-#endif
 
 template<
       typename _Key

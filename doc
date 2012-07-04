@@ -42,16 +42,13 @@ Author's web page   : http://www.lukaszczerwinski.pl/assoc_vector.en.html
   
   
 ### Does _AssocVector_ have any dependencies?
-No, just STL and C++ compiler should be enough to run it.
-
-
+No it does not depend on any other libraries (except STL) but **C++11 Standard** is required. If you need to run AssocVector with C++11 support please use AssocVector 1.0.x version instead.
+  
+  
 ### Which compilers are supported?
-* g++ >= 4.0
-* msvc >= 10
+* g++ >= 4.6.
 
-It should also work with
-* Intel C++ compiler
-* clang
+If you need to run AssocVector with other compiler please use AssocVector 1.0.x version instead.
   
   
 ### Are there any performance tests for it?
@@ -59,11 +56,10 @@ Yes, you may found them with source code. There are tests for some different arc
   
 For Intel Celeron 1.4GHz, 1GB RAM, rvalue reference, click [here](http://lukaszczerwinski.pl/av.perf.celeron.html).  
 For Intel Core 2 Duo 2.5GHz, 3GB RAM, rvalue reference, click [here](http://lukaszczerwinski.pl/av.perf.intel.html).  
-For AMD Dual Core Opteron 2.6GHz, 32GB RAM, no rvalue reference, click [here](http://lukaszczerwinski.pl/amd.opteron.html).  
-
+  
   
 ### Is there any _a one minute tutorial_, how to use _AssocVector_.
-The same way like _std::map_.
+AssocVector is completely compatible with _std::map_ and usage of it is exactly the same.
 
     av[ "c++" ] = 1983;  
     av[ "java" ] = 1995;  
@@ -193,11 +189,11 @@ After erase 11
 After erase 50
 
     +---+---+---+---+---+---+---+---+---+---+---+---+---+  
-    | 1 | 3 | 4 | 8 | 9 | 13| 32| 35| 47| 48|   |   |   |  
+    | 1 | 3 | 4 | 8 | 9 | 13| 32| 35| 47| 48| 50|   |   |  
     +---+---+---+---+---+---+---+---+---+---+---+---+---+  
     |   |   |   |  
     +---+---+---+  
-    |   |   |   |  
+    |*50|   |   |  
     +---+---+---+  
   
   
@@ -268,7 +264,7 @@ These methods are an extensions which has to be explicitly enabled with _AV_ENAB
   
   
 ### Is there any additional documentation for _AssocVector_?
-No it is not. GitHub/AssocVector/Wiki should be consider as the more in depth documentation about _AssocVector_. If it is missing something just let me know.
+No, it is not. GitHub/AssocVector/Wiki should be consider as the more in depth documentation about _AssocVector_. If it is missing something just let me know.
   
   
 ### I have an idea how to improve an _AssocVector_ even more. What should I do?
@@ -279,8 +275,8 @@ Just let me know!
 Just let me know!
   
   
-### I with an _AssocVector_ to have an additional feature like... (eg.: erase items by predicate). May you implement it in a next version?
-No I do not. Only features available in standard std::map are and will be supported.
+### I with an _AssocVector_ to have an additional feature like... (eg.: erase items by predicate). May you do it?
+No, I do not. Only features available in standard std::map are and will be supported.
   
   
 ### I found a bug, what should I do?

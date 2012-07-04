@@ -8,14 +8,19 @@ GitHub wiki page    : https://github.com/wo3kie/AssocVector/wiki
 GitHub wiki changes : https://github.com/wo3kie/AssocVector/wiki/changes  
 Author's web page   : http://www.lukaszczerwinski.pl/assoc_vector.en.html  
 
+### Requirements
+* C++11 Standard
+
 ### AssocVector library content:
 * readme          - This file.
 * license         - Full text of the BSD license.
 * changes         - The description of changes.
 * doc             - Documentation in form of FAQ (https://github.com/wo3kie/AssocVector/wiki)
+
 * AssocVector.hpp - The core code of the AssocVector.
 * unit.test.cpp   - Unit tests code.
 * perf.test.cpp   - Performance tests code.
+
 * AV-LAV-AMDDualCoreOpteron8218HE-2.6GHz-32GB   - performance test result
 * AV-LAV-IntelCeleronM-1.4GHz-1GB-c++0x         - performance test result
 * AV-LAV-IntelCore2Duo-2.5GHz-3GB-c++0x         - performance test result

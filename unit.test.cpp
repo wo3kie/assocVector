@@ -7,6 +7,10 @@
  * Distributed under the BSD Software License (see file license)
  */
 
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
+    #error C++11 is required to run this code, please use AssocVector 1.0.x instead.
+#endif
+
 #include <cassert>
 #include <iostream>
 #include <map>
@@ -27,48 +31,7 @@
         if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; assert( false );}
 #else
     #error Are you trying to run unit tests with assertions disabled ?
-
-    #define AV_ASSERT( expression ) (void)( expression );
-    #define AV_ASSERT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
-    #define AV_ASSERT_NOT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
 #endif
-
-#ifndef AV_CXX11X_RVALUE_REFERENCE
-    #warning Do not forget to run unit tests with C++11 as well if possible !
-#endif
-
-template< typename T, typename K >
-typename std::map< T, K >::iterator
-erase( std::map< T, K > & map, typename std::map< T, K >::iterator pos )
-{
-    typename std::map< T, K >::iterator result = map.end();
-
-    if( pos != map.end() )
-    {
-#ifdef AV_MAP_ERASE_RETURNS_ITERATOR
-        result = map.erase( pos );
-#else
-        result = pos;
-        ++ result;
-        map.erase( pos );
-#endif
-    }
-
-    return result;
-}
-
-template< typename T, typename K >
-typename AssocVector< T, K >::iterator
-erase( AssocVector< T, K > & av, typename AssocVector< T, K >::iterator pos )
-{
-    typename AssocVector< T, K >::iterator result = av.end();
-
-    if( pos != av.end() ){
-        result = av.erase( pos );
-    }
-
-    return result;
-}
 
 //
 // dump
@@ -294,14 +257,12 @@ struct S3
         ++ destroyedObjects;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     S3( S3 && other )
         : array( std::move( other.array ) )
     {
         ++ createdObjects;
         ++ moves;
     }
-#endif
 
     S3 & operator=( S3 const & other )
     {
@@ -313,7 +274,6 @@ struct S3
         return * this;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     S3 & operator=( S3 && other )
     {
         ++ moves;
@@ -322,7 +282,6 @@ struct S3
 
         return * this;
     }
-#endif
 
     bool operator==( S3 const & other )const
     {
@@ -787,8 +746,8 @@ struct FindErase
         for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
             {// do test
-                inAV = erase( av, av.find( k ) );
-                inMAP = erase( map, map.find( k ) );
+                inAV = av.erase( av.find( k ) );
+                inMAP = map.erase( map.find( k ) );
             }
 
             {// validate
@@ -2997,123 +2956,119 @@ void mem_leak_test_assign_operator()
     AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
 }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
+//
+// cxx11x_move_test_1
+//
+void cxx11x_move_test_1()
+{
+    typedef MyAllocator< std::pair< int, S3 > > Allocator;
 
-    //
-    // cxx11x_move_test_1
-    //
-    void cxx11x_move_test_1()
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    S3::createdObjects = 0;
+    S3::destroyedObjects = 0;
+
+    S3::moves = 0;
+    S3::copies = 0;
+
     {
-        typedef MyAllocator< std::pair< int, S3 > > Allocator;
+        unsigned const counter = 1024;
 
-        Allocator::notFreedMemory = 0;
-        Allocator::totalMemory = 0;
+        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        AV av1;
 
-        S3::createdObjects = 0;
-        S3::destroyedObjects = 0;
-
-        S3::moves = 0;
-        S3::copies = 0;
-
-        {
-            unsigned const counter = 1024;
-
-            typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
-            AV av1;
-
-            {// insert( value_type )
-                for( unsigned i = 0 ; i < counter ; ++ i ){
-                    av1.insert( AV::value_type( i, S3() ) );
-                }
+        {// insert( value_type )
+            for( unsigned i = 0 ; i < counter ; ++ i ){
+                av1.insert( AV::value_type( i, S3() ) );
             }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            AV av2 = AV_MOVE( av1 );
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
         }
 
-        AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
-        AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+        AV_ASSERT_EQUAL( S3::copies, counter );
+
+        AV av2 = std::move( av1 );
+
+        AV_ASSERT_EQUAL( S3::copies, counter );
     }
 
-    //
-    // cxx11x_move_test_2
-    //
-    void cxx11x_move_test_2()
+    AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
+    AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+}
+
+//
+// cxx11x_move_test_2
+//
+void cxx11x_move_test_2()
+{
+    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    S3::createdObjects = 0;
+    S3::destroyedObjects = 0;
+
+    S3::moves = 0;
+    S3::copies = 0;
+
     {
-        typedef MyAllocator< std::pair< int, S3 > > Allocator;
+        unsigned const counter = 1024;
 
-        Allocator::notFreedMemory = 0;
-        Allocator::totalMemory = 0;
+        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        AV av;
 
-        S3::createdObjects = 0;
-        S3::destroyedObjects = 0;
-
-        S3::moves = 0;
-        S3::copies = 0;
-
-        {
-            unsigned const counter = 1024;
-
-            typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
-            AV av;
-
-            {// insert( value_type )
-                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                    av.insert( AV::value_type( i, S3() ) );
-                }
+        {// insert( value_type )
+            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+                av.insert( AV::value_type( i, S3() ) );
             }
-
-            AV_ASSERT_EQUAL( S3::copies, counter / 2 );
-
-            {// _insert( value_type )
-                for( unsigned i = counter / 2 ; i < counter ; ++ i ){
-                    av._insert( AV::value_type( i, S3() ) );
-                }
-            }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            {// find( value_type )
-                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                    av.find( i );
-                }
-            }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            {// _find( value_type )
-                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                    av._find( i );
-                }
-            }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            {// erase( value_type )
-                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                    av.erase( i );
-                }
-            }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            {// erase( iterator )
-                for( unsigned i = counter / 2 ; i < counter ; ++ i ){
-                    av.erase( av.find( i ) );
-                }
-            }
-
-            AV_ASSERT( S3::copies < 2 * counter );
         }
 
-        AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
-        AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+        AV_ASSERT_EQUAL( S3::copies, counter / 2 );
+
+        {// _insert( value_type )
+            for( unsigned i = counter / 2 ; i < counter ; ++ i ){
+                av._insert( AV::value_type( i, S3() ) );
+            }
+        }
+
+        AV_ASSERT_EQUAL( S3::copies, counter );
+
+        {// find( value_type )
+            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+                av.find( i );
+            }
+        }
+
+        AV_ASSERT_EQUAL( S3::copies, counter );
+
+        {// _find( value_type )
+            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+                av._find( i );
+            }
+        }
+
+        AV_ASSERT_EQUAL( S3::copies, counter );
+
+        {// erase( value_type )
+            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+                av.erase( i );
+            }
+        }
+
+        AV_ASSERT_EQUAL( S3::copies, counter );
+
+        {// erase( iterator )
+            for( unsigned i = counter / 2 ; i < counter ; ++ i ){
+                av.erase( av.find( i ) );
+            }
+        }
+
+        AV_ASSERT( S3::copies < 2 * counter );
     }
 
-#endif
+    AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
+    AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+}
 
 int main( int argc, char * argv[] )
 {
@@ -3215,7 +3170,6 @@ int main( int argc, char * argv[] )
         std::cout << "OK." << std::endl;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     {
         std::cout << "C++11x tests..."; std::flush( std::cout );
 
@@ -3224,7 +3178,6 @@ int main( int argc, char * argv[] )
 
         std::cout << "OK." << std::endl;
     }
-#endif
 
     {
         std::cout << "Memory tests..."; std::flush( std::cout );

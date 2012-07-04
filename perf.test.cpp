@@ -183,14 +183,12 @@ struct S3
         ++ destroyedObjects;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     S3( S3 && other )
         : array( std::move( other.array ) )
     {
         ++ createdObjects;
         ++ moves;
     }
-#endif
 
     S3 & operator=( S3 const & other )
     {
@@ -202,7 +200,6 @@ struct S3
         return * this;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     S3 & operator=( S3 && other )
     {
         ++ moves;
@@ -211,7 +208,6 @@ struct S3
 
         return * this;
     }
-#endif
 
     bool operator==( S3 const & other )const
     {
@@ -1103,15 +1099,6 @@ std::string getTestMode()
     #endif
 }
 
-std::string getRValueReferenceSupport()
-{
-    #ifdef AV_CXX11X_RVALUE_REFERENCE
-        return "T&&";
-    #else
-        return "";
-    #endif
-}
-
 std::string getCompilerName()
 {
     std::ostringstream out;
@@ -1134,8 +1121,6 @@ void printHeader()
         << std::string( 5, '*' )
         << " "
         << getTestMode()
-        << " * "
-        << getRValueReferenceSupport()
         << " * "
         << getCompilerName()
         << " "
