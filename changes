@@ -11,3 +11,5 @@
 ### New features
 * No
 
+### Others
+* Minimal size for AssocVector is (4+2+2) (was 8+2+2)

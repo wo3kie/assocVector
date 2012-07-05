@@ -2703,7 +2703,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     array::reset( _buffer );
     array::reset( _erased );
 
-    std::size_t const defaultSize = 2*(2*2);
+    std::size_t const defaultSize = 2 * 2;
 
     reserve( defaultSize );
 }
