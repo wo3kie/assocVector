@@ -1,10 +1,13 @@
-# Changes Log
+## Changes Log
 
 ## Version 1.1.0 differs from 1.0.0 in the following ways
 
-### Backward compatibility break
+### Backwards compatibility break
 * C++11 is required.
 
 ### Bug fixes
+* No
 
 ### New features
+* No
+

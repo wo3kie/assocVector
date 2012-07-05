@@ -532,14 +532,11 @@ private:
     _M _m;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-Insert< _K, _M >
-insert( _K k, _M m = _M() )
+template< typename _K >
+Insert< _K, _K >
+insert( _K k, _K m = _K() )
 {
-    return Insert< _K, _M >( k, m );
+    return Insert< _K, _K >( k, m );
 }
 
 //
@@ -587,14 +584,11 @@ private:
     Range< _K > _range;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-InsertRange< _K, _M >
+template< typename _K >
+InsertRange< _K, _K >
 insert( Range< _K > const & range )
 {
-    return InsertRange< _K, _M >( range );
+    return InsertRange< _K, _K >( range );
 }
 
 //
@@ -639,24 +633,18 @@ private:
     Range< _K > _range;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-EraseRange< _K, _M >
+template< typename _K >
+EraseRange< _K, _K >
 erase( _K k )
 {
-    return EraseRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+    return EraseRange< _K, _K >( Range< _K >( k, k + _K( 1 ) ) );
 }
 
-template<
-      typename _K
-    , typename _M = _K
->
-EraseRange< _K, _M >
+template< typename _K >
+EraseRange< _K, _K >
 erase( Range< _K > const & range )
 {
-    return EraseRange< _K, _M >( range );
+    return EraseRange< _K, _K >( range );
 }
 
 //
@@ -700,24 +688,18 @@ private:
     Range< _K > _range;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-FindRange< _K, _M >
+template< typename _K >
+FindRange< _K, _K >
 find( _K k )
 {
-    return FindRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+    return FindRange< _K, _K >( Range< _K >( k, k + _K( 1 ) ) );
 }
 
-template<
-      typename _K
-    , typename _M = _K
->
-FindRange< _K, _M >
+template< typename _K >
+FindRange< _K, _K >
 find( Range< _K > const & range )
 {
-    return FindRange< _K, _M >( range );
+    return FindRange< _K, _K >( range );
 }
 
 //
@@ -761,24 +743,18 @@ private:
     Range< _K > _range;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-FindErase< _K, _M >
+template< typename _K >
+FindErase< _K, _K >
 findErase( _K k )
 {
-    return FindErase< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+    return FindErase< _K, _K >( Range< _K >( k, k + _K( 1 ) ) );
 }
 
-template<
-      typename _K
-    , typename _M = _K
->
-FindErase< _K, _M >
+template< typename _K >
+FindErase< _K, _K >
 findErase( Range< _K > const & range )
 {
-    return FindErase< _K, _M >( range );
+    return FindErase< _K, _K >( range );
 }
 
 //
@@ -816,24 +792,18 @@ private:
     Range< _K > _range;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-CountRange< _K, _M >
+template< typename _K >
+CountRange< _K, _K >
 count( _K k )
 {
-    return CountRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+    return CountRange< _K, _K >( Range< _K >( k, k + _K( 1 ) ) );
 }
 
-template<
-      typename _K
-    , typename _M = _K
->
-CountRange< _K, _M >
+template< typename _K >
+CountRange< _K, _K >
 count( Range< _K > const & range )
 {
-    return CountRange< _K, _M >( range );
+    return CountRange< _K, _K >( range );
 }
 
 //
@@ -877,24 +847,18 @@ private:
     Range< _K > _range;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-LowerBound< _K, _M >
+template< typename _K >
+LowerBound< _K, _K >
 lower_bound( _K k )
 {
-    return LowerBound< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+    return LowerBound< _K, _K >( Range< _K >( k, k + _K( 1 ) ) );
 }
 
-template<
-      typename _K
-    , typename _M = _K
->
-LowerBound< _K, _M >
+template< typename _K >
+LowerBound< _K, _K >
 lower_bound( Range< _K > const & range )
 {
-    return LowerBound< _K, _M >( range );
+    return LowerBound< _K, _K >( range );
 }
 
 //
@@ -938,24 +902,18 @@ private:
     Range< _K > _range;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-UpperBound< _K, _M >
+template< typename _K >
+UpperBound< _K, _K >
 upper_bound( _K k )
 {
-    return UpperBound< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+    return UpperBound< _K, _K >( Range< _K >( k, k + _K( 1 ) ) );
 }
 
-template<
-      typename _K
-    , typename _M = _K
->
-UpperBound< _K, _M >
+template< typename _K >
+UpperBound< _K, _K >
 upper_bound( Range< _K > const & range )
 {
-    return UpperBound< _K, _M >( range );
+    return UpperBound< _K, _K >( range );
 }
 
 //
@@ -1005,32 +963,24 @@ private:
     Range< _K > _range;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-EqualRange< _K, _M >
+template< typename _K >
+EqualRange< _K, _K >
 equal_range( _K k )
 {
-    return EqualRange< _K, _M >( Range< _K >( k, k + _K( 1 ) ) );
+    return EqualRange< _K, _K >( Range< _K >( k, k + _K( 1 ) ) );
 }
 
-template<
-      typename _K
-    , typename _M = _K
->
-EqualRange< _K, _M >
+template< typename _K >
+EqualRange< _K, _K >
 equal_range( Range< _K > const & range )
 {
-    return EqualRange< _K, _M >( range );
+    return EqualRange< _K, _K >( range );
 }
 
 //
 // IndexGet
 //
-template<
-    typename _K
->
+template< typename _K >
 struct IndexGet
 {
     IndexGet( _K k )
@@ -1057,9 +1007,7 @@ private:
     _K _k;
 };
 
-template<
-    typename _K
->
+template< typename _K >
 IndexGet< _K >
 index_get( _K k )
 {
@@ -1102,14 +1050,11 @@ private:
     _M _m;
 };
 
-template<
-      typename _K
-    , typename _M = _K
->
-IndexPut< _K, _M >
-index_put( _K k, _M m = _M() )
+template< typename _K >
+IndexPut< _K, _K >
+index_put( _K k, _K m = _K() )
 {
-    return IndexPut< _K, _M >( k, m );
+    return IndexPut< _K, _K >( k, m );
 }
 
 //
@@ -2697,9 +2642,8 @@ void black_box_test( int rep )
             case 2:
                 {
                     int const key = rand() % maxKeyValue;
-                    _T const value = _T();
 
-                    test >> insert( key, value );
+                    test >> insert( key, key );
                 }
 
                 break;
@@ -2734,9 +2678,8 @@ void black_box_test( int rep )
             case 6:
                 {
                     int const key = rand() % maxKeyValue;
-                    _T const value = _T();
 
-                    test >> index_put( key, value );
+                    test >> index_put( key, key );
                 }
 
                 break;
