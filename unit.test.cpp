@@ -2475,6 +2475,38 @@ void test_reverse_iterators_distance()
 }
 
 //
+// test_reverse_iterators_base
+//
+void test_reverse_iterators_base()
+{
+    typedef AssocVector< int, int > AssocVector;
+    typedef std::map< int, int > Map;
+    
+    AssocVector av;
+    av[1] = 9;
+    av[0] = 7;
+    av[7] = 9;
+    av[2] = 4;
+    
+    Map map;
+    map[1] = 9;
+    map[0] = 7;
+    map[7] = 9;
+    map[2] = 4;
+
+    AV_ASSERT( av.begin() == av.rend().base() );
+    AV_ASSERT( av.end() == av.rbegin().base() );
+
+    AssocVector::reverse_iterator avRBegin = av.rbegin();
+    av.erase( -- avRBegin.base() );
+    
+    Map::reverse_iterator  mapRBegin = map.rbegin();
+    map.erase( -- mapRBegin.base() );
+    
+    checkEqual( av, map );
+}
+
+//
 // test_iterators_begin_equals_end_in_empty_container
 //
 void test_iterators_begin_equals_end_in_empty_container()
@@ -3101,6 +3133,7 @@ int main( int argc, char * argv[] )
 
         test_iterators_distance();
         test_reverse_iterators_distance();
+        test_reverse_iterators_base();
 
         test_iterators_begin_equals_end_in_empty_container();
         test_reverse_iterators_begin_equal_end_in_empty_storage();
