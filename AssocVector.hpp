@@ -2121,7 +2121,7 @@ namespace detail
     >
     std::ostream &
     operator<<(
-        std::ostream & out
+          std::ostream & out
         , AssocVectorLazyIterator< _Iterator, _Container > const & iter
     )
     {
@@ -2285,6 +2285,28 @@ namespace detail
     private:
         pointer_mutable _current;
     };
+
+    template<
+        typename _Iterator
+      , typename _Container
+    >
+    std::ostream & operator<<(
+        std::ostream & out
+      , _AssocVectorIterator< _Iterator, _Container > const & iter
+    )
+    {
+        out << "S: " << iter.getCurrent();
+
+        if( iter.getCurrent() == 0 ){
+            out << " (null)(end)";
+        }
+        else{
+            out << " " << * iter.get();
+        }
+
+        return out;
+    }
+
 } // namespace detail
 
 template<
