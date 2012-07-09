@@ -2533,13 +2533,21 @@ void test_reverse_iterators_base()
 {
     typedef AssocVector< int, int > AssocVector;
     typedef std::map< int, int > Map;
-    
+
     AssocVector av;
     av[1] = 9;
     av[0] = 7;
     av[7] = 9;
     av[2] = 4;
-    
+
+    std::cout << av.begin() << std::endl;
+    std::cout << av.end() << std::endl;
+
+    std::cout << av.rbegin().base() << std::endl;
+    std::cout << av.rend().base() << std::endl;
+
+    std::cout << av._end() << std::endl;
+
     Map map;
     map[1] = 9;
     map[0] = 7;
@@ -2551,10 +2559,10 @@ void test_reverse_iterators_base()
 
     AssocVector::reverse_iterator avRBegin = av.rbegin();
     av.erase( -- avRBegin.base() );
-    
+
     Map::reverse_iterator  mapRBegin = map.rbegin();
     map.erase( -- mapRBegin.base() );
-    
+
     checkEqual( av, map );
 }
 

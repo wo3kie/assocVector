@@ -3,13 +3,13 @@
 ## Version 1.0.1 differs from 1.0.0 in the following ways
 
 ## Backwards compatibility change
-* AssocVectorLazyIterator::base renamed into get
-* _AssocVectorIterator::base renamed into get
+* Method renamed, AssocVectorLazyIterator::base renamed into get
+* Method renamed, _AssocVectorIterator::base renamed into get
 
 ### Bug fixes
 * Bug Fix, 1, unit.test.cpp does not compile in C++03 mode, https://github.com/wo3kie/AssocVector/issues/1  
 * Bug Fix, 2, AssocVectorReverseIterator::base() returns wrong type (pointer), https://github.com/wo3kie/AssocVector/issues/2
 
 ### New features
-* No
+* Function added, operator<< ( ostream&, _AssocVectorItetator & )
 
