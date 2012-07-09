@@ -728,8 +728,18 @@ struct FindErase
         for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
             {// do test
-                inAV = av.erase( av.find( k ) );
-                inMAP = map.erase( map.find( k ) );
+                inAV = av.find( k );
+                inMAP = map.find( k );
+                
+                if( inAV == av.end() )
+                {
+                    AV_CHECK( inMAP == map.end() );
+                    
+                    continue;
+                }
+                
+                inAV = av.erase( inAV );
+                inMAP = map.erase( inMAP );
             }
 
             {// validate
