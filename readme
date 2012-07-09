@@ -14,9 +14,12 @@ Author's web page   : http://www.lukaszczerwinski.pl/assoc_vector.en.html
   
   
 ### How to build code?
-* g++ -Wall --pedantic --std=c++0x -O1 unit.test.cpp -o unit.test
-* g++ -Wall --pedantic --std=c++0x -O3 perf.test.cpp -o perf.test -I _path to Loki/Boost libraries_
+* g++ --std=c++0x unit.test.cpp -o unit.test
+* g++ --std=c++0x perf.test.cpp -o perf.test -I _path to Loki/Boost libraries_
   
+From g++ 4.7 --_std_=_c++0x_ should be replaced with --_std_=_c++11_.  
+It is recommended to build unit tests with optimization for faster execution (-O1).  
+Code should compile without any warnings even with _Wall_ and _pedantic_ options.  
   
 ### AssocVector library content:
 * readme          - This file (https://github.com/wo3kie/AssocVector/wiki/readme)
@@ -28,3 +31,10 @@ Author's web page   : http://www.lukaszczerwinski.pl/assoc_vector.en.html
 * perf.test.cpp   - Performance tests code.  
 * AV-LAV-IntelCeleronM-1.4GHz-1GB-c++0x         - performance test result
 * AV-LAV-IntelCore2Duo-2.5GHz-3GB-c++0x         - performance test result
+  
+  
+### Contributors
+I would like to thank you for your contributions
+- you allowed me to improve the quality of the AssocVector library:
+
+* Arkadiusz Nagórka, did a great code review and found some bugs  
