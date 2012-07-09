@@ -2498,14 +2498,6 @@ void test_reverse_iterators_base()
     av[7] = 9;
     av[2] = 4;
 
-    std::cout << av.begin() << std::endl;
-    std::cout << av.end() << std::endl;
-
-    std::cout << av.rbegin().base() << std::endl;
-    std::cout << av.rend().base() << std::endl;
-
-    std::cout << av._end() << std::endl;
-
     Map map;
     map[1] = 9;
     map[0] = 7;
