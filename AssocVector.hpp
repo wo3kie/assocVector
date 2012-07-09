@@ -1953,15 +1953,15 @@ namespace detail
 
         reference operator*()const
         {
-            return * base();
+            return * get();
         }
 
         pointer operator->()const
         {
-            return base();
+            return get();
         }
 
-        pointer base()const
+        pointer get()const
         {
             AV_PRECONDITION( _current );
             AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
@@ -2270,17 +2270,17 @@ namespace detail
         {
             AV_PRECONDITION( _current != 0 );
 
-            return * base();
+            return * get();
         }
 
         pointer operator->()const
         {
             AV_PRECONDITION( _current != 0 );
 
-            return base();
+            return get();
         }
 
-        pointer base()const
+        pointer get()const
         {
             AV_PRECONDITION( _current != 0 );
 
@@ -3986,9 +3986,9 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
         return end();
     }
 
-    // iterator::base converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
+    // iterator::get converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
     // revert real iterator type: pair< T1 const, T2 > * -> pair< T1, T2 > *
-    value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.base() );
+    value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.get() );
 
     {//erase from _buffer
         if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) )
@@ -4080,9 +4080,9 @@ template<
 bool
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_erase( iterator pos )
 {
-    // iterator::base converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
+    // iterator::get converts  : pair< T1, T2 > *       -> pair< T1 const, T2 > *
     // revert real iterator type: pair< T1 const, T2 > * -> pair< T1, T2 > *
-    value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.base() );
+    value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.get() );
 
     {//erase from _buffer
         if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) )
