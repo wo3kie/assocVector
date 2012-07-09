@@ -11,5 +11,6 @@
 * Bug Fix, 2, AssocVectorReverseIterator::base() returns wrong type (pointer), https://github.com/wo3kie/AssocVector/issues/2
 
 ### New features
-* Function added, operator<< ( ostream&, _AssocVectorItetator & )
+* Function added, operator<< ( ostream&, _AssocVectorItetator & )  
+* Method added, AssocVector::capacity()  
 

@@ -2504,6 +2504,7 @@ public:
     //
     inline bool empty()const;
     inline std::size_t size()const;
+    inline std::size_t capacity()const;
 
     //
     // insert
@@ -3126,6 +3127,18 @@ std::size_t
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::size()const
 {
     return _storage.size() + _buffer.size() - _erased.size();
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+std::size_t
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::capacity()const
+{
+    return _storage.capacity() + _buffer.capacity();
 }
 
 template<
