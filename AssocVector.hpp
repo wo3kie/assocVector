@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <type_traits>
 
 #include <cassert>
@@ -2337,7 +2338,9 @@ public:
     typedef _Mapped mapped_type;
 
     typedef value_type_key_const value_type;
+    
     typedef mapped_type & reference;
+    typedef mapped_type const & const_reference;
 
     typedef _Cmp key_compare;
     typedef _Allocator allocator_type;
@@ -2540,6 +2543,12 @@ public:
     //
     reference operator[]( key_type const & k );
 
+    //
+    // at
+    //
+    reference at( key_type const & k );
+    const_reference at( key_type const & k )const;
+    
     //
     // erase
     //
@@ -3704,6 +3713,40 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::find( _Key const & k )
             , result._current
         );
     }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reference
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::at( _Key const & k )
+{
+    _FindImplResult const result = findImpl( k );
+
+    if( result._current == 0 ){
+        throw std::out_of_range( "AssocVector::at" );
+    }
+    else
+    {
+        return * result._current;
+    }
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_reference
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::at( _Key const & k )const
+{
+    typedef AssocVector< _Key, _Mapped, _Cmp, _Allocator > * NonConstThis;
+
+    return const_cast< NonConstThis >( this )->at( k );
 }
 
 template<
