@@ -1,7 +1,7 @@
 ## AssocVector
 The AssocVector is a container similar to loki::AssocVector created by Andrei Alexandrescu. However insert and erase operations are significantly optimised _O(sqrt(N))_ vs. _O(N)_. All the others operations should not be slower.
 
-## Copyright (C) 2010 £ukasz Czerwiñski
+## Copyright (C) 2010 Lukasz Czerwinski
 
 ### Most important links:
 GitHub source code  : https://github.com/wo3kie/AssocVector  
@@ -22,10 +22,10 @@ It is recommended to build unit tests with optimization for faster execution (-O
 Code should compile without any warnings even with _Wall_ and _pedantic_ options.  
   
 ### AssocVector library content:
-* readme          - This file (https://github.com/wo3kie/AssocVector/wiki/readme)
-* license         - Full text of the BSD license (https://github.com/wo3kie/AssocVector/wiki/license)
-* changes         - The description of changes (https://github.com/wo3kie/AssocVector/wiki/changes)
-* doc             - Documentation in form of FAQ (https://github.com/wo3kie/AssocVector/wiki)
+* readme      - This file (https://github.com/wo3kie/AssocVector/wiki/readme)
+* license     - Full text of the BSD license (https://github.com/wo3kie/AssocVector/wiki/license)
+* changes     - The description of changes (https://github.com/wo3kie/AssocVector/wiki/changes)
+* doc         - Documentation in form of FAQ (https://github.com/wo3kie/AssocVector/wiki)
 * AssocVector.hpp - The core code of the AssocVector.  
 * unit.test.cpp   - Unit tests code.  
 * perf.test.cpp   - Performance tests code.  
