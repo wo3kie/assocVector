@@ -120,7 +120,7 @@ namespace util
         {
             template< typename _Ptr >
             static
-            void destroy( _Ptr, _Ptr )
+            void destroy( _Ptr, _Ptr )noexcept
             {
             }
         };
@@ -130,7 +130,7 @@ namespace util
         {
             template< typename _Ptr >
             static
-            void destroy( _Ptr first, _Ptr const last )
+            void destroy( _Ptr first, _Ptr const last )noexcept
             {
                 AV_PRECONDITION( first <= last );
 
@@ -149,7 +149,7 @@ namespace util
     template< typename _Ptr >
     inline
     void
-    destroy_range( _Ptr first, _Ptr const last )
+    destroy_range( _Ptr first, _Ptr const last )noexcept
     {
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
@@ -386,80 +386,81 @@ namespace array
         typedef _T * iterator;
         typedef _T const * const_iterator;
 
-        iterator begin(){
-            return _data;
-        }
-
-        const_iterator begin()const
+        iterator begin()noexcept
         {
             return _data;
         }
 
-        const_iterator cbegin()const
+        const_iterator begin()const noexcept
+        {
+            return _data;
+        }
+
+        const_iterator cbegin()const noexcept
         {
             return _data;
         }
         
-        iterator end()
+        iterator end()noexcept
         {
             return _data + _size;
         }
 
-        const_iterator end()const
+        const_iterator end()const noexcept
         {
             return _data + _size;
         }
 
-        const_iterator cend()const
+        const_iterator cend()const noexcept
         {
             return _data + _size;
         }
         
-        bool empty()const
+        bool empty()const noexcept
         {
             return _size == 0;
         }
 
-        bool full()const
+        bool full()const noexcept
         {
             return _size == _capacity;
         }
 
-        std::size_t size()const
+        std::size_t size()const noexcept
         {
             return _size;
         }
 
-        std::size_t getSize()const
+        std::size_t getSize()const noexcept
         {
             return size();
         }
 
-        void setSize( std::size_t newSize )
+        void setSize( std::size_t newSize ) noexcept
         {
             AV_PRECONDITION( _data != 0 || newSize == 0 );
 
             _size = newSize;
         }
 
-        std::size_t capacity()const
+        std::size_t capacity()const noexcept
         {
             return _capacity;
         }
 
-        std::size_t getCapacity()const
+        std::size_t getCapacity()const noexcept
         {
             return capacity();
         }
 
-        void setCapacity( std::size_t newCapacity )
+        void setCapacity( std::size_t newCapacity ) noexcept
         {
             AV_PRECONDITION( _data != 0 || newCapacity == 0 );
 
             _capacity = newCapacity;
         }
 
-        value_type & front()
+        value_type & front() noexcept
         {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( empty() == false );
@@ -467,7 +468,7 @@ namespace array
             return _data[ 0 ];
         }
 
-        value_type const & front()const
+        value_type const & front()const noexcept
         {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( empty() == false );
@@ -475,7 +476,7 @@ namespace array
             return _data[ 0 ];
         }
 
-        value_type & back()
+        value_type & back() noexcept
         {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( empty() == false );
@@ -483,7 +484,7 @@ namespace array
             return _data[ _size - 1 ];
         }
 
-        value_type const & back()const
+        value_type const & back()const noexcept
         {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( empty() == false );
@@ -491,32 +492,32 @@ namespace array
             return _data[ _size - 1 ];
         }
 
-        _T * const data()const
+        _T * const data()const noexcept
         {
             return _data;
         }
 
-        _T * const getData()const
+        _T * const getData()const noexcept
         {
             return data();
         }
 
-        _T * data()
+        _T * data() noexcept
         {
             return _data;
         }
 
-        _T * getData()
+        _T * getData() noexcept
         {
             return data();
         }
 
-        void setData( _T * t )
+        void setData( _T * t ) noexcept
         {
             _data = t;
         }
 
-        value_type & operator[]( std::size_t index )
+        value_type & operator[]( std::size_t index ) noexcept
         {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( index < size() );
@@ -524,7 +525,7 @@ namespace array
             return _data[ index ];
         }
 
-        value_type const & operator[]( std::size_t index )const
+        value_type const & operator[]( std::size_t index )const noexcept
         {
             AV_PRECONDITION( _data != 0 );
             AV_PRECONDITION( index < size() );
@@ -2462,7 +2463,7 @@ public:
     //
     // clear
     //
-    inline void clear();
+    inline void clear() noexcept;
 
     //
     // operator=
@@ -2474,7 +2475,7 @@ public:
     // methods
     //
     void reserve( std::size_t newCapacity );
-    void swap( AssocVector & other );
+    void swap( AssocVector & other ) noexcept;
 
     //
     // iterators
@@ -2498,9 +2499,9 @@ public:
     //
     // size
     //
-    inline bool empty()const;
-    inline std::size_t size()const;
-    inline std::size_t capacity()const;
+    inline bool empty()const noexcept;
+    inline std::size_t size()const noexcept;
+    inline std::size_t capacity()const noexcept;
 
     //
     // insert
@@ -2891,7 +2892,7 @@ template<
     , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::clear()
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::clear() noexcept
 {
     util::destroy_range( _storage.begin(), _storage.end() );
     util::destroy_range( _buffer.begin(), _buffer.end() );
@@ -3173,7 +3174,7 @@ template<
     , typename _Allocator
 >
 bool
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::empty()const
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::empty()const noexcept
 {
     return size() == 0;
 }
@@ -3185,7 +3186,7 @@ template<
     , typename _Allocator
 >
 std::size_t
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::size()const
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::size()const noexcept
 {
     return _storage.size() + _buffer.size() - _erased.size();
 }
@@ -3197,7 +3198,7 @@ template<
     , typename _Allocator
 >
 std::size_t
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::capacity()const
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::capacity()const noexcept
 {
     return _storage.capacity() + _buffer.capacity();
 }
@@ -4243,7 +4244,7 @@ template<
 void
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::swap(
     AssocVector< _Key, _Mapped, _Cmp, _Allocator > & other
-)
+) noexcept
 {
     std::swap( _storage, other._storage );
     std::swap( _buffer, other._buffer );
