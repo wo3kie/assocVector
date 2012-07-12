@@ -117,11 +117,11 @@ void checkEqual(
     AV_ASSERT_EQUAL( av.empty(), map.empty() );
     AV_ASSERT_EQUAL( av.size(), map.size() );
 
-    checkEqual( av.begin(), av.end(), map.begin(), map.end() );
-    checkEqual( av.rbegin(), av.rend(), map.rbegin(), map.rend() );
+    checkEqual( av.cbegin(), av.end(), map.cbegin(), map.cend() );
+    checkEqual( av.crbegin(), av.rend(), map.rbegin(), map.rend() );
 
-    checkEqualBackward( av.begin(), av.end(), map.begin(), map.end() );
-    checkEqualBackward( av.rbegin(), av.rend(), map.rbegin(), map.rend() );
+    checkEqualBackward( av.begin(), av.cend(), map.cbegin(), map.cend() );
+    checkEqualBackward( av.rbegin(), av.crend(), map.rbegin(), map.rend() );
 }
 
 //

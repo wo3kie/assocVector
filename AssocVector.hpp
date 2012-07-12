@@ -395,6 +395,11 @@ namespace array
             return _data;
         }
 
+        const_iterator cbegin()const
+        {
+            return _data;
+        }
+        
         iterator end()
         {
             return _data + _size;
@@ -405,6 +410,11 @@ namespace array
             return _data + _size;
         }
 
+        const_iterator cend()const
+        {
+            return _data + _size;
+        }
+        
         bool empty()const
         {
             return _size == 0;
@@ -2471,15 +2481,19 @@ public:
     //
     inline iterator begin();
     inline const_iterator begin()const;
+    inline const_iterator cbegin()const;
 
     inline reverse_iterator rbegin();
     inline const_reverse_iterator rbegin()const;
+    inline const_reverse_iterator crbegin()const;
 
     inline iterator end();
     inline const_iterator end()const;
+    inline const_iterator cend()const;
 
     inline reverse_iterator rend();
     inline const_reverse_iterator rend()const;
+    inline const_reverse_iterator crend()const;
 
     //
     // size
@@ -3026,6 +3040,18 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::cbegin()const
+{
+    return begin();
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_reverse_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::rbegin()const
 {
@@ -3038,10 +3064,10 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::end()
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_reverse_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::crbegin()const
 {
-    return iterator( this, _storage.end(), _buffer.end(), _erased.end(), 0 );
+    return rbegin();
 }
 
 template<
@@ -3050,10 +3076,10 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_end()
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::end()
 {
-    return _iterator( 0 );
+    return iterator( this, _storage.end(), _buffer.end(), _erased.end(), 0 );
 }
 
 template<
@@ -3086,10 +3112,10 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_const_iterator
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_end()const
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::cend()const
 {
-    return _const_iterator( 0 );
+    return end();
 }
 
 template<
@@ -3102,6 +3128,42 @@ typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_reverse_iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::rend()const
 {
     return const_reverse_iterator( begin() );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_reverse_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::crend()const
+{
+    return rend();
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_end()
+{
+    return _iterator( 0 );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_const_iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_end()const
+{
+    return _const_iterator( 0 );
 }
 
 template<

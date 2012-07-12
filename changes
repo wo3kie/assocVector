@@ -3,7 +3,7 @@
 ## Version 1.1.0 differs from 1.0.1 in the following ways
 
 ### Backwards compatibility break
-* C++11 is required.
+* C++11 is required
 
 ### Bug fixes
 * No
@@ -11,6 +11,9 @@
 ### New features
 * Method added, AssocVector::AssocVector( initializer_list< value_type > )
 * Method added, AssocVector::insert( initializer_list< value_type > )
+* Method added, Array::cbegin, cend
+* Method added, AssocVector::cbegin, cend
+* Method added, AssocVector::crbegin, crend
 
 ### Others
 * Minimal size for AssocVector is 8 (4+2+2) (was 8+2+2)
