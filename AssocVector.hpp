@@ -2437,6 +2437,12 @@ public:
     );
 
     AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other );
+    
+    AssocVector(
+          std::initializer_list< value_type > list
+        , _Cmp const & cmp = _Cmp()
+        , _Allocator const & allocator = _Allocator()
+    );
 
     //
     // destructor
@@ -2492,6 +2498,8 @@ public:
     template< typename _Iterator >
     inline void insert( _Iterator begin, _Iterator end );
 
+    inline void insert( std::initializer_list< value_type > list );
+    
     //
     // find
     //
@@ -2769,6 +2777,29 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
 
     array::reset( _erased );
     array::create< typename _Storage::const_iterator >( _erased, other._erased, getAllocator( _erased ) );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+      std::initializer_list< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::value_type > list
+    , _Cmp const & cmp
+    , _Allocator const & allocator
+)
+    : _cmp( cmp )
+    , _allocator( allocator )
+{
+    array::reset( _storage );
+    array::reset( _buffer );
+    array::reset( _erased );
+
+    reserve( list.size() );
+    
+    insert( list );
 }
 
 template<
@@ -3156,6 +3187,20 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
         , result._inErased
         , result._current
     );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+void
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
+    std::initializer_list< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::value_type > list
+)
+{
+    insert( list.begin(), list.end() );
 }
 
 template<

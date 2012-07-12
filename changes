@@ -9,7 +9,8 @@
 * No
 
 ### New features
-* No
+* Method added, AssocVector::AssocVector( initializer_list< value_type > )
+* Method added, AssocVector::insert( initializer_list< value_type > )
 
 ### Others
-* Minimal size for AssocVector is (4+2+2) (was 8+2+2)
+* Minimal size for AssocVector is 8 (4+2+2) (was 8+2+2)

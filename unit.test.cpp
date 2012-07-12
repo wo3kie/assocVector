@@ -1164,23 +1164,12 @@ void test_move_empty_array()
 //
 void test_move_self_copy()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
+
 
     util::move( array.begin(), array.end(), array.begin() );
 
-    std::vector< int > expected;
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 3 );
-    expected.push_back( 4 );
-    expected.push_back( 5 );
-    expected.push_back( 6 );
+    std::vector< int > expected( { 1, 2, 3, 4, 5, 6 } );
 
     AV_ASSERT( array == expected );
 }
@@ -1190,13 +1179,7 @@ void test_move_self_copy()
 //
 void test_move_between_different_containers()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
 
     std::vector< int > array2( 6, 0 );
 
@@ -1210,23 +1193,11 @@ void test_move_between_different_containers()
 //
 void test_move_overlap_less_then_half()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
 
     util::move( array.begin(), array.begin() + 3, array.begin() + 3 );
 
-    std::vector< int > expected;
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 3 );
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 3 );
+    std::vector< int > expected( { 1, 2, 3, 1, 2, 3 } );
 
     AV_ASSERT( array == expected );
 }
@@ -1236,23 +1207,11 @@ void test_move_overlap_less_then_half()
 //
 void test_move_overlap_more_than_half()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
 
     util::move( array.begin(), array.begin() + 4, array.begin() + 2 );
 
-    std::vector< int > expected;
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 3 );
-    expected.push_back( 4 );
+    std::vector< int > expected( { 1, 2, 1, 2, 3, 4 } );
 
     AV_ASSERT( array == expected );
 }
@@ -1262,23 +1221,11 @@ void test_move_overlap_more_than_half()
 //
 void test_move_overlap_copy_to_begining()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
 
     util::move( array.begin() + 2, array.end(), array.begin() );
 
-    std::vector< int > expected;
-    expected.push_back( 3 );
-    expected.push_back( 4 );
-    expected.push_back( 5 );
-    expected.push_back( 6 );
-    expected.push_back( 5 );
-    expected.push_back( 6 );
+    std::vector< int > expected( { 3, 4, 5, 6, 5, 6 } );
 
     AV_ASSERT( array == expected );
 }
@@ -1295,12 +1242,7 @@ void test_last_less_equal()
     }
 
     {
-        std::vector< int > v;
-        v.push_back( 1 );
-        v.push_back( 3 );
-        v.push_back( 5 );
-        v.push_back( 7 );
-        v.push_back( 9 );
+        std::vector< int > v( { 1, 3, 5, 7, 9 } );
 
         {
             int i = 1;
@@ -1971,6 +1913,46 @@ void test_insert_in_random_order()
 }
 
 //
+// insert_init_list
+//
+void test_insert_init_list()
+{
+    typedef AssocVector< std::string, int > AssocVector;
+
+    AssocVector av;
+    av.insert( { { "1", 1 }, { "4", 4 }, { "2", 2 }, { "5", 5 }, { "3", 3 }, { "2", 2 } } );
+
+    AV_ASSERT_EQUAL( av.size(), 5 );
+
+    AssocVector::const_iterator found;
+
+    found = av.find( "1" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "1" );
+    AV_ASSERT_EQUAL( found->second, 1 );
+
+    found = av.find( "2" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "2" );
+    AV_ASSERT_EQUAL( found->second, 2 );
+
+    found = av.find( "3" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "3" );
+    AV_ASSERT_EQUAL( found->second, 3 );
+
+    found = av.find( "4" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "4" );
+    AV_ASSERT_EQUAL( found->second, 4 );
+
+    found = av.find( "5" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "5" );
+    AV_ASSERT_EQUAL( found->second, 5 );
+}
+
+//
 // test_erase_in_increasing_order
 //
 void test_erase_in_increasing_order()
@@ -2369,6 +2351,45 @@ void test_copy_constructor()
 
     AssocVector assocVector2( assocVector1 );
     AV_ASSERT( assocVector1 == assocVector2 );
+}
+
+//
+// test_constructor_init_list
+//
+void test_constructor_init_list()
+{
+    typedef AssocVector< std::string, int > AssocVector;
+
+    AssocVector av( { { "1", 1 }, { "4", 4 }, { "2", 2 }, { "5", 5 }, { "3", 3 }, { "2", 2 } } );
+
+    AV_ASSERT_EQUAL( av.size(), 5 );
+
+    AssocVector::const_iterator found;
+
+    found = av.find( "1" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "1" );
+    AV_ASSERT_EQUAL( found->second, 1 );
+
+    found = av.find( "2" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "2" );
+    AV_ASSERT_EQUAL( found->second, 2 );
+
+    found = av.find( "3" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "3" );
+    AV_ASSERT_EQUAL( found->second, 3 );
+
+    found = av.find( "4" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "4" );
+    AV_ASSERT_EQUAL( found->second, 4 );
+
+    found = av.find( "5" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "5" );
+    AV_ASSERT_EQUAL( found->second, 5 );
 }
 
 //
@@ -3105,12 +3126,14 @@ int main( int argc, char * argv[] )
 
         test_constructor();
         test_copy_constructor();
+        test_constructor_init_list();
         test_assign_operator();
         test_clear();
 
         test_insert_in_increasing_order();
         test_insert_in_decreasing_order();
         test_insert_in_random_order();
+        test_insert_init_list();
 
         test_erase_in_increasing_order();
         test_erase_in_decreasing_order();
