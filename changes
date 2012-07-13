@@ -15,6 +15,7 @@
 * Method added, AssocVector::cbegin, cend
 * Method added, AssocVector::crbegin, crend
 * Method added, AssocVector::at( key_type )
+* Method added, AssocVector::max_size
 
 ### Others
 * Minimal size for AssocVector is 8 (4+2+2) (was 8+2+2)

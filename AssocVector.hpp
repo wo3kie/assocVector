@@ -2505,6 +2505,7 @@ public:
     inline bool empty()const noexcept;
     inline std::size_t size()const noexcept;
     inline std::size_t capacity()const noexcept;
+    inline std::size_t max_size()const noexcept;
 
     //
     // insert
@@ -3210,6 +3211,18 @@ std::size_t
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::capacity()const noexcept
 {
     return _storage.capacity() + _buffer.capacity();
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+std::size_t
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::max_size()const noexcept
+{
+    return _allocator.max_size();
 }
 
 template<
