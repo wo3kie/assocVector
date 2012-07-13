@@ -29,9 +29,9 @@
 
     unsigned const AV_TIMEOUT = 10;
 #else
-    #define AV_TEST_EXTENSIONS
+    //#define AV_TEST_EXTENSIONS
     //#define AV_TEST_VECTOR
-    #define AV_TEST_LOKI
+    //#define AV_TEST_LOKI
     //#define AV_TEST_STD_MAP
     //#define AV_TEST_BOOST_HASH
 
@@ -88,16 +88,16 @@
         } \
     }
 
-int random()
+int random( int min = 0, int max = 1024 * 1024 * 1024 )
 {
 #ifdef AV_TEST_BOOST_RANDOM
     static boost::random::mt19937 gen;
 
-    boost::random::uniform_int_distribution<> dist( 1, 1024 * 1024 * 1024 );
+    boost::random::uniform_int_distribution<> dist( min, max );
 
     return dist( gen );
 #else
-    return rand();
+    return min + ( rand() % ( max - min + 1 ) );
 #endif
 }
 
@@ -178,7 +178,7 @@ struct S3
         ++ createdObjects;
 
         for( int i = 0 ; i < 10 ; ++ i ){
-            array.push_back( rand() );
+            array.push_back( random() );
         }
     }
 
@@ -871,7 +871,7 @@ void insert_random()
         std::vector< int > array;
 
         for( unsigned j = 0 ; j < i ; ++ j )
-            array.push_back( rand() + rand() - rand() );
+            array.push_back( random() );
 
         test_insert_random< AssocVector< int, _T > >( REPS / i, array, "insert_random.AssocVector< int, " + name< _T >() + " >" );
 
@@ -953,7 +953,7 @@ void index_operator_random()
         std::vector< int > array;
 
         for( unsigned j = 0 ; j < i ; ++ j )
-            array.push_back( rand() + rand() - rand() );
+            array.push_back( random() );
 
         test_index_operator_random< AssocVector< int, _T > >( REPS / i, array, "index_operator_random.AssocVector< int, " + name< _T >() + " >" );
 
@@ -1054,7 +1054,7 @@ void erase_random()
         std::vector< int > array;
 
         for( unsigned j = 0 ; j < i ; ++ j )
-            array.push_back( rand() + rand() - rand() );
+            array.push_back( random() );
 
         test_erase_random< AssocVector< int, _T > >( REPS / i, array, "erase_random.AssocVector< int, " + name< _T >() + " >" );
 
@@ -1082,10 +1082,10 @@ void random_operations()
         std::vector< std::pair< int, int > > array;
 
         for( unsigned j = 0 ; j < i/2 ; ++ j )
-            array.push_back( std::make_pair( 0, rand() + rand() - rand() ) );
+            array.push_back( std::make_pair( 0, random() ) );
 
         for( unsigned j = i/2 ; j < i ; ++ j )
-            array.push_back( std::make_pair( rand() % 3, rand() + rand() - rand() ) );
+            array.push_back( std::make_pair( random( 0, 2 ), random() ) );
 
         test_random_operations< AssocVector< int, _T > >( REPS / i, array, "test_random_operations.AssocVector< int, " + name< _T >() + " >" );
 
@@ -1138,6 +1138,15 @@ std::string getCompilerName()
     return out.str();
 }
 
+std::string getRandomMode()
+{
+    #ifdef AV_TEST_BOOST_RANDOM
+        return "boost::random";
+    #else
+        return "rand";
+    #endif
+}
+
 void printHeader()
 {
 
@@ -1149,6 +1158,8 @@ void printHeader()
         << getCxx11Support()
         << " * "
         << getCompilerName()
+        << " * "
+        << getRandomMode()
         << " "
         << std::string( 5, '*' )
         << "\n"

@@ -9,6 +9,7 @@
 ### Bug fixes
 * Bug Fix, 1, unit.test.cpp does not compile in C++03 mode, https://github.com/wo3kie/AssocVector/issues/1  
 * Bug Fix, 2, AssocVectorReverseIterator::base() returns wrong type (pointer), https://github.com/wo3kie/AssocVector/issues/2
+* Bug Fix, 3, random function is defined but not used in perf.test.cpp, https://github.com/wo3kie/AssocVector/issues/3
 
 ### New features
 * Function added, operator<< ( ostream&, _AssocVectorItetator & )  
