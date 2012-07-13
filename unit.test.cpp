@@ -327,6 +327,11 @@ std::ostream & operator<<( std::ostream & out, S3 const & s3 )
     return out;
 }
 
+S3 createS3( int i = 0 )
+{
+    return S3( i );
+}
+
 //
 // MyAllocator
 //
@@ -372,6 +377,11 @@ struct MyAllocator
     void construct( pointer p, value_type const & v )
     {
         _alloc.construct( p, v );
+    }
+    
+    void construct( pointer p, value_type && v )
+    {
+        _alloc.construct( p, std::move( v ) );
     }
 
     void destroy( pointer p )
@@ -2990,11 +3000,11 @@ void cxx11x_move_test_1()
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter );
+        AV_ASSERT_EQUAL( S3::copies, 0 );
 
         AV av2 = std::move( av1 );
 
-        AV_ASSERT_EQUAL( S3::copies, counter );
+        AV_ASSERT_EQUAL( S3::copies, 0 );
     }
 
     AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
@@ -3025,7 +3035,9 @@ void cxx11x_move_test_2()
 
         {// insert( value_type )
             for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                av.insert( AV::value_type( i, S3() ) );
+                S3 s3;
+                
+                av.insert( AV::value_type( i, s3 ) );
             }
         }
 
@@ -3037,7 +3049,7 @@ void cxx11x_move_test_2()
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter );
+        AV_ASSERT_EQUAL( S3::copies, counter / 2 );
 
         {// find( value_type )
             for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
@@ -3045,7 +3057,7 @@ void cxx11x_move_test_2()
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter );
+        AV_ASSERT_EQUAL( S3::copies, counter / 2 );
 
         {// _find( value_type )
             for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
@@ -3053,7 +3065,7 @@ void cxx11x_move_test_2()
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter );
+        AV_ASSERT_EQUAL( S3::copies, counter / 2 );
 
         {// erase( value_type )
             for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
@@ -3061,7 +3073,7 @@ void cxx11x_move_test_2()
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter );
+        AV_ASSERT_EQUAL( S3::copies, counter / 2 );
 
         {// erase( iterator )
             for( unsigned i = counter / 2 ; i < counter ; ++ i ){
@@ -3076,22 +3088,43 @@ void cxx11x_move_test_2()
     AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
 }
 
-int main( int argc, char * argv[] )
+//
+// cxx11x_forward_test_insert
+//
+void cxx11x_forward_test_insert()
 {
-    {// new unit test framework
-        {
-            AssocVector< S1, S1 > av;
-            std::map< S1, S1 > map;
+    typedef MyAllocator< std::pair< int, S3 > > Allocator;
 
-            TestCase< S1, S1 > test( av, map );
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
 
-            test
-                >> insert( Range<>( 0, 10 + 1 ) )
-                >> erase( Range<>( 0, 5 + 1 ) )
-                >> erase( Range<>( 5, 10 + 1 ) );
+    S3::createdObjects = 0;
+    S3::destroyedObjects = 0;
+
+    S3::moves = 0;
+    S3::copies = 0;
+
+    {
+        unsigned const counter = 1024;
+
+        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        AV av;
+
+        {// insert( value_type )
+            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+                av.insert( std::move( AV::value_type( i, std::move( createS3() ) ) ) );
+            }
         }
+
+        AV_ASSERT_EQUAL( S3::copies, 0 );
     }
 
+    AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
+    AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+}
+
+int main( int argc, char * argv[] )
+{
     {
         std::cout << "Util tests..."; std::flush( std::cout );
 
@@ -3184,6 +3217,8 @@ int main( int argc, char * argv[] )
 
         cxx11x_move_test_1();
         cxx11x_move_test_2();
+        
+        cxx11x_forward_test_insert();
 
         std::cout << "OK." << std::endl;
     }

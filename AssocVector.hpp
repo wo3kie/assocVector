@@ -678,13 +678,44 @@ namespace array
         return last;
     }
 
-    template< typename _T >
+    template<
+          typename _T
+        , typename _T2
+    >
+    inline
+    void
+    insertImpl(
+          _T pos
+        , _T2 const & t
+    )
+    {
+        * pos = t;
+    }
+    
+    template<
+          typename _T
+        , typename _T2
+    >
+    inline
+    void
+    insertImpl(
+          _T pos
+        , _T2 && t
+    )
+    {
+        * pos = std::move( t );
+    }
+    
+    template<
+          typename _T
+        , typename _T2
+    >
     inline
     void
     insert(
           Array< _T > & array
         , typename Array< _T >::iterator pos
-        , _T const & t
+        , _T2 && t
     )
     {
         AV_PRECONDITION( array.size() + 1 <= array.capacity() );
@@ -696,20 +727,21 @@ namespace array
         if( pos != array.end() ){
             util::move( pos, array.end(), pos + 1 );
         }
-
-        * pos = t;
+        
+        insertImpl( pos, std::forward< _T2 >( t ) );
 
         array.setSize( array.size() + 1 );
     }
 
     template<
           typename _T
+        , typename _T2
         , typename _Cmp
     >
     std::pair< typename Array< _T >::iterator, bool >
     insert_in_sorted(
           Array< _T > & array
-        , _T const & t
+        , _T2 && t
         , _Cmp cmp
     )
     {
@@ -727,7 +759,7 @@ namespace array
             }
         }
 
-        insert( array, greaterEqual, t );
+        insert( array, greaterEqual, std::forward< _T2 >( t ) );
 
         return std::make_pair( greaterEqual, true );
     }
@@ -2512,10 +2544,16 @@ public:
     //
     std::pair< iterator, bool > insert( value_type const & value );
 
-    iterator insert( iterator hint, value_type const & value );
+    template< typename __ValueType >
+    std::pair< iterator, bool > insert( __ValueType && value );
+    
+    iterator insert( const_iterator hint, value_type const & value );
+    
+    template< typename __ValueType >
+    iterator insert( const_iterator hint, __ValueType && value );
 
     template< typename _Iterator >
-    inline void insert( _Iterator begin, _Iterator end );
+    inline void insert( _Iterator first, _Iterator last );
 
     inline void insert( std::initializer_list< value_type > list );
     
@@ -2584,6 +2622,9 @@ public:
     // extension, faster, non STL compatible version of insert
     //
     bool _insert( value_type const & value );
+    
+    template< typename __ValueType >
+    bool _insert( __ValueType && value );
 
     //
     // extension, faster, non STL compatible version of end, works with _find
@@ -2617,16 +2658,21 @@ private:
     //
     // insert
     //
-    bool tryPushBack( key_type const & k, mapped_type const & m );
+    template< typename __ValueType >
+    bool tryPushBack( __ValueType && value );
 
+    bool shouldBePushBack( value_type const & value )const;
+
+    template< typename __ValueType >
     _FindOrInsertToBufferResult
-    findOrInsertToBuffer( key_type const & k, mapped_type const & m );
+    findOrInsertToBuffer( __ValueType && value );
 
     //
     // insertImpl, function does as little as needed but returns as much data as possible
     //
+    template< typename __ValueType >
     _InsertImplResult
-    insertImpl( value_type const & value );
+    insertImpl( __ValueType && value );
 
     //
     // erase
@@ -3254,9 +3300,35 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
+template<
+    typename __ValueType
+>
+std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator, bool >
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert( __ValueType && value )
+{
+    _InsertImplResult const result = insertImpl( std::forward< __ValueType >( value ) );
+
+    return std::make_pair(
+          iterator(
+              this
+            , result._inStorage
+            , result._inBuffer
+            , result._inErased
+            , result._current
+          )
+        , result._isInserted
+    );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
-      typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator hint
+      typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator hint
     , value_type const & value
 )
 {
@@ -3264,6 +3336,35 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
     (void)(hint);
 
     _InsertImplResult const result = insertImpl( value );
+
+    return iterator(
+          this
+        , result._inStorage
+        , result._inBuffer
+        , result._inErased
+        , result._current
+    );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+template<
+    typename __ValueType
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
+      typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator hint
+    , __ValueType && value
+)
+{
+    // todo: use hint
+    (void)(hint);
+
+    _InsertImplResult const result = insertImpl( std::forward< __ValueType >( value ) );
 
     return iterator(
           this
@@ -3306,14 +3407,32 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
+template<
+    typename __ValueType
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_insert( __ValueType && value )
+{
+    return insertImpl( std::forward< __ValueType >( value ) )._isInserted;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+template<
+    typename __ValueType
+>
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_InsertImplResult
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & value )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( __ValueType && value )
 {
     _Key const & k = value.first;
     _Mapped const & m = value.second;
 
     {//push back to storage
-        if( tryPushBack( k, m ) )
+        if( tryPushBack( std::forward< __ValueType >( value ) ) )
         {
             _InsertImplResult result;
             result._isInserted = true;
@@ -3339,7 +3458,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( value_type const & v
     {//find or insert to buffer
         if( notPresentInStorage )
         {
-            _FindOrInsertToBufferResult const findOrInsertToBufferResult = findOrInsertToBuffer( k, m );
+            _FindOrInsertToBufferResult const findOrInsertToBufferResult
+                = findOrInsertToBuffer( std::forward< __ValueType >( value ) );
 
             _InsertImplResult result;
             result._isInserted = findOrInsertToBufferResult._isInserted;
@@ -3440,7 +3560,7 @@ template<
     , typename _Allocator
 >
 bool
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( _Key const & k, _Mapped const & m )
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::shouldBePushBack( value_type const & value )const
 {
     bool pushBackToStorage = false;
 
@@ -3452,7 +3572,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( _Key const & k, _Ma
             }
             else
             {
-                if( _cmp( _buffer.back().first, k ) ){
+                if( _cmp( _buffer.back().first, value.first ) ){
                     pushBackToStorage = true;
                 }
             }
@@ -3461,20 +3581,35 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( _Key const & k, _Ma
         {
             if( _buffer.empty() )
             {
-                if( _cmp( _storage.back().first, k ) ){
+                if( _cmp( _storage.back().first, value.first ) ){
                     pushBackToStorage = true;
                 }
             }
             else
             {
-                if( _cmp( _storage.back().first, k ) && _cmp( _buffer.back().first,k ) ){
+                if( _cmp( _storage.back().first, value.first ) && _cmp( _buffer.back().first, value.first ) ){
                     pushBackToStorage = true;
                 }
             }
         }
     }
 
-    if( pushBackToStorage == false ){
+    return pushBackToStorage;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+template<
+    typename __ValueType
+>
+bool
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( __ValueType && value )
+{
+    if( shouldBePushBack( value ) == false ){
         return false;
     }
 
@@ -3483,7 +3618,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( _Key const & k, _Ma
     }
 
     {//push back
-        new ( _storage.end() ) value_type_mutable( k, m );
+        getAllocator( _storage )
+            .construct( _storage.end(), std::forward< __ValueType >( value ) );
 
         _storage.setSize( _storage.size() + 1 );
     }
@@ -4359,18 +4495,18 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
+template<
+    typename __ValueType
+>
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_FindOrInsertToBufferResult
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
-      _Key const & k
-    , _Mapped const & m
-)
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer( __ValueType && value )
 {
     typename _Storage::iterator const greaterEqualInBuffer
-        = std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
+        = std::lower_bound( _buffer.begin(), _buffer.end(), value.first, value_comp() );
 
     if( greaterEqualInBuffer != _buffer.end() )
     {
-        bool const isEqual = _cmp( k, greaterEqualInBuffer->first ) == false;
+        bool const isEqual = _cmp( value.first, greaterEqualInBuffer->first ) == false;
 
         if( isEqual )
         {
@@ -4389,7 +4525,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
 
         AV_CHECK( _buffer.empty() );
 
-        array::insert( _buffer, _buffer.begin(), value_type_mutable( k, m ) );
+        array::insert(
+              _buffer
+            , _buffer.begin()
+            , value_type_mutable( std::forward< __ValueType >( value ) )
+        );
 
         _FindOrInsertToBufferResult result;
         result._inBuffer = _buffer.begin();
@@ -4402,7 +4542,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer(
     }
     else
     {
-        array::insert( _buffer, greaterEqualInBuffer, value_type_mutable( k, m ) );
+        array::insert(
+              _buffer
+            , greaterEqualInBuffer
+            , value_type_mutable( std::forward< __ValueType >( value ) )
+        );
 
         _FindOrInsertToBufferResult result;
         result._inBuffer = greaterEqualInBuffer;
