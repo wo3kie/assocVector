@@ -401,7 +401,7 @@ namespace array
         {
             return _data;
         }
-        
+
         iterator end()noexcept
         {
             return _data + _size;
@@ -416,7 +416,7 @@ namespace array
         {
             return _data + _size;
         }
-        
+
         bool empty()const noexcept
         {
             return _size == 0;
@@ -691,7 +691,7 @@ namespace array
     {
         * pos = t;
     }
-    
+
     template<
           typename _T
         , typename _T2
@@ -705,7 +705,7 @@ namespace array
     {
         * pos = std::move( t );
     }
-    
+
     template<
           typename _T
         , typename _T2
@@ -727,7 +727,7 @@ namespace array
         if( pos != array.end() ){
             util::move( pos, array.end(), pos + 1 );
         }
-        
+
         insertImpl( pos, std::forward< _T2 >( t ) );
 
         array.setSize( array.size() + 1 );
@@ -2370,7 +2370,7 @@ public:
     typedef _Mapped mapped_type;
 
     typedef value_type_key_const value_type;
-    
+
     typedef mapped_type & reference;
     typedef mapped_type const & const_reference;
 
@@ -2483,7 +2483,7 @@ public:
     );
 
     AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other );
-    
+
     AssocVector(
           std::initializer_list< value_type > list
         , _Cmp const & cmp = _Cmp()
@@ -2546,9 +2546,9 @@ public:
 
     template< typename __ValueType >
     std::pair< iterator, bool > insert( __ValueType && value );
-    
+
     iterator insert( const_iterator hint, value_type const & value );
-    
+
     template< typename __ValueType >
     iterator insert( const_iterator hint, __ValueType && value );
 
@@ -2556,7 +2556,7 @@ public:
     inline void insert( _Iterator first, _Iterator last );
 
     inline void insert( std::initializer_list< value_type > list );
-    
+
     //
     // find
     //
@@ -2587,7 +2587,7 @@ public:
     //
     reference at( key_type const & k );
     const_reference at( key_type const & k )const;
-    
+
     //
     // erase
     //
@@ -2622,7 +2622,7 @@ public:
     // extension, faster, non STL compatible version of insert
     //
     bool _insert( value_type const & value );
-    
+
     template< typename __ValueType >
     bool _insert( __ValueType && value );
 
@@ -2869,7 +2869,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     array::reset( _erased );
 
     reserve( list.size() );
-    
+
     insert( list );
 }
 
@@ -3804,7 +3804,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
         typename _Storage::iterator const greaterEqualInBuffer
             = std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
 
-        bool const isHiggsBosonFound = true; 
+        bool const isHiggsBosonFound = true;
 
         bool const presentInBuffer
             = isHiggsBosonFound
@@ -3880,7 +3880,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::at( _Key const & k )
     }
     else
     {
-        return * result._current;
+        return result._current->second;
     }
 }
 

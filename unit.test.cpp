@@ -378,7 +378,7 @@ struct MyAllocator
     {
         _alloc.construct( p, v );
     }
-    
+
     void construct( pointer p, value_type && v )
     {
         _alloc.construct( p, std::move( v ) );
@@ -740,14 +740,14 @@ struct FindErase
             {// do test
                 inAV = av.find( k );
                 inMAP = map.find( k );
-                
+
                 if( inAV == av.end() )
                 {
                     AV_CHECK( inMAP == map.end() );
-                    
+
                     continue;
                 }
-                
+
                 inAV = av.erase( inAV );
                 inMAP = map.erase( inMAP );
             }
@@ -3036,7 +3036,7 @@ void cxx11x_move_test_2()
         {// insert( value_type )
             for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
                 S3 s3;
-                
+
                 av.insert( AV::value_type( i, s3 ) );
             }
         }
@@ -3121,6 +3121,45 @@ void cxx11x_forward_test_insert()
 
     AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
     AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+}
+
+//
+// cxx11x_at_test
+//
+void cxx11x_at_test()
+{
+    typedef AssocVector< std::string, int > AssocVector;
+
+    AssocVector av;
+
+    av[ "a" ] = 1;
+    av[ "b" ] = 2;
+    av[ "c" ] = 3;
+
+    av.erase( "b" );
+
+    AV_ASSERT( av.at( "a" ) == 1 );
+    AV_ASSERT( av.at( "c" ) == 3 );
+
+    try{
+        av.at( "b" ) == 2;
+        AV_ASSERT( false );
+    }
+    catch( std::out_of_range & ){
+    }
+    catch( ... ){
+        AV_ASSERT( false );
+    }
+
+    try{
+        av.at( "d" ) == 4;
+        AV_ASSERT( false );
+    }
+    catch( std::out_of_range & ){
+    }
+    catch( ... ){
+        AV_ASSERT( false );
+    }
 }
 
 int main( int argc, char * argv[] )
@@ -3217,8 +3256,10 @@ int main( int argc, char * argv[] )
 
         cxx11x_move_test_1();
         cxx11x_move_test_2();
-        
+
         cxx11x_forward_test_insert();
+
+        cxx11x_at_test();
 
         std::cout << "OK." << std::endl;
     }
