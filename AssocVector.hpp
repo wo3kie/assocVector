@@ -2477,7 +2477,6 @@ public:
     //
     explicit AssocVector( _Cmp const & cmp = _Cmp(), _Allocator const & allocator = _Allocator() );
     explicit AssocVector( _Allocator const & allocator );
-    AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other );
 
     template< typename __InputIterator >
     AssocVector(
@@ -2487,7 +2486,17 @@ public:
         , _Allocator const & allocator = _Allocator()
     );
 
+    AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other );
+    AssocVector(
+          AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other
+        , _Allocator const & allocator
+    );
+
     AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other );
+    AssocVector(
+          AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
+        , _Allocator const & allocator
+    );
 
     AssocVector(
           std::initializer_list< value_type > list
@@ -2839,51 +2848,6 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
-    AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other
-)
-    : _cmp( other._cmp )
-    , _allocator( other._allocator )
-{
-    array::reset( _storage );
-    array::create< value_type_mutable >( _storage, other._storage, getAllocator( _storage ) );
-
-    array::reset( _buffer );
-    array::create< value_type_mutable >( _buffer, other._buffer, getAllocator( _buffer ) );
-
-    array::reset( _erased );
-    array::create< typename _Storage::const_iterator >( _erased, other._erased, getAllocator( _erased ) );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Allocator
->
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
-      std::initializer_list< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::value_type > list
-    , _Cmp const & cmp
-    , _Allocator const & allocator
-)
-    : _cmp( cmp )
-    , _allocator( allocator )
-{
-    array::reset( _storage );
-    array::reset( _buffer );
-    array::reset( _erased );
-
-    reserve( list.size() );
-
-    insert( list );
-}
-
-template<
-      typename _Key
-    , typename _Mapped
-    , typename _Cmp
-    , typename _Allocator
->
 template<
     typename __InputIterator
 >
@@ -2918,6 +2882,51 @@ template<
     , typename _Allocator
 >
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+    AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other
+)
+    : _cmp( other._cmp )
+    , _allocator( other._allocator )
+{
+    array::reset( _storage );
+    array::create< value_type_mutable >( _storage, other._storage, getAllocator( _storage ) );
+
+    array::reset( _buffer );
+    array::create< value_type_mutable >( _buffer, other._buffer, getAllocator( _buffer ) );
+
+    array::reset( _erased );
+    array::create< typename _Storage::const_iterator >( _erased, other._erased, getAllocator( _erased ) );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+      AssocVector< _Key, _Mapped, _Cmp, _Allocator > const & other
+    , _Allocator const & allocator
+)
+    : _cmp( other._cmp )
+    , _allocator( _allocator )
+{
+    array::reset( _storage );
+    array::create< value_type_mutable >( _storage, other._storage, getAllocator( _storage ) );
+
+    array::reset( _buffer );
+    array::create< value_type_mutable >( _buffer, other._buffer, getAllocator( _buffer ) );
+
+    array::reset( _erased );
+    array::create< typename _Storage::const_iterator >( _erased, other._erased, getAllocator( _erased ) );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
 )
     : _storage( other._storage )
@@ -2929,6 +2938,50 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     array::reset( other._storage );
     array::reset( other._buffer );
     array::reset( other._erased );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+      AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
+    , _Allocator const & allocator
+)
+    : _storage( other._storage )
+    , _buffer( other._buffer )
+    , _erased( other._erased )
+    , _cmp( other._cmp )
+    , _allocator( _allocator )
+{
+    array::reset( other._storage );
+    array::reset( other._buffer );
+    array::reset( other._erased );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+      std::initializer_list< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::value_type > list
+    , _Cmp const & cmp
+    , _Allocator const & allocator
+)
+    : _cmp( cmp )
+    , _allocator( allocator )
+{
+    array::reset( _storage );
+    array::reset( _buffer );
+    array::reset( _erased );
+
+    reserve( list.size() );
+
+    insert( list );
 }
 
 template<
