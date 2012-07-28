@@ -3072,25 +3072,33 @@ void cxx11x_move_test_2()
         AV av;
 
         {// insert( value_type )
-            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                Value s3;
+            for( unsigned i = 0 ; i < counter / 4 ; ++ i ){
+                S3 s3;
 
                 av.insert( AV::value_type( i, s3 ) );
             }
         }
 
-        AV_ASSERT_EQUAL( Value::copies, counter / 2 );
+        AV_ASSERT_EQUAL( S3::copies, counter / 4 );
 
         {// _insert( value_type )
-            for( unsigned i = counter / 2 ; i < counter ; ++ i ){
-                av._insert( AV::value_type( i, Value() ) );
+            for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
+                av._insert( AV::value_type( i, S3() ) );
             }
         }
 
-        AV_ASSERT_EQUAL( Value::copies, counter / 2 );
+        AV_ASSERT_EQUAL( S3::copies, counter / 4 );
 
+        {// operator[]( value_type )
+            for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
+                av[ i ] = S3();
+            }
+        }
+
+        AV_ASSERT_EQUAL( S3::copies, counter / 4 );
+        
         {// find( value_type )
-            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+            for( unsigned i = 0 ; i < counter / 4 ; ++ i ){
                 av.find( i );
             }
         }
@@ -3098,13 +3106,21 @@ void cxx11x_move_test_2()
         AV_ASSERT_EQUAL( Value::copies, counter / 2 );
 
         {// _find( value_type )
-            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+            for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
                 av._find( i );
             }
         }
 
         AV_ASSERT_EQUAL( Value::copies, counter / 2 );
 
+        {// operator[]( value_type )
+            for( unsigned i = counter / 2 ; i < counter ; ++ i ){
+                av[ i ] == i;
+            }
+        }
+
+        AV_ASSERT_EQUAL( S3::copies, counter / 2 );
+        
         {// erase( value_type )
             for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
                 av.erase( i );

@@ -2595,6 +2595,7 @@ public:
     // operator[]
     //
     reference operator[]( key_type const & k );
+    reference operator[]( key_type && k );
 
     //
     // at
@@ -4259,6 +4260,18 @@ typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reference
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator[]( key_type const & k )
 {
     return insert( value_type( k, mapped_type() ) ).first->second;
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reference
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator[]( key_type && k )
+{
+    return insert( value_type( std::move( k ), mapped_type() ) ).first->second;
 }
 
 template<
