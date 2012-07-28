@@ -3073,37 +3073,41 @@ void cxx11x_move_test_2()
 
         {// insert( value_type )
             for( unsigned i = 0 ; i < counter / 4 ; ++ i ){
-                S3 s3;
+                Value value;
 
-                av.insert( AV::value_type( i, s3 ) );
+                av.insert( AV::value_type( i, value ) );
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter / 4 );
+        AV_ASSERT_EQUAL( Key::copies, counter / 4 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
 
-        {// _insert( value_type )
+        {// insert( value_type )
             for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
-                av._insert( AV::value_type( i, S3() ) );
+                av.insert( AV::value_type( Key( i ), Value( i ) ) );
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter / 4 );
+        AV_ASSERT_EQUAL( Key::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
 
         {// operator[]( value_type )
             for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
-                av[ i ] = S3();
+                av[ i ] = Value();
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter / 4 );
-        
+        AV_ASSERT_EQUAL( Key::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
         {// find( value_type )
             for( unsigned i = 0 ; i < counter / 4 ; ++ i ){
                 av.find( i );
             }
         }
 
-        AV_ASSERT_EQUAL( Value::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Key::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
 
         {// _find( value_type )
             for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
@@ -3111,7 +3115,8 @@ void cxx11x_move_test_2()
             }
         }
 
-        AV_ASSERT_EQUAL( Value::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Key::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
 
         {// operator[]( value_type )
             for( unsigned i = counter / 2 ; i < counter ; ++ i ){
@@ -3119,15 +3124,17 @@ void cxx11x_move_test_2()
             }
         }
 
-        AV_ASSERT_EQUAL( S3::copies, counter / 2 );
-        
+        AV_ASSERT_EQUAL( Key::copies, counter );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
         {// erase( value_type )
             for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
                 av.erase( i );
             }
         }
 
-        AV_ASSERT_EQUAL( Value::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Key::copies, counter );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
 
         {// erase( iterator )
             for( unsigned i = counter / 2 ; i < counter ; ++ i ){
@@ -3135,7 +3142,8 @@ void cxx11x_move_test_2()
             }
         }
 
-        AV_ASSERT( Value::copies < 2 * counter );
+        AV_ASSERT( Key::copies <= 2 * counter );
+        AV_ASSERT( Value::copies <= 2 * counter );
     }
 
     AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );

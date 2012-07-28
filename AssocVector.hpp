@@ -4367,11 +4367,11 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     // revert real iterator type: pair< T1 const, T2 > * -> pair< T1, T2 > *
     value_type_mutable * const posBase = reinterpret_cast< value_type_mutable * >( pos.get() );
 
+    _Key const key = pos->first;
+
     {//erase from _buffer
         if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) )
         {
-            _Key const key = pos->first;
-
             array::erase( _buffer, posBase );
 
             typename _Storage::iterator const greaterEqualInStorage
@@ -4392,8 +4392,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     }
 
     {//erase from back
-        _Key const key = pos->first;
-
         _TryRemoveBackResult const result = tryRemoveStorageBack( posBase );
 
         if( result._anyItemRemoved )
@@ -4419,8 +4417,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     }
 
     {//erase from _storage
-        _Key const key = pos->first;
-
         _TryEraseFromStorageResult const result = tryEraseFromStorage( posBase );
 
         if( result._isErased == false ){
