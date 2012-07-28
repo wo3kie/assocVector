@@ -334,6 +334,9 @@ struct MyAllocator
     typedef _T & reference;
     typedef _T const & const_reference;
 
+    typedef std::size_t size_type;
+    typedef std::ptrdiff_t difference_type;
+
     MyAllocator(){}
 
     MyAllocator( MyAllocator const & other )
@@ -2285,6 +2288,31 @@ void test_user_type()
 }
 
 //
+// test_types
+//
+void test_types()
+{
+    typedef AssocVector< Key, Value > AV;
+
+    sizeof( AV::key_type );
+    sizeof( AV::mapped_type );
+    sizeof( AV::value_type );
+    sizeof( AV::key_compare );
+    sizeof( AV::value_compare );
+    sizeof( AV::allocator_type );
+    sizeof( AV::reference );
+    sizeof( AV::const_reference );
+    sizeof( AV::iterator );
+    sizeof( AV::const_iterator );
+    sizeof( AV::size_type );
+    sizeof( AV::difference_type );
+    sizeof( AV::pointer );
+    sizeof( AV::const_pointer );
+    sizeof( AV::reverse_iterator );
+    sizeof( AV::const_reverse_iterator );
+}
+
+//
 // test_constructor
 //
 void test_constructor()
@@ -3247,6 +3275,8 @@ int main( int argc, char * argv[] )
         test_operator_index();
 
         test_user_type();
+
+        test_types();
 
         std::cout << "OK." << std::endl;
     }

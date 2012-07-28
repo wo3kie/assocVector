@@ -2371,13 +2371,19 @@ public:
 
     typedef value_type_key_const value_type;
 
-    typedef mapped_type & reference;
-    typedef mapped_type const & const_reference;
+    typedef typename _Allocator::size_type size_type;
+    typedef typename _Allocator::difference_type difference_type;
+
+    typedef typename _Allocator::pointer pointer;
+    typedef typename _Allocator::const_pointer const_pointer;
 
     typedef _Cmp key_compare;
+    typedef util::CmpByFirst< value_type_mutable, _Cmp > value_compare;
+
     typedef _Allocator allocator_type;
 
-    typedef util::CmpByFirst< value_type_mutable, _Cmp > value_compare;
+    typedef mapped_type & reference;
+    typedef mapped_type const & const_reference;
 
     typedef detail::AssocVectorLazyIterator< value_type_mutable *, AssocVector > iterator;
     typedef detail::AssocVectorLazyIterator< value_type_mutable const *, AssocVector > const_iterator;
@@ -2386,7 +2392,6 @@ public:
     typedef std::reverse_iterator< const_iterator > const_reverse_iterator;
 
     typedef array::Array< value_type_mutable > _Storage;
-
     typedef array::Array< typename _Storage::const_iterator > _Erased;
 
 #ifdef AV_ENABLE_EXTENSIONS
