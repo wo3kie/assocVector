@@ -2646,6 +2646,11 @@ public:
         return value_compare( _cmp );
     }
 
+    allocator_type get_allocator()const noexcept
+    {
+        return _allocator;
+    }
+
 #ifdef AV_ENABLE_EXTENSIONS
     public:
 #else
@@ -2655,7 +2660,7 @@ public:
     //
     // extension, flatenize container, enforce merge of _storage with _erased and with _buffer
     //
-    void merge();
+    void _merge();
 
     //
     // extension, faster, non STL compatible version of insert
@@ -4327,7 +4332,7 @@ template<
     , typename _Allocator
 >
 void
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::merge()
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_merge()
 {
     if( size() > _storage.capacity() )
     {
@@ -4681,7 +4686,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findOrInsertToBuffer( __ValueTyp
 
     if( _buffer.full() )
     {
-        merge();
+        _merge();
 
         AV_CHECK( _buffer.empty() );
 

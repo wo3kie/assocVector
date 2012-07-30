@@ -4,6 +4,7 @@
 
 ### Backwards compatibility break
 * C++11 is required
+* Method renamed, AssocVector::merge renamed into AssocVector::_merge
 
 ### Bug fixes
 * No
