@@ -684,7 +684,7 @@ namespace array
     >
     inline
     void
-    insertImpl(
+    insert_impl(
           _T pos
         , _T2 const & t
     )
@@ -698,7 +698,7 @@ namespace array
     >
     inline
     void
-    insertImpl(
+    insert_impl(
           _T pos
         , _T2 && t
     )
@@ -728,7 +728,7 @@ namespace array
             util::move( pos, array.end(), pos + 1 );
         }
 
-        insertImpl( pos, std::forward< _T2 >( t ) );
+        insert_impl( pos, std::forward< _T2 >( t ) );
 
         array.setSize( array.size() + 1 );
     }
@@ -1125,7 +1125,7 @@ namespace detail
                 return false;
             }
 
-            typename _Container::_Erased::value_type
+            typename _Container::_Erased::value_type const &
             get( _Container const * container )const
             {
                 AV_PRECONDITION( _current );
@@ -1245,7 +1245,7 @@ namespace detail
                 return false;
             }
 
-            typename _Container::_Storage::value_type
+            typename _Container::_Storage::value_type const &
             get( _Container const * container )const
             {
                 AV_PRECONDITION( _current );
@@ -1536,7 +1536,7 @@ namespace detail
                 return false;
             }
 
-            typename _Container::_Storage::value_type
+            typename _Container::_Storage::value_type const &
             get( _Container const * container )const
             {
                 AV_PRECONDITION( _current );
@@ -1721,7 +1721,7 @@ namespace detail
                 return _current != 0;
             }
 
-            typename _Container::_Storage::value_type
+            typename _Container::_Storage::value_type const &
             get( _Container const * container )const
             {
                 return * _current;
@@ -2572,6 +2572,15 @@ public:
     inline void insert( std::initializer_list< value_type > list );
 
     //
+    // emplace
+    //
+    template< class... __Args >
+    std::pair< iterator, bool > emplace( __Args... args );
+
+    template< class... __Args >
+    std::pair< iterator, bool > emplace_hint( const_iterator hint, __Args... args );
+
+    //
     // find
     //
     iterator find( key_type const & k );
@@ -2676,7 +2685,10 @@ private:
     template< typename __ValueType >
     bool tryPushBack( __ValueType && value );
 
-    bool shouldBePushBack( value_type const & value )const;
+    template<
+        typename __ValueType
+    >
+    bool shouldBePushBack( __ValueType && value )const;
 
     template< typename __ValueType >
     _FindOrInsertToBufferResult
@@ -2688,6 +2700,12 @@ private:
     template< typename __ValueType >
     _InsertImplResult
     insertImpl( __ValueType && value );
+
+    //
+    // emplace_impl
+    //
+    template< class __Head, class... __Tail >
+    std::pair< iterator, bool > emplaceImpl( __Head && head, __Tail... tail );
 
     //
     // erase
@@ -3391,8 +3409,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
     , value_type const & value
 )
 {
-    // todo: use hint
-    (void)(hint);
+    ( void )( hint );
 
     _InsertImplResult const result = insertImpl( value );
 
@@ -3416,12 +3433,11 @@ template<
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
-      typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::const_iterator hint
+      const_iterator hint
     , __ValueType && value
 )
 {
-    // todo: use hint
-    (void)(hint);
+    ( void )( hint );
 
     _InsertImplResult const result = insertImpl( std::forward< __ValueType >( value ) );
 
@@ -3442,7 +3458,7 @@ template<
 >
 void
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insert(
-    std::initializer_list< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::value_type > list
+    std::initializer_list< value_type > list
 )
 {
     insert( list.begin(), list.end() );
@@ -3618,8 +3634,70 @@ template<
     , typename _Cmp
     , typename _Allocator
 >
+template<
+    class... __Args
+>
+std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator, bool >
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::emplace( __Args... args )
+{
+    return emplaceImpl( args... );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+template<
+    class... __Args
+>
+std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator, bool >
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::emplace_hint( const_iterator hint, __Args... args )
+{
+    ( void )( hint );
+
+    return emplaceImpl( args... );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+template<
+      class __Head
+    , class... __Tail
+>
+std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator, bool >
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::emplaceImpl( __Head && head, __Tail... tail )
+{
+    _InsertImplResult const result = insertImpl( value_type_mutable( key_type( head ), mapped_type( tail... ) ) );
+
+    return std::make_pair(
+          iterator(
+              this
+            , result._inStorage
+            , result._inBuffer
+            , result._inErased
+            , result._current
+          )
+        , result._isInserted
+    );
+}
+
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+template<
+    typename __ValueType
+>
 bool
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::shouldBePushBack( value_type const & value )const
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::shouldBePushBack( __ValueType && value )const
 {
     bool pushBackToStorage = false;
 
@@ -3696,7 +3774,7 @@ template<
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryRemoveBackResult
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryRemoveStorageBack(
-    typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
+    typename _Storage::iterator pos
 )
 {
     if( pos + 1 != _storage.end() )
@@ -3745,7 +3823,7 @@ template<
 >
 typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_TryEraseFromStorageResult
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryEraseFromStorage(
-    typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_Storage::iterator pos
+    typename _Storage::iterator pos
 )
 {
     std::pair< typename _Erased::iterator, bool > const insertInSortedResult

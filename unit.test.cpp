@@ -227,11 +227,12 @@ std::ostream & operator<<( std::ostream & out, Key const & s3 )
 //
 struct Value
 {
-    Value( int i = 0 )
+    Value( int i = 0, std::string const & text = "" )
     {
         ++ createdObjects;
 
         array.push_back( i );
+        this->text = text;
 
         for( int i = 1 ; i < 4 ; ++ i ){
             array.push_back( rand() );
@@ -240,6 +241,7 @@ struct Value
 
     Value( Value const & other )
         : array( other.array )
+        , text( other.text )
     {
         ++ createdObjects;
         ++ copies;
@@ -252,6 +254,7 @@ struct Value
 
     Value( Value && other )
         : array( std::move( other.array ) )
+        , text( other.text )
     {
         ++ createdObjects;
         ++ moves;
@@ -272,13 +275,16 @@ struct Value
         ++ moves;
 
         array = std::move( other.array );
+        text = other.text;
 
         return * this;
     }
 
     bool operator==( Value const & other )const
     {
-        return array[0] == other.array[0];
+        return
+               array[0] == other.array[0]
+            && text == other.text;
     }
 
     bool operator!=( Value const & other )const
@@ -297,6 +303,7 @@ struct Value
     }
 
     std::vector< int > array;
+    std::string text;
 
     static unsigned createdObjects;
     static unsigned destroyedObjects;
@@ -3234,6 +3241,56 @@ void cxx11x_at_test()
     }
 }
 
+//
+// cxx11x_emplace_test
+//
+void cxx11x_emplace_test()
+{
+    typedef AssocVector< Key, Value > AssocVector;
+
+    {
+        AssocVector av;
+
+        Key::copies = 0;
+        Value::copies = 0;
+
+        av.emplace( 1 );
+
+        AV_ASSERT_EQUAL( Key::copies, 0 );
+        AV_ASSERT_EQUAL( Value::copies, 0 );
+
+        AV_ASSERT( av.at( 1 ) == Value( 0, "" ) );
+    }
+
+    {
+        AssocVector av;
+
+        Key::copies = 0;
+        Value::copies = 0;
+
+        av.emplace( 11, 22 );
+
+        AV_ASSERT_EQUAL( Key::copies, 0 );
+        AV_ASSERT_EQUAL( Value::copies, 0 );
+
+        AV_ASSERT( av.at( 11 ) == Value( 22, "" ) );
+    }
+
+    {
+        AssocVector av;
+
+        Key::copies = 0;
+        Value::copies = 0;
+
+        av.emplace( 111, 222, "333" );
+
+        AV_ASSERT_EQUAL( Key::copies, 0 );
+        AV_ASSERT_EQUAL( Value::copies, 0 );
+
+        AV_ASSERT( av.at( 111 ) == Value( 222, "333" ) );
+    }
+}
+
 int main( int argc, char * argv[] )
 {
     {
@@ -3334,6 +3391,7 @@ int main( int argc, char * argv[] )
         cxx11x_forward_test_insert();
 
         cxx11x_at_test();
+        cxx11x_emplace_test();
 
         std::cout << "OK." << std::endl;
     }
