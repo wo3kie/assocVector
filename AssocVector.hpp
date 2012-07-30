@@ -94,9 +94,11 @@ namespace util
           typename _T1
         , typename _T2
     >
-    inline
-    bool
-    is_between( _T1 const & first, _T2 const & value, _T1 const & last )
+    inline bool is_between(
+          _T1 const & first
+        , _T2 const & value
+        , _T1 const & last
+    )
     {
         AV_PRECONDITION( first <= last );
 
@@ -148,9 +150,10 @@ namespace util
     }
 
     template< typename _Ptr >
-    inline
-    void
-    destroy_range( _Ptr first, _Ptr const last )noexcept
+    inline void destroy_range(
+          _Ptr first
+        , _Ptr const last
+    )noexcept
     {
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
@@ -165,7 +168,11 @@ namespace util
         , typename _OutputIterator
     >
     _OutputIterator
-    move_forward( _InputIterator first, _InputIterator last, _OutputIterator output )
+    move_forward(
+          _InputIterator first
+        , _InputIterator last
+        , _OutputIterator output
+    )
     {
         AV_PRECONDITION( first <= last );
 
@@ -181,7 +188,11 @@ namespace util
         , typename _OutputPtr
     >
     _OutputPtr
-    uninitialized_move_forward( _InputPtr first, _InputPtr last, _OutputPtr output )
+    uninitialized_move_forward(
+          _InputPtr first
+        , _InputPtr last
+        , _OutputPtr output
+    )
     {
         AV_PRECONDITION( first <= last );
 
@@ -202,7 +213,11 @@ namespace util
         , typename _OutputIterator
     >
     _OutputIterator
-    move_backward( _InputIterator first, _InputIterator last, _OutputIterator output )
+    move_backward(
+          _InputIterator first
+        , _InputIterator last
+        , _OutputIterator output
+    )
     {
         AV_PRECONDITION( first <= last );
 
@@ -227,9 +242,7 @@ namespace util
           typename _InputPtr
         , typename _OutputPtr
     >
-    inline
-    void
-    move(
+    inline void move(
           _InputPtr first
         , _InputPtr last
         , _OutputPtr first2
@@ -256,7 +269,12 @@ template<
     , typename _Cmp
 >
 _Iterator
-last_less_equal( _Iterator first, _Iterator last, _T const & t, _Cmp cmp )
+last_less_equal(
+      _Iterator first
+    , _Iterator last
+    , _T const & t
+    , _Cmp cmp
+)
 {
     AV_PRECONDITION( first <= last );
 
@@ -548,9 +566,7 @@ namespace array
           typename _T
         , typename _Allocator
     >
-    inline
-    Array< _T >
-    create(
+    inline Array< _T > create(
             std::size_t capacity
           , _Allocator allocator
     )
@@ -575,9 +591,7 @@ namespace array
         , typename _T2
         , typename _Allocator
     >
-    inline
-    void
-    create(
+    inline void create(
           Array< _T > & object
         , Array< _T2 > const & other
         , _Allocator allocator
@@ -596,9 +610,7 @@ namespace array
     }
 
     template< typename _T >
-    inline
-    void
-    reset( Array< _T > & array )
+    inline void reset( Array< _T > & array )
     {
         array.setData( 0 );
         array.setSize( 0 );
@@ -609,9 +621,7 @@ namespace array
           typename _T
         , typename _Allocator
     >
-    inline
-    void
-    destroy_deallocate(
+    inline void destroy_deallocate(
           Array< _T > & array
         , _Allocator allocator
     )
@@ -624,9 +634,7 @@ namespace array
           typename _T
         , typename _Allocator
     >
-    inline
-    void
-    reserve(
+    inline void reserve(
           Array< _T > & array
         , std::size_t capacity
         , _Allocator allocator
@@ -678,30 +686,14 @@ namespace array
         return last;
     }
 
-    template<
-          typename _T
-        , typename _T2
-    >
-    inline
-    void
-    insert_impl(
-          _T pos
-        , _T2 const & t
-    )
+    template< typename _T, typename _T2 >
+    inline void insert_impl( _T pos, _T2 const & t )
     {
         * pos = t;
     }
 
-    template<
-          typename _T
-        , typename _T2
-    >
-    inline
-    void
-    insert_impl(
-          _T pos
-        , _T2 && t
-    )
+    template< typename _T, typename _T2 >
+    inline void insert_impl( _T pos, _T2 && t )
     {
         * pos = std::move( t );
     }
@@ -1126,7 +1118,7 @@ namespace detail
             }
 
             typename _Container::_Erased::value_type const &
-            get( _Container const * container )const
+            get( _Container const * container )const noexcept
             {
                 AV_PRECONDITION( _current );
                 AV_PRECONDITION( is_not_end( container ) );
@@ -1135,12 +1127,12 @@ namespace detail
                 return * _current;
             }
 
-            typename _Container::_Erased::const_iterator data()const
+            typename _Container::_Erased::const_iterator data()const noexcept
             {
                 return _current;
             }
 
-            operator bool()const
+            operator bool()const noexcept
             {
                 return _current != 0;
             }
@@ -1246,7 +1238,7 @@ namespace detail
             }
 
             typename _Container::_Storage::value_type const &
-            get( _Container const * container )const
+            get( _Container const * container )const noexcept
             {
                 AV_PRECONDITION( _current );
                 AV_PRECONDITION( is_not_end( container ) );
@@ -1255,12 +1247,12 @@ namespace detail
                 return * _current;
             }
 
-            operator bool()const
+            operator bool()const noexcept
             {
                 return _current != 0;
             }
 
-            pointer_mutable data()const
+            pointer_mutable data()const noexcept
             {
                 return _current;
             }
@@ -1514,7 +1506,7 @@ namespace detail
                 );
             }
 
-            operator bool()const
+            operator bool()const noexcept
             {
                 return _current != 0;
             }
@@ -1537,7 +1529,7 @@ namespace detail
             }
 
             typename _Container::_Storage::value_type const &
-            get( _Container const * container )const
+            get( _Container const * container )const noexcept
             {
                 AV_PRECONDITION( _current );
                 AV_PRECONDITION( is_not_end( container ) );
@@ -1545,7 +1537,7 @@ namespace detail
                 return * _current;
             }
 
-            pointer_mutable data()const
+            pointer_mutable data()const noexcept
             {
                 return _current;
             }
@@ -1716,18 +1708,18 @@ namespace detail
                 }
             }
 
-            operator bool()const
+            operator bool()const noexcept
             {
                 return _current != 0;
             }
 
             typename _Container::_Storage::value_type const &
-            get( _Container const * container )const
+            get( _Container const * container )const noexcept
             {
                 return * _current;
             }
 
-            pointer_mutable data()const
+            pointer_mutable data()const noexcept
             {
                 return _current;
             }
@@ -1998,13 +1990,30 @@ namespace detail
         }
 
         // public for copy constructor only : Iterator -> ConstIterator
-        _Container const * getContainer()const{ return _container; }
+        _Container const * getContainer()const noexcept
+        {
+            return _container;
+        }
 
-        pointer_mutable getCurrentInStorage()const{ return _currentInStorage.data(); }
-        pointer_mutable getCurrentInBuffer()const{ return _currentInBuffer.data(); }
-        typename _Container::_Erased::const_iterator getCurrentInErased()const{ return _currentInErased.data(); }
+        pointer_mutable getCurrentInStorage()const noexcept
+        {
+            return _currentInStorage.data();
+        }
 
-        pointer_mutable getCurrent()const{ return _current.data(); }
+        pointer_mutable getCurrentInBuffer()const noexcept
+        {
+            return _currentInBuffer.data();
+        }
+
+        typename _Container::_Erased::const_iterator getCurrentInErased()const noexcept
+        {
+            return _currentInErased.data();
+        }
+
+        pointer_mutable getCurrent()const noexcept
+        {
+            return _current.data();
+        }
 
     private:
         /*const function*/
@@ -2315,13 +2324,13 @@ namespace detail
                 );
         }
 
-        operator bool()const
+        operator bool()const noexcept
         {
             return _current != 0;
         }
 
         // public for copy constructor only : Iterator -> ConstIterator
-        pointer_mutable getCurrent()const
+        pointer_mutable getCurrent()const noexcept
         {
             return _current;
         }
@@ -2475,8 +2484,14 @@ public:
     //
     // constructor
     //
-    explicit AssocVector( _Cmp const & cmp = _Cmp(), _Allocator const & allocator = _Allocator() );
-    explicit AssocVector( _Allocator const & allocator );
+    explicit
+    AssocVector(
+          _Cmp const & cmp = _Cmp()
+        , _Allocator const & allocator = _Allocator()
+    );
+
+    explicit
+    AssocVector( _Allocator const & allocator );
 
     template< typename __InputIterator >
     AssocVector(
