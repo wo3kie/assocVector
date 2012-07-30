@@ -3961,11 +3961,8 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
         typename _Storage::iterator const greaterEqualInBuffer
             = std::lower_bound( _buffer.begin(), _buffer.end(), k, value_comp() );
 
-        bool const isHiggsBosonFound = true;
-
         bool const presentInBuffer
-            = isHiggsBosonFound
-            && greaterEqualInBuffer != _buffer.end()
+            = greaterEqualInBuffer != _buffer.end()
             && key_comp()( k, greaterEqualInBuffer->first ) == false;
 
         if( presentInBuffer )
