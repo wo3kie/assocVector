@@ -601,12 +601,12 @@ namespace array
         AV_PRECONDITION( object.size() == 0 );
         AV_PRECONDITION( object.data() == 0 );
 
-        object = create< _T >( other.capacity(), allocator );
+        object = create< _T >( other.size(), allocator );
 
         util::uninitialized_move_forward( other.begin(), other.end(), object.begin() );
 
         object.setSize( other.size() );
-        object.setCapacity( other.capacity() );
+        object.setCapacity( other.size() );
     }
 
     template< typename _T >

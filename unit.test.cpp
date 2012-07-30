@@ -2257,6 +2257,23 @@ void test_equal_range()
 }
 
 //
+// test_shrink_to_fit
+//
+void test_shrink_to_fit()
+{
+    typedef AssocVector< Key, Value > AV;
+    AV av;
+
+    for( int i = 600 ; i > 0 ; -- i ){
+        av[ i ] = i;
+    }
+
+    AV( av ).swap( av );
+
+    AV_ASSERT_EQUAL( av.size(), av.capacity() );
+}
+
+//
 // test_operator_index
 //
 void test_operator_index()
@@ -3352,6 +3369,8 @@ int main( int argc, char * argv[] )
         test_lower_bound();
         test_upper_bound();
         test_equal_range();
+
+        test_shrink_to_fit();
 
         test_operator_index();
 
