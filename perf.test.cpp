@@ -1,24 +1,13 @@
 /*
- * Author: Lukasz Czerwinski
+ * Copyright (C) 2012 £ukasz Czerwiñski
+ *
  * GitHub: https://github.com/wo3kie/AssocVector
  * Website: http://www.lukaszczerwinski.pl/assoc_vector.en.html
+ *
+ * Distributed under the BSD Software License (see file license)
  */
 
-/*
- * AssocVector is developed under the BSD license. It is allowed to
- * distribute source, use it and modify without any limitations either
- * for personal or commercial goal. Whilst distributing source code
- * using AssocVector it is obligate to mark the author
- */
-
- /*
- * There is absolutely no guarantee that AssocVector will work without
- * any errors and that is free of any bugs. AssocVector author is not
- * responsible for any damages, mind and financial loses related with
- * AssocVector using.
- */
-
- //#define AV_UNIT_TESTS
+//#define AV_UNIT_TESTS
 
 // configuration.begin
 
@@ -29,9 +18,9 @@
 
     unsigned const AV_TIMEOUT = 10;
 #else
-    //#define AV_TEST_EXTENSIONS
+    #define AV_TEST_EXTENSIONS
     //#define AV_TEST_VECTOR
-    //#define AV_TEST_LOKI
+    #define AV_TEST_LOKI
     //#define AV_TEST_STD_MAP
     //#define AV_TEST_BOOST_HASH
 
@@ -194,14 +183,12 @@ struct S3
         ++ destroyedObjects;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     S3( S3 && other )
         : array( std::move( other.array ) )
     {
         ++ createdObjects;
         ++ moves;
     }
-#endif
 
     S3 & operator=( S3 const & other )
     {
@@ -213,7 +200,6 @@ struct S3
         return * this;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     S3 & operator=( S3 && other )
     {
         ++ moves;
@@ -222,7 +208,6 @@ struct S3
 
         return * this;
     }
-#endif
 
     bool operator==( S3 const & other )const
     {
@@ -1114,15 +1099,6 @@ std::string getTestMode()
     #endif
 }
 
-std::string getCxx11Support()
-{
-    #ifdef AV_CXX11X_RVALUE_REFERENCE
-        return "C++11";
-    #else
-        return "no C++11";
-    #endif
-}
-
 std::string getCompilerName()
 {
     std::ostringstream out;
@@ -1154,8 +1130,6 @@ void printHeader()
         << std::string( 5, '*' )
         << " "
         << getTestMode()
-        << " * "
-        << getCxx11Support()
         << " * "
         << getCompilerName()
         << " * "

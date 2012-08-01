@@ -1,22 +1,15 @@
 /*
- * Author: Lukasz Czerwinski
+ * Copyright (C) 2012 £ukasz Czerwiñski
+ *
  * GitHub: https://github.com/wo3kie/AssocVector
  * Website: http://www.lukaszczerwinski.pl/assoc_vector.en.html
+ *
+ * Distributed under the BSD Software License (see file license)
  */
 
-/*
- * AssocVector is developed under the BSD license. It is allowed to
- * distribute source, use it and modify without any limitations either
- * for personal or commercial goal. Whilst distributing source code
- * using AssocVector it is obligate to mark the author
- */
-
- /*
- * There is absolutely no guarantee that AssocVector will work without
- * any errors and that is free of any bugs. AssocVector author is not
- * responsible for any damages, mind and financial loses related with
- * AssocVector using.
- */
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
+    #error C++11 is required to run this code, please use AssocVector 1.0.x instead.
+#endif
 
 #include <cassert>
 #include <iostream>
@@ -38,48 +31,7 @@
         if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; assert( false );}
 #else
     #error Are you trying to run unit tests with assertions disabled ?
-
-    #define AV_ASSERT( expression ) (void)( expression );
-    #define AV_ASSERT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
-    #define AV_ASSERT_NOT_EQUAL( actual, expected ) (void)( actual ); (void)( expected );
 #endif
-
-#ifndef AV_CXX11X_RVALUE_REFERENCE
-    #warning Do not forget to run unit tests with C++11 as well if possible !
-#endif
-
-template< typename T, typename K >
-typename std::map< T, K >::iterator
-erase( std::map< T, K > & map, typename std::map< T, K >::iterator pos )
-{
-    typename std::map< T, K >::iterator result = map.end();
-
-    if( pos != map.end() )
-    {
-#ifdef AV_MAP_ERASE_RETURNS_ITERATOR
-        result = map.erase( pos );
-#else
-        result = pos;
-        ++ result;
-        map.erase( pos );
-#endif
-    }
-
-    return result;
-}
-
-template< typename T, typename K >
-typename AssocVector< T, K >::iterator
-erase( AssocVector< T, K > & av, typename AssocVector< T, K >::iterator pos )
-{
-    typename AssocVector< T, K >::iterator result = av.end();
-
-    if( pos != av.end() ){
-        result = av.erase( pos );
-    }
-
-    return result;
-}
 
 //
 // dump
@@ -165,124 +117,19 @@ void checkEqual(
     AV_ASSERT_EQUAL( av.empty(), map.empty() );
     AV_ASSERT_EQUAL( av.size(), map.size() );
 
-    checkEqual( av.begin(), av.end(), map.begin(), map.end() );
-    checkEqual( av.rbegin(), av.rend(), map.rbegin(), map.rend() );
+    checkEqual( av.cbegin(), av.end(), map.cbegin(), map.cend() );
+    checkEqual( av.crbegin(), av.rend(), map.rbegin(), map.rend() );
 
-    checkEqualBackward( av.begin(), av.end(), map.begin(), map.end() );
-    checkEqualBackward( av.rbegin(), av.rend(), map.rbegin(), map.rend() );
+    checkEqualBackward( av.begin(), av.cend(), map.cbegin(), map.cend() );
+    checkEqualBackward( av.rbegin(), av.crend(), map.rbegin(), map.rend() );
 }
 
 //
-// S1
+// Key
 //
-struct S1
+struct Key
 {
-    S1( int i = 0 )
-        : _i( i )
-    {
-    }
-
-    S1 & operator=( S1 const & other )
-    {
-        _i = other._i;
-
-        return * this;
-    }
-
-    bool operator==( S1 const & other )const
-    {
-        return _i == other._i;
-    }
-
-    bool operator!=( S1 const & other )const
-    {
-        return ! operator==( other );
-    }
-
-    bool operator<( S1 const & other )const
-    {
-        return _i < other._i;
-    }
-
-    int _i;
-};
-
-std::ostream & operator<<( std::ostream & out, S1 const & s1 )
-{
-    return out << s1._i;
-}
-
-//
-// S2
-//
-struct S2
-{
-    S2( int i = 0 )
-    {
-        _b = i;
-        _s = i;
-        _i = i;
-        _u = i;
-        _c = i;
-        _f = i;
-        _d = i;
-        _v = (void*)(i);
-    }
-
-    S2 & operator=( S2 const & other )
-    {
-        _b = other._b;
-        _s = other._s;
-        _i = other._i;
-        _u = other._u;
-        _c = other._c;
-        _f = other._f;
-        _d = other._d;
-        _v = other._v;
-
-        return * this;
-    }
-
-    bool operator==( S2 const & other )const
-    {
-        return
-               _b == other._b
-            && _s == other._s
-            && _i == other._i
-            && _u == other._u
-            && _c == other._c
-            && _f == other._f
-            && _d == other._d
-            && _v == other._v;
-    }
-
-    bool operator!=( S2 const & other )const
-    {
-        return ! operator==( other );
-    }
-
-    bool _b;
-    short _s;
-    int _i;
-    unsigned _u;
-    char _c;
-    float _f;
-    double _d;
-    void * _v;
-};
-
-std::ostream & operator<<( std::ostream & out, S2 const & s2 )
-{
-    return out << s2._b << ", " << s2._s << ", " << s2._i << ", " << s2._u << ", "
-        << s2._c << ", " << s2._f << ", " << s2._d << ", " << s2._v;
-}
-
-//
-// S3
-//
-struct S3
-{
-    S3( int i = 0 )
+    Key( int i = 0 )
     {
         ++ createdObjects;
 
@@ -293,39 +140,36 @@ struct S3
         }
     }
 
-    S3( S3 const & other )
+    Key( Key const & other )
         : array( other.array )
     {
         ++ createdObjects;
         ++ copies;
     }
 
-    ~S3()
+    ~Key()
     {
         ++ destroyedObjects;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
-    S3( S3 && other )
+    Key( Key && other )
         : array( std::move( other.array ) )
     {
         ++ createdObjects;
         ++ moves;
     }
-#endif
 
-    S3 & operator=( S3 const & other )
+    Key & operator=( Key const & other )
     {
         ++ copies;
 
-        S3 temp( other );
+        Key temp( other );
         this->swap( temp );
 
         return * this;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
-    S3 & operator=( S3 && other )
+    Key & operator=( Key && other )
     {
         ++ moves;
 
@@ -333,24 +177,23 @@ struct S3
 
         return * this;
     }
-#endif
 
-    bool operator==( S3 const & other )const
+    bool operator==( Key const & other )const
     {
         return array[0] == other.array[0];
     }
 
-    bool operator!=( S3 const & other )const
+    bool operator!=( Key const & other )const
     {
         return ! operator==( other );
     }
 
-    bool operator<( S3 const & other )const
+    bool operator<( Key const & other )const
     {
         return array[0] < other.array[0];
     }
 
-    void swap( S3 & other )
+    void swap( Key & other )
     {
         array.swap( other.array );
     }
@@ -364,15 +207,120 @@ struct S3
     static unsigned moves;
 };
 
-unsigned S3::createdObjects = 0;
+unsigned Key::createdObjects = 0;
 
-unsigned S3::destroyedObjects = 0;
+unsigned Key::destroyedObjects = 0;
 
-unsigned S3::copies = 0;
+unsigned Key::copies = 0;
 
-unsigned S3::moves = 0;
+unsigned Key::moves = 0;
 
-std::ostream & operator<<( std::ostream & out, S3 const & s3 )
+std::ostream & operator<<( std::ostream & out, Key const & s3 )
+{
+    dump( s3.array.begin(), s3.array.end(), out );
+
+    return out;
+}
+
+//
+// Value
+//
+struct Value
+{
+    Value( int i = 0, std::string const & text = "" )
+    {
+        ++ createdObjects;
+
+        array.push_back( i );
+        this->text = text;
+
+        for( int i = 1 ; i < 4 ; ++ i ){
+            array.push_back( rand() );
+        }
+    }
+
+    Value( Value const & other )
+        : array( other.array )
+        , text( other.text )
+    {
+        ++ createdObjects;
+        ++ copies;
+    }
+
+    ~Value()
+    {
+        ++ destroyedObjects;
+    }
+
+    Value( Value && other )
+        : array( std::move( other.array ) )
+        , text( other.text )
+    {
+        ++ createdObjects;
+        ++ moves;
+    }
+
+    Value & operator=( Value const & other )
+    {
+        ++ copies;
+
+        Value temp( other );
+        this->swap( temp );
+
+        return * this;
+    }
+
+    Value & operator=( Value && other )
+    {
+        ++ moves;
+
+        array = std::move( other.array );
+        text = other.text;
+
+        return * this;
+    }
+
+    bool operator==( Value const & other )const
+    {
+        return
+               array[0] == other.array[0]
+            && text == other.text;
+    }
+
+    bool operator!=( Value const & other )const
+    {
+        return ! operator==( other );
+    }
+
+    bool operator<( Value const & other )const
+    {
+        return array[0] < other.array[0];
+    }
+
+    void swap( Value & other )
+    {
+        array.swap( other.array );
+    }
+
+    std::vector< int > array;
+    std::string text;
+
+    static unsigned createdObjects;
+    static unsigned destroyedObjects;
+
+    static unsigned copies;
+    static unsigned moves;
+};
+
+unsigned Value::createdObjects = 0;
+
+unsigned Value::destroyedObjects = 0;
+
+unsigned Value::copies = 0;
+
+unsigned Value::moves = 0;
+
+std::ostream & operator<<( std::ostream & out, Value const & s3 )
 {
     dump( s3.array.begin(), s3.array.end(), out );
 
@@ -392,6 +340,9 @@ struct MyAllocator
 
     typedef _T & reference;
     typedef _T const & const_reference;
+
+    typedef std::size_t size_type;
+    typedef std::ptrdiff_t difference_type;
 
     MyAllocator(){}
 
@@ -424,6 +375,11 @@ struct MyAllocator
     void construct( pointer p, value_type const & v )
     {
         _alloc.construct( p, v );
+    }
+
+    void construct( pointer p, value_type && v )
+    {
+        _alloc.construct( p, std::move( v ) );
     }
 
     void destroy( pointer p )
@@ -780,8 +736,18 @@ struct FindErase
         for( _K k = _range.start() ; k != _range.end() ; k += _range.step() )
         {
             {// do test
-                inAV = erase( av, av.find( k ) );
-                inMAP = erase( map, map.find( k ) );
+                inAV = av.find( k );
+                inMAP = map.find( k );
+
+                if( inAV == av.end() )
+                {
+                    AV_CHECK( inMAP == map.end() );
+
+                    continue;
+                }
+
+                inAV = av.erase( inAV );
+                inMAP = map.erase( inMAP );
             }
 
             {// validate
@@ -1206,23 +1172,12 @@ void test_move_empty_array()
 //
 void test_move_self_copy()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
+
 
     util::move( array.begin(), array.end(), array.begin() );
 
-    std::vector< int > expected;
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 3 );
-    expected.push_back( 4 );
-    expected.push_back( 5 );
-    expected.push_back( 6 );
+    std::vector< int > expected( { 1, 2, 3, 4, 5, 6 } );
 
     AV_ASSERT( array == expected );
 }
@@ -1232,13 +1187,7 @@ void test_move_self_copy()
 //
 void test_move_between_different_containers()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
 
     std::vector< int > array2( 6, 0 );
 
@@ -1252,23 +1201,11 @@ void test_move_between_different_containers()
 //
 void test_move_overlap_less_then_half()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
 
     util::move( array.begin(), array.begin() + 3, array.begin() + 3 );
 
-    std::vector< int > expected;
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 3 );
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 3 );
+    std::vector< int > expected( { 1, 2, 3, 1, 2, 3 } );
 
     AV_ASSERT( array == expected );
 }
@@ -1278,23 +1215,11 @@ void test_move_overlap_less_then_half()
 //
 void test_move_overlap_more_than_half()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
 
     util::move( array.begin(), array.begin() + 4, array.begin() + 2 );
 
-    std::vector< int > expected;
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 1 );
-    expected.push_back( 2 );
-    expected.push_back( 3 );
-    expected.push_back( 4 );
+    std::vector< int > expected( { 1, 2, 1, 2, 3, 4 } );
 
     AV_ASSERT( array == expected );
 }
@@ -1304,23 +1229,11 @@ void test_move_overlap_more_than_half()
 //
 void test_move_overlap_copy_to_begining()
 {
-    std::vector< int > array;
-    array.push_back( 1 );
-    array.push_back( 2 );
-    array.push_back( 3 );
-    array.push_back( 4 );
-    array.push_back( 5 );
-    array.push_back( 6 );
+    std::vector< int > array( { 1, 2, 3, 4, 5, 6 } );
 
     util::move( array.begin() + 2, array.end(), array.begin() );
 
-    std::vector< int > expected;
-    expected.push_back( 3 );
-    expected.push_back( 4 );
-    expected.push_back( 5 );
-    expected.push_back( 6 );
-    expected.push_back( 5 );
-    expected.push_back( 6 );
+    std::vector< int > expected( { 3, 4, 5, 6, 5, 6 } );
 
     AV_ASSERT( array == expected );
 }
@@ -1337,12 +1250,7 @@ void test_last_less_equal()
     }
 
     {
-        std::vector< int > v;
-        v.push_back( 1 );
-        v.push_back( 3 );
-        v.push_back( 5 );
-        v.push_back( 7 );
-        v.push_back( 9 );
+        std::vector< int > v( { 1, 3, 5, 7, 9 } );
 
         {
             int i = 1;
@@ -1954,10 +1862,10 @@ void test_merge_7()
 //
 void test_insert_in_increasing_order()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 32 ) );
@@ -1968,10 +1876,10 @@ void test_insert_in_increasing_order()
 //
 void test_insert_in_decreasing_order()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 32, -1, -1 ) );
@@ -1982,10 +1890,10 @@ void test_insert_in_decreasing_order()
 //
 void test_insert_in_random_order()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( 10 )
@@ -2013,14 +1921,54 @@ void test_insert_in_random_order()
 }
 
 //
+// insert_init_list
+//
+void test_insert_init_list()
+{
+    typedef AssocVector< std::string, int > AssocVector;
+
+    AssocVector av;
+    av.insert( { { "1", 1 }, { "4", 4 }, { "2", 2 }, { "5", 5 }, { "3", 3 }, { "2", 2 } } );
+
+    AV_ASSERT_EQUAL( av.size(), 5 );
+
+    AssocVector::const_iterator found;
+
+    found = av.find( "1" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "1" );
+    AV_ASSERT_EQUAL( found->second, 1 );
+
+    found = av.find( "2" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "2" );
+    AV_ASSERT_EQUAL( found->second, 2 );
+
+    found = av.find( "3" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "3" );
+    AV_ASSERT_EQUAL( found->second, 3 );
+
+    found = av.find( "4" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "4" );
+    AV_ASSERT_EQUAL( found->second, 4 );
+
+    found = av.find( "5" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "5" );
+    AV_ASSERT_EQUAL( found->second, 5 );
+}
+
+//
 // test_erase_in_increasing_order
 //
 void test_erase_in_increasing_order()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 32 ) )
@@ -2032,10 +1980,10 @@ void test_erase_in_increasing_order()
 //
 void test_erase_in_decreasing_order()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 32, -1, -1 ) )
@@ -2047,10 +1995,10 @@ void test_erase_in_decreasing_order()
 //
 void test_erase_in_random_order()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 21 ) )
@@ -2083,10 +2031,10 @@ void test_erase_in_random_order()
 //
 void test_insert_insert()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( 1, 11 )
@@ -2105,10 +2053,10 @@ void test_insert_insert()
 //
 void test_insert_erase_erase()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 50 ) )
@@ -2129,10 +2077,10 @@ void test_insert_erase_erase()
 //
 void test_insert_erase_insert()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 50, 2 ) )
@@ -2156,10 +2104,10 @@ void test_insert_erase_insert()
 //
 void test_find()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 32, 2 ) )
@@ -2172,10 +2120,10 @@ void test_find()
 //
 void test_find_erase_find()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 32, 2 ) )
@@ -2195,10 +2143,10 @@ void test_find_erase_find()
 //
 void test_find_erase_find_insert_find()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 30, 2 ) )
@@ -2224,10 +2172,10 @@ void test_find_erase_find_insert_find()
 //
 void test_count()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 0, 30, 2 ) )
@@ -2253,10 +2201,10 @@ void test_count()
 //
 void test_lower_bound()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 30, 10, -1 ) )
@@ -2273,10 +2221,10 @@ void test_lower_bound()
 //
 void test_upper_bound()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 30, 10, -1 ) )
@@ -2293,10 +2241,10 @@ void test_upper_bound()
 //
 void test_equal_range()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> insert( Range<>( 30, 10, -1 ) )
@@ -2309,14 +2257,31 @@ void test_equal_range()
 }
 
 //
+// test_shrink_to_fit
+//
+void test_shrink_to_fit()
+{
+    typedef AssocVector< Key, Value > AV;
+    AV av;
+
+    for( int i = 600 ; i > 0 ; -- i ){
+        av[ i ] = i;
+    }
+
+    AV( av ).swap( av );
+
+    AV_ASSERT_EQUAL( av.size(), av.capacity() );
+}
+
+//
 // test_operator_index
 //
 void test_operator_index()
 {
-    AssocVector< S3, S3 > av;
-    std::map< S3, S3 > map;
+    AssocVector< Key, Value > av;
+    std::map< Key, Value > map;
 
-    TestCase< S3, S3 > test( av, map );
+    TestCase< Key, Value > test( av, map );
 
     test
         >> index_put( 1, 1 )
@@ -2337,13 +2302,38 @@ void test_operator_index()
 //
 void test_user_type()
 {
-    typedef AssocVector< S1, S3 > AssocVector;
+    typedef AssocVector< Key, Value > AssocVector;
 
     AssocVector av;
-    av.insert( AssocVector::value_type( S1(), S3() ) );
-    S3 & m = av[ S1() ];
-    av[ S1() ] = m;
-    av.find( S1() );
+    av.insert( AssocVector::value_type( Key(), Value() ) );
+    Value & m = av[ Key() ];
+    av[ Key() ] = m;
+    av.find( Key() );
+}
+
+//
+// test_types
+//
+void test_types()
+{
+    typedef AssocVector< Key, Value > AV;
+
+    sizeof( AV::key_type );
+    sizeof( AV::mapped_type );
+    sizeof( AV::value_type );
+    sizeof( AV::key_compare );
+    sizeof( AV::value_compare );
+    sizeof( AV::allocator_type );
+    sizeof( AV::reference );
+    sizeof( AV::const_reference );
+    sizeof( AV::iterator );
+    sizeof( AV::const_iterator );
+    sizeof( AV::size_type );
+    sizeof( AV::difference_type );
+    sizeof( AV::pointer );
+    sizeof( AV::const_pointer );
+    sizeof( AV::reverse_iterator );
+    sizeof( AV::const_reverse_iterator );
 }
 
 //
@@ -2411,6 +2401,45 @@ void test_copy_constructor()
 
     AssocVector assocVector2( assocVector1 );
     AV_ASSERT( assocVector1 == assocVector2 );
+}
+
+//
+// test_constructor_init_list
+//
+void test_constructor_init_list()
+{
+    typedef AssocVector< std::string, int > AssocVector;
+
+    AssocVector av( { { "1", 1 }, { "4", 4 }, { "2", 2 }, { "5", 5 }, { "3", 3 }, { "2", 2 } } );
+
+    AV_ASSERT_EQUAL( av.size(), 5 );
+
+    AssocVector::const_iterator found;
+
+    found = av.find( "1" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "1" );
+    AV_ASSERT_EQUAL( found->second, 1 );
+
+    found = av.find( "2" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "2" );
+    AV_ASSERT_EQUAL( found->second, 2 );
+
+    found = av.find( "3" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "3" );
+    AV_ASSERT_EQUAL( found->second, 3 );
+
+    found = av.find( "4" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "4" );
+    AV_ASSERT_EQUAL( found->second, 4 );
+
+    found = av.find( "5" );
+    AV_ASSERT( found != av.end() );
+    AV_ASSERT_EQUAL( found->first, "5" );
+    AV_ASSERT_EQUAL( found->second, 5 );
 }
 
 //
@@ -2686,22 +2715,22 @@ void test_iterators_increment_decrement_2()
 //
 // black_box_test
 //
-template< typename _T >
+template< typename _Key, typename _Value >
 void black_box_test( int rep )
 {
-    typedef AssocVector< int, _T > AV;
+    typedef AssocVector< _Key, _Value > AV;
     AV av;
 
-    typedef std::map< int, _T > MAP;
+    typedef std::map< _Key, _Value > MAP;
     MAP map;
 
-    TestCase< int, _T > test( av, map );
+    TestCase< _Key, _Value > test( av, map );
 
     checkEqual( av, map );
 
     int percentage = 1;
     int const progressStep = 20;
-    int const numberOfRepetitions = rep * 1024;
+    int const numberOfRepetitions = rep * 256;
 
     {//draw simple progress bar
         std::cout << "[0%.."; std::flush( std::cout );
@@ -2810,21 +2839,27 @@ void black_box_test( int rep )
 //
 void mem_leak_test_1()
 {
-    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+    typedef MyAllocator< std::pair< Key, Value > > Allocator;
 
     Allocator::notFreedMemory = 0;
     Allocator::totalMemory = 0;
 
-    S3::createdObjects = 0;
-    S3::destroyedObjects = 0;
+    Key::createdObjects = 0;
+    Key::destroyedObjects = 0;
 
-    S3::moves = 0;
-    S3::copies = 0;
+    Key::moves = 0;
+    Key::copies = 0;
+
+    Value::createdObjects = 0;
+    Value::destroyedObjects = 0;
+
+    Value::moves = 0;
+    Value::copies = 0;
 
     {
         unsigned const maxKeyValue = 512;
 
-        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        typedef AssocVector< Key, Value, std::less< Key >, Allocator > AV;
         AV av;
 
         for( int i = 0 ; i < 128 * 1024 ; ++ i )
@@ -2834,7 +2869,7 @@ void mem_leak_test_1()
             switch( operation )
             {
                 case 0:
-                    av.insert( typename AV::value_type( rand() % maxKeyValue, S3() ) );
+                    av.insert( typename AV::value_type( rand() % maxKeyValue, Value() ) );
                     break;
 
                 case 1:
@@ -2857,14 +2892,16 @@ void mem_leak_test_1()
                     break;
 
                 case 4:
-                    av[ rand() % maxKeyValue ] = S3();
+                    av[ rand() % maxKeyValue ] = Value();
                     break;
             }
         }
     }
 
     AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
-    AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+
+    AV_ASSERT_EQUAL( Key::createdObjects, Key::destroyedObjects );
+    AV_ASSERT_EQUAL( Value::createdObjects, Value::destroyedObjects );
 }
 
 //
@@ -2872,27 +2909,27 @@ void mem_leak_test_1()
 //
 void mem_leak_test_destructor()
 {
-    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+    typedef MyAllocator< std::pair< int, Value > > Allocator;
 
     Allocator::notFreedMemory = 0;
     Allocator::totalMemory = 0;
 
-    S3::createdObjects = 0;
-    S3::destroyedObjects = 0;
+    Value::createdObjects = 0;
+    Value::destroyedObjects = 0;
 
     {
         int const numberOfObjects = 1024;
 
-        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        typedef AssocVector< int, Value, std::less< int >, Allocator > AV;
         AV av;
 
         for( int i = 0 ; i < numberOfObjects ; ++ i ){
-            av.insert( AV::value_type( i, S3() ) );
+            av.insert( AV::value_type( i, Value() ) );
         }
     }
 
     AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
-    AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+    AV_ASSERT_EQUAL( Value::createdObjects, Value::destroyedObjects );
 }
 
 //
@@ -2900,26 +2937,26 @@ void mem_leak_test_destructor()
 //
 void mem_leak_test_clear()
 {
-    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+    typedef MyAllocator< std::pair< int, Value > > Allocator;
 
     Allocator::notFreedMemory = 0;
     Allocator::totalMemory = 0;
 
-    S3::createdObjects = 0;
-    S3::destroyedObjects = 0;
+    Value::createdObjects = 0;
+    Value::destroyedObjects = 0;
 
     int const numberOfObjects = 1024;
 
-    typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+    typedef AssocVector< int, Value, std::less< int >, Allocator > AV;
     AV av;
 
     for( int i = 0 ; i < numberOfObjects ; ++ i ){
-        av.insert( AV::value_type( i, S3() ) );
+        av.insert( AV::value_type( i, Value() ) );
     }
 
     av.clear();
 
-    AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+    AV_ASSERT_EQUAL( Value::createdObjects, Value::destroyedObjects );
 }
 
 //
@@ -2927,29 +2964,29 @@ void mem_leak_test_clear()
 //
 void mem_leak_test_copy_constructor()
 {
-    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+    typedef MyAllocator< std::pair< int, Value > > Allocator;
 
     Allocator::notFreedMemory = 0;
     Allocator::totalMemory = 0;
 
-    S3::createdObjects = 0;
-    S3::destroyedObjects = 0;
+    Value::createdObjects = 0;
+    Value::destroyedObjects = 0;
 
     {
         int const numberOfObjects = 1024;
 
-        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        typedef AssocVector< int, Value, std::less< int >, Allocator > AV;
         AV av;
 
         for( int i = 0 ; i < numberOfObjects ; ++ i ){
-            av.insert( AV::value_type( i, S3() ) );
+            av.insert( AV::value_type( i, Value() ) );
         }
 
         AV av2( av );
     }
 
     AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
-    AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+    AV_ASSERT_EQUAL( Value::createdObjects, Value::destroyedObjects );
 }
 
 //
@@ -2957,22 +2994,22 @@ void mem_leak_test_copy_constructor()
 //
 void mem_leak_test_assign_operator()
 {
-    typedef MyAllocator< std::pair< int, S3 > > Allocator;
+    typedef MyAllocator< std::pair< int, Value > > Allocator;
 
     Allocator::notFreedMemory = 0;
     Allocator::totalMemory = 0;
 
-    S3::createdObjects = 0;
-    S3::destroyedObjects = 0;
+    Value::createdObjects = 0;
+    Value::destroyedObjects = 0;
 
     {
         int const numberOfObjects = 1024;
 
-        typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
+        typedef AssocVector< int, Value, std::less< int >, Allocator > AV;
         AV av;
 
         for( int i = 0 ; i < numberOfObjects ; ++ i ){
-            av.insert( AV::value_type( i, S3() ) );
+            av.insert( AV::value_type( i, Value() ) );
         }
 
         AV av2;
@@ -2980,143 +3017,299 @@ void mem_leak_test_assign_operator()
     }
 
     AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
-    AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+    AV_ASSERT_EQUAL( Value::createdObjects, Value::destroyedObjects );
 }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
+//
+// cxx11x_move_test_1
+//
+void cxx11x_move_test_1()
+{
+    typedef MyAllocator< std::pair< Key, Value > > Allocator;
 
-    //
-    // cxx11x_move_test_1
-    //
-    void cxx11x_move_test_1()
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    Key::createdObjects = 0;
+    Key::destroyedObjects = 0;
+
+    Key::moves = 0;
+    Key::copies = 0;
+
+    Value::createdObjects = 0;
+    Value::destroyedObjects = 0;
+
+    Value::moves = 0;
+    Value::copies = 0;
+
     {
-        typedef MyAllocator< std::pair< int, S3 > > Allocator;
+        unsigned const counter = 1024;
 
-        Allocator::notFreedMemory = 0;
-        Allocator::totalMemory = 0;
+        typedef AssocVector< Key, Value, std::less< Key >, Allocator > AV;
+        AV av1;
 
-        S3::createdObjects = 0;
-        S3::destroyedObjects = 0;
-
-        S3::moves = 0;
-        S3::copies = 0;
-
-        {
-            unsigned const counter = 1024;
-
-            typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
-            AV av1;
-
-            {// insert( value_type )
-                for( unsigned i = 0 ; i < counter ; ++ i ){
-                    av1.insert( AV::value_type( i, S3() ) );
-                }
+        {// insert( value_type )
+            for( unsigned i = 0 ; i < counter ; ++ i ){
+                av1.insert( AV::value_type( i, Value() ) );
             }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            AV av2 = AV_MOVE( av1 );
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
         }
 
-        AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
-        AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+        AV_ASSERT_EQUAL( Value::copies, 0 );
+
+        AV av2 = std::move( av1 );
+
+        AV_ASSERT_EQUAL( Value::copies, 0 );
     }
 
-    //
-    // cxx11x_move_test_2
-    //
-    void cxx11x_move_test_2()
+    AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
+
+    AV_ASSERT_EQUAL( Key::createdObjects, Key::destroyedObjects );
+    AV_ASSERT_EQUAL( Value::createdObjects, Value::destroyedObjects );
+}
+
+//
+// cxx11x_move_test_2
+//
+void cxx11x_move_test_2()
+{
+    typedef MyAllocator< std::pair< Key, Value > > Allocator;
+
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    Key::createdObjects = 0;
+    Key::destroyedObjects = 0;
+
+    Key::moves = 0;
+    Key::copies = 0;
+
+    Value::createdObjects = 0;
+    Value::destroyedObjects = 0;
+
+    Value::moves = 0;
+    Value::copies = 0;
+
     {
-        typedef MyAllocator< std::pair< int, S3 > > Allocator;
+        unsigned const counter = 1024;
 
-        Allocator::notFreedMemory = 0;
-        Allocator::totalMemory = 0;
+        typedef AssocVector< Key, Value, std::less< Key >, Allocator > AV;
+        AV av;
 
-        S3::createdObjects = 0;
-        S3::destroyedObjects = 0;
+        {// insert( value_type )
+            for( unsigned i = 0 ; i < counter / 4 ; ++ i ){
+                Value value;
 
-        S3::moves = 0;
-        S3::copies = 0;
-
-        {
-            unsigned const counter = 1024;
-
-            typedef AssocVector< int, S3, std::less< int >, Allocator > AV;
-            AV av;
-
-            {// insert( value_type )
-                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                    av.insert( AV::value_type( i, S3() ) );
-                }
+                av.insert( AV::value_type( i, value ) );
             }
-
-            AV_ASSERT_EQUAL( S3::copies, counter / 2 );
-
-            {// _insert( value_type )
-                for( unsigned i = counter / 2 ; i < counter ; ++ i ){
-                    av._insert( AV::value_type( i, S3() ) );
-                }
-            }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            {// find( value_type )
-                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                    av.find( i );
-                }
-            }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            {// _find( value_type )
-                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                    av._find( i );
-                }
-            }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            {// erase( value_type )
-                for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
-                    av.erase( i );
-                }
-            }
-
-            AV_ASSERT_EQUAL( S3::copies, counter );
-
-            {// erase( iterator )
-                for( unsigned i = counter / 2 ; i < counter ; ++ i ){
-                    av.erase( av.find( i ) );
-                }
-            }
-
-            AV_ASSERT( S3::copies < 2 * counter );
         }
 
-        AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
-        AV_ASSERT_EQUAL( S3::createdObjects, S3::destroyedObjects );
+        AV_ASSERT_EQUAL( Key::copies, counter / 4 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
+        {// insert( value_type )
+            for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
+                av.insert( AV::value_type( Key( i ), Value( i ) ) );
+            }
+        }
+
+        AV_ASSERT_EQUAL( Key::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
+        {// operator[]( value_type )
+            for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
+                av[ i ] = Value();
+            }
+        }
+
+        AV_ASSERT_EQUAL( Key::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
+        {// find( value_type )
+            for( unsigned i = 0 ; i < counter / 4 ; ++ i ){
+                av.find( i );
+            }
+        }
+
+        AV_ASSERT_EQUAL( Key::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
+        {// _find( value_type )
+            for( unsigned i = counter / 4 ; i < counter / 2 ; ++ i ){
+                av._find( i );
+            }
+        }
+
+        AV_ASSERT_EQUAL( Key::copies, counter / 2 );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
+        {// operator[]( value_type )
+            for( unsigned i = counter / 2 ; i < counter ; ++ i ){
+                av[ i ] == i;
+            }
+        }
+
+        AV_ASSERT_EQUAL( Key::copies, counter );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
+        {// erase( value_type )
+            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+                av.erase( i );
+            }
+        }
+
+        AV_ASSERT_EQUAL( Key::copies, counter );
+        AV_ASSERT_EQUAL( Value::copies, counter / 4 );
+
+        {// erase( iterator )
+            for( unsigned i = counter / 2 ; i < counter ; ++ i ){
+                av.erase( av.find( i ) );
+            }
+        }
+
+        AV_ASSERT( Key::copies <= 2 * counter );
+        AV_ASSERT( Value::copies <= 2 * counter );
     }
 
-#endif
+    AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
+
+    AV_ASSERT_EQUAL( Key::createdObjects, Key::destroyedObjects );
+    AV_ASSERT_EQUAL( Value::createdObjects, Value::destroyedObjects );
+}
+
+//
+// cxx11x_forward_test_insert
+//
+void cxx11x_forward_test_insert()
+{
+    typedef MyAllocator< std::pair< Key, Value > > Allocator;
+
+    Allocator::notFreedMemory = 0;
+    Allocator::totalMemory = 0;
+
+    Key::createdObjects = 0;
+    Key::destroyedObjects = 0;
+
+    Key::moves = 0;
+    Key::copies = 0;
+
+    Value::createdObjects = 0;
+    Value::destroyedObjects = 0;
+
+    Value::moves = 0;
+    Value::copies = 0;
+
+    {
+        unsigned const counter = 1024;
+
+        typedef AssocVector< Key, Value, std::less< Key >, Allocator > AV;
+        AV av;
+
+        {// insert( value_type )
+            for( unsigned i = 0 ; i < counter / 2 ; ++ i ){
+                av.insert( std::move( AV::value_type( i, std::move( Value() ) ) ) );
+            }
+        }
+
+        AV_ASSERT_EQUAL( Value::copies, 0 );
+    }
+
+    AV_ASSERT_EQUAL( Allocator::notFreedMemory, 0 );
+
+    AV_ASSERT_EQUAL( Key::createdObjects, Key::destroyedObjects );
+    AV_ASSERT_EQUAL( Value::createdObjects, Value::destroyedObjects );
+}
+
+//
+// cxx11x_at_test
+//
+void cxx11x_at_test()
+{
+    typedef AssocVector< std::string, int > AssocVector;
+
+    AssocVector av;
+
+    av[ "a" ] = 1;
+    av[ "b" ] = 2;
+    av[ "c" ] = 3;
+
+    av.erase( "b" );
+
+    AV_ASSERT( av.at( "a" ) == 1 );
+    AV_ASSERT( av.at( "c" ) == 3 );
+
+    try{
+        av.at( "b" ) == 2;
+        AV_ASSERT( false );
+    }
+    catch( std::out_of_range & ){
+    }
+    catch( ... ){
+        AV_ASSERT( false );
+    }
+
+    try{
+        av.at( "d" ) == 4;
+        AV_ASSERT( false );
+    }
+    catch( std::out_of_range & ){
+    }
+    catch( ... ){
+        AV_ASSERT( false );
+    }
+}
+
+//
+// cxx11x_emplace_test
+//
+void cxx11x_emplace_test()
+{
+    typedef AssocVector< Key, Value > AssocVector;
+
+    {
+        AssocVector av;
+
+        Key::copies = 0;
+        Value::copies = 0;
+
+        av.emplace( 1 );
+
+        AV_ASSERT_EQUAL( Key::copies, 0 );
+        AV_ASSERT_EQUAL( Value::copies, 0 );
+
+        AV_ASSERT( av.at( 1 ) == Value( 0, "" ) );
+    }
+
+    {
+        AssocVector av;
+
+        Key::copies = 0;
+        Value::copies = 0;
+
+        av.emplace( 11, 22 );
+
+        AV_ASSERT_EQUAL( Key::copies, 0 );
+        AV_ASSERT_EQUAL( Value::copies, 0 );
+
+        AV_ASSERT( av.at( 11 ) == Value( 22, "" ) );
+    }
+
+    {
+        AssocVector av;
+
+        Key::copies = 0;
+        Value::copies = 0;
+
+        av.emplace( 111, 222, "333" );
+
+        AV_ASSERT_EQUAL( Key::copies, 0 );
+        AV_ASSERT_EQUAL( Value::copies, 0 );
+
+        AV_ASSERT( av.at( 111 ) == Value( 222, "333" ) );
+    }
+}
 
 int main( int argc, char * argv[] )
 {
-    {// new unit test framework
-        {
-            AssocVector< S1, S1 > av;
-            std::map< S1, S1 > map;
-
-            TestCase< S1, S1 > test( av, map );
-
-            test
-                >> insert( Range<>( 0, 10 + 1 ) )
-                >> erase( Range<>( 0, 5 + 1 ) )
-                >> erase( Range<>( 5, 10 + 1 ) );
-        }
-    }
-
     {
         std::cout << "Util tests..."; std::flush( std::cout );
 
@@ -3151,12 +3344,14 @@ int main( int argc, char * argv[] )
 
         test_constructor();
         test_copy_constructor();
+        test_constructor_init_list();
         test_assign_operator();
         test_clear();
 
         test_insert_in_increasing_order();
         test_insert_in_decreasing_order();
         test_insert_in_random_order();
+        test_insert_init_list();
 
         test_erase_in_increasing_order();
         test_erase_in_decreasing_order();
@@ -3175,9 +3370,13 @@ int main( int argc, char * argv[] )
         test_upper_bound();
         test_equal_range();
 
+        test_shrink_to_fit();
+
         test_operator_index();
 
         test_user_type();
+
+        test_types();
 
         std::cout << "OK." << std::endl;
     }
@@ -3202,16 +3401,19 @@ int main( int argc, char * argv[] )
         std::cout << "OK." << std::endl;
     }
 
-#ifdef AV_CXX11X_RVALUE_REFERENCE
     {
         std::cout << "C++11x tests..."; std::flush( std::cout );
 
         cxx11x_move_test_1();
         cxx11x_move_test_2();
 
+        cxx11x_forward_test_insert();
+
+        cxx11x_at_test();
+        cxx11x_emplace_test();
+
         std::cout << "OK." << std::endl;
     }
-#endif
 
     {
         std::cout << "Memory tests..."; std::flush( std::cout );
@@ -3230,9 +3432,7 @@ int main( int argc, char * argv[] )
 
         int rep = argc == 2 ? atoi( argv[1] ) : 16;
 
-        black_box_test< S1 >( rep );
-        black_box_test< S2 >( rep );
-        black_box_test< S3 >( rep );
+        black_box_test< Key, Value >( rep );
 
         std::cout << "OK." << std::endl;
     }
