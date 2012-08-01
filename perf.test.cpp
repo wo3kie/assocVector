@@ -18,9 +18,9 @@
 
     unsigned const AV_TIMEOUT = 10;
 #else
-    //#define AV_TEST_EXTENSIONS
+    #define AV_TEST_EXTENSIONS
     //#define AV_TEST_VECTOR
-    //#define AV_TEST_LOKI
+    #define AV_TEST_LOKI
     //#define AV_TEST_STD_MAP
     //#define AV_TEST_BOOST_HASH
 
