@@ -1,7 +1,7 @@
 ## AssocVector
-The AssocVector is a container similar to loki::AssocVector created by Andrei Alexandrescu. However insert and erase operations are significantly optimised O(sqrt(N)) vs. O(N). All the others operations should not be slower.
+The AssocVector is sorted vector, however insert and erase operations are significantly optimised O(sqrt(N)) vs. O(N). All the others operations should not be slower.
 
-## Copyright (C) 2012 £ukasz Czerwiñski
+## Copyright (C) 2012 Lukasz Czerwinski
 
 ### Most important links:
 GitHub source code  : https://github.com/wo3kie/AssocVector  
@@ -37,4 +37,4 @@ Code should compile without any warnings even with Wall and pedantic options.
 I would like to thank you for your contributions
 - you allowed me to improve the quality of the AssocVector library:
 
-* Arkadiusz NagÃ³rka, did a great code review and found some bugs  
+* Arkadiusz Nagorka, did a great code review and found some bugs  
