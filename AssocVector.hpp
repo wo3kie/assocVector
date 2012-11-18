@@ -41,10 +41,10 @@
 #endif
 
 #ifdef AV_DEBUG
-    #define AV_PRECONDITION( condition )    if( (bool)( condition ) == false ){int*i=0;*i=0;}
-    #define AV_CHECK( condition )           if( (bool)( condition ) == false ){int*i=0;*i=0;}
-    #define AV_POSTCONDITION( condition )   if( (bool)( condition ) == false ){int*i=0;*i=0;}
-    #define AV_ERROR()                      if( true )                        {int*i=0;*i=0;}
+    #define AV_PRECONDITION( condition )    if( (bool)( condition ) == false ){abort();}
+    #define AV_CHECK( condition )           if( (bool)( condition ) == false ){abort();}
+    #define AV_POSTCONDITION( condition )   if( (bool)( condition ) == false ){abort();}
+    #define AV_ERROR()                      if( (true)                       ){abort();}
 #else
     #define AV_PRECONDITION( condition )    (void)( 0 );
     #define AV_CHECK( condition )           (void)( 0 );
@@ -88,6 +88,51 @@ namespace util
 namespace util
 {
     //
+    // equal
+    //
+    template<
+          typename _T1
+        , typename _T2
+    >
+    inline bool equal(
+          _T1 const & first
+        , _T2 const & second
+    )
+    {
+        if( first < second ){
+            return false;
+        }
+
+        if( second < first ){
+            return false;
+        }
+
+        return true;
+    }
+
+    //
+    // less_equal
+    //
+    template<
+          typename _T1
+        , typename _T2
+    >
+    inline bool less_equal(
+          _T1 const & first
+        , _T2 const & second
+    )
+    {
+        if( first < second ){
+            return true;
+        }
+
+        return ( second < first ) == false;
+    }
+}
+
+namespace util
+{
+    //
     // is_between
     //
     template<
@@ -100,7 +145,7 @@ namespace util
         , _T1 const & last
     )
     {
-        AV_PRECONDITION( first <= last );
+        AV_PRECONDITION( less_equal( first, last ) );
 
         return ( value < first ) == false && ( last < value ) == false;
     }
@@ -123,7 +168,7 @@ namespace util
         {
             template< typename _Ptr >
             static
-            void destroy( _Ptr, _Ptr )noexcept
+            void destroy( _Ptr, _Ptr )
             {
             }
         };
@@ -133,16 +178,13 @@ namespace util
         {
             template< typename _Ptr >
             static
-            void destroy( _Ptr first, _Ptr const last )noexcept
+            void destroy( _Ptr first, _Ptr const last )
             {
-                AV_PRECONDITION( first <= last );
+                AV_PRECONDITION( less_equal( first, last ) );
 
                 typedef typename std::iterator_traits< _Ptr >::value_type T;
 
-                for( /*empty*/ ; first != last ; ++ first )
-                {
-                    AV_CHECK( first != 0 );
-
+                for( /*empty*/ ; first != last ; ++ first ){
                     first -> T::~T();
                 }
             }
@@ -153,7 +195,7 @@ namespace util
     inline void destroy_range(
           _Ptr first
         , _Ptr const last
-    )noexcept
+    )
     {
         typedef typename std::iterator_traits< _Ptr >::value_type T;
 
@@ -164,31 +206,11 @@ namespace util
 namespace util
 {
     template<
-          typename _InputIterator
-        , typename _OutputIterator
-    >
-    _OutputIterator
-    move_forward(
-          _InputIterator first
-        , _InputIterator last
-        , _OutputIterator output
-    )
-    {
-        AV_PRECONDITION( first <= last );
-
-        for( /*empty*/ ; first != last ; ++ output , ++ first ){
-            * output = std::move( * first );
-        }
-
-        return output;
-    }
-
-    template<
           typename _InputPtr
         , typename _OutputPtr
     >
     _OutputPtr
-    uninitialized_move_forward(
+    uninitialized_move(
           _InputPtr first
         , _InputPtr last
         , _OutputPtr output
@@ -208,33 +230,6 @@ namespace util
         return output;
     }
 
-    template<
-          typename _InputIterator
-        , typename _OutputIterator
-    >
-    _OutputIterator
-    move_backward(
-          _InputIterator first
-        , _InputIterator last
-        , _OutputIterator output
-    )
-    {
-        AV_PRECONDITION( first <= last );
-
-        while( first != last )
-        {
-            -- output;
-            -- last;
-
-            * output = std::move( * last );
-        }
-
-        return output;
-    }
-}
-
-namespace util
-{
     //
     // move
     //
@@ -249,10 +244,10 @@ namespace util
     )
     {
         if( first < first2 ){
-            util::move_backward( first, last, first2 + ( last - first ) );
+            std::move_backward( first, last, first2 + ( last - first ) );
         }
         else if( first > first2 ){
-            util::move_forward( first, last, first2 );
+            std::move( first, last, first2 );
         }
         else{
             // first == first2 -> do nothing
@@ -276,7 +271,7 @@ last_less_equal(
     , _Cmp cmp
 )
 {
-    AV_PRECONDITION( first <= last );
+    AV_PRECONDITION( less_equal( first, last ) );
 
     if( first == last ){
         return last;
@@ -317,37 +312,6 @@ last_less_equal(
 
         return -- greaterEqual;
     }
-}
-
-}
-
-namespace util
-{
-
-template<
-      typename _InputIterator
-    , typename _Cmp
->
-bool is_sorted(
-      _InputIterator first
-    , _InputIterator const last
-    , _Cmp const & cmp
-)
-{
-    if( std::distance( first, last ) < 2 ){
-        return true;
-    }
-
-    _InputIterator second = first;
-
-    for( ++ second ; second != last ; ++ first, ++ second )
-    {
-        if( cmp( * first, * second ) == false ){
-            return false;
-        }
-    }
-
-    return true;
 }
 
 }
@@ -603,7 +567,7 @@ namespace array
 
         object = create< _T >( other.size(), allocator );
 
-        util::uninitialized_move_forward( other.begin(), other.end(), object.begin() );
+        util::uninitialized_move( other.begin(), other.end(), object.begin() );
 
         object.setSize( other.size() );
         object.setCapacity( other.size() );
@@ -648,7 +612,7 @@ namespace array
 
         Array< _T > newArray = array::create< _T >( capacity, allocator );
 
-        util::uninitialized_move_forward( array.begin(), array.end(), newArray.begin() );
+        util::uninitialized_move( array.begin(), array.end(), newArray.begin() );
 
         array::destroy_deallocate( array, allocator );
 
@@ -669,7 +633,7 @@ namespace array
         , _Cmp cmp
     )
     {
-        AV_PRECONDITION( first <= last );
+        AV_PRECONDITION( util::less_equal( first, last ) );
 
         _Iterator const greaterEqual = std::lower_bound( first, last, t, cmp );
 
@@ -960,11 +924,11 @@ move_merge_into_uninitialized(
     }
 
     if( first1 == last1 ){
-        return uninitialized_move_forward( first2, last2, output );
+        return uninitialized_move( first2, last2, output );
     }
 
     if( first2 == last2 ){
-        return uninitialized_move_forward( first1, last1, output );
+        return uninitialized_move( first1, last1, output );
     }
 
     return output;
@@ -2098,7 +2062,13 @@ namespace detail
                 // found in storage, not found in erased
 
                 AV_CHECK( _currentInStorage.validate( _container ) );
-                AV_CHECK( std::binary_search( _container->erased().begin(), _container->erased().end(), _currentInStorage.data() ) == false );
+                AV_CHECK(
+                    std::binary_search(
+                          _container->erased().begin()
+                        , _container->erased().end()
+                        , _currentInStorage.data()
+                    ) == false
+                );
                 AV_CHECK( _currentInErased.validate( _container ) );
                 AV_CHECK( _current == _currentInStorage );
 
@@ -3693,7 +3663,8 @@ template<
 std::pair< typename AssocVector< _Key, _Mapped, _Cmp, _Allocator >::iterator, bool >
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::emplaceImpl( __Head && head, __Tail... tail )
 {
-    _InsertImplResult const result = insertImpl( value_type_mutable( key_type( head ), mapped_type( tail... ) ) );
+    _InsertImplResult const result
+        = insertImpl( value_type_mutable( key_type( head ), mapped_type( tail... ) ) );
 
     return std::make_pair(
           iterator(
@@ -3744,7 +3715,9 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::shouldBePushBack( __ValueType &&
             }
             else
             {
-                if( _cmp( _storage.back().first, value.first ) && _cmp( _buffer.back().first, value.first ) ){
+                if(  _cmp( _storage.back().first, value.first )
+                  && _cmp( _buffer.back().first, value.first )
+                ){
                     pushBackToStorage = true;
                 }
             }
@@ -3928,7 +3901,10 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::findImpl( _Key const & k )
 
             bool const itemNotMarkedAsErased
                 = greaterEqualInErased == _erased.end()
-                || std::less< typename _Storage::const_iterator >()( greaterEqualInStorage, * greaterEqualInErased );
+                || std::less< typename _Storage::const_iterator >()(
+                         greaterEqualInStorage
+                       , * greaterEqualInErased
+                   );
 
             if( itemNotMarkedAsErased )
             {
@@ -4230,7 +4206,7 @@ template<
 bool
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateStorage()const
 {
-    if( util::is_sorted( _storage.begin(), _storage.end(), value_comp() ) == false )
+    if( std::is_sorted( _storage.begin(), _storage.end(), value_comp() ) == false )
     {
         AV_ERROR();
 
@@ -4253,7 +4229,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateBuffer()const
         return true;
     }
 
-    if( util::is_sorted( _buffer.begin(), _buffer.end(), value_comp() ) == false )
+    if( std::is_sorted( _buffer.begin(), _buffer.end(), value_comp() ) == false )
     {
         AV_ERROR();
 
@@ -4292,7 +4268,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateErased()const
     }
 
     if(
-        util::is_sorted(
+        std::is_sorted(
               _erased.begin()
             , _erased.end()
             , std::less< typename _Storage::const_iterator >()
