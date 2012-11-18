@@ -1858,6 +1858,45 @@ void test_merge_7()
 }
 
 //
+// test_empty_container
+//
+void test_empty_container_impl( AssocVector< Key, Value > const & av )
+{
+    AV_ASSERT( av.empty() );
+    AV_ASSERT_EQUAL( av.size(), 0 );
+    AV_ASSERT_EQUAL( av.capacity(), 4 /*storage*/ + 2 /*buffer*/ );
+
+    AV_ASSERT( av.begin() == av.end() );
+    AV_ASSERT( av.cbegin() == av.cend() );
+    AV_ASSERT( av.rbegin() == av.rend() );
+    AV_ASSERT( av.crbegin() == av.crend() );
+}
+
+void test_empty_container()
+{
+    {
+        AssocVector< Key, Value > av;
+
+        test_empty_container_impl( av );
+    }
+
+    {
+        std::allocator< std::pair< Key, Value > > allocator;
+        AssocVector< Key, Value > av( allocator );
+
+        test_empty_container_impl( av );
+    }
+
+    {
+        std::less< Key > cmp;
+        std::allocator< std::pair< Key, Value > > allocator;
+        AssocVector< Key, Value > av( cmp, allocator );
+
+        test_empty_container_impl( av );
+    }
+}
+
+//
 // test_insert_in_increasing_order
 //
 void test_insert_in_increasing_order()
@@ -3347,6 +3386,8 @@ int main( int argc, char * argv[] )
         test_constructor_init_list();
         test_assign_operator();
         test_clear();
+
+        test_empty_container();
 
         test_insert_in_increasing_order();
         test_insert_in_decreasing_order();
