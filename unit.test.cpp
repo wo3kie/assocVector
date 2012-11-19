@@ -21,14 +21,23 @@
 #include "AssocVector.hpp"
 
 #ifdef AV_DEBUG
-    #define AV_ASSERT( expression )\
+    #define _CORE_DUMP()\
+        { int * core_dump = 0; * core_dump = 0; }
+
+    #define _AV_ASSERT_CORE_DUMP( expression )\
+        if( ( expression ) ){}else{ _CORE_DUMP() }
+
+    #define _AV_ASSERT( expression )\
         assert( expression )
 
+    #define AV_ASSERT( expression )\
+        _AV_ASSERT_CORE_DUMP( expression )
+
     #define AV_ASSERT_EQUAL( actual, expected )\
-        if( ( actual ) != ( expected ) ){ std::cout << "(" << actual << ") == " << expected << std::endl; assert( false );}
+        if( ( actual ) != ( expected ) ){ std::cout << "(" << actual << ") == " << expected << std::endl; AV_ASSERT( false );}
 
     #define AV_ASSERT_NOT_EQUAL( actual, expected )\
-        if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; assert( false );}
+        if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; AV_ASSERT( false );}
 #else
     #error Are you trying to run unit tests with assertions disabled ?
 #endif
@@ -1860,31 +1869,33 @@ void test_merge_7()
 //
 // test_empty_container
 //
-void test_empty_container_impl( AssocVector< Key, Value > const & av )
-{
-    AV_ASSERT( av.empty() );
-    AV_ASSERT_EQUAL( av.size(), 0 );
-    AV_ASSERT_EQUAL( av.capacity(), 4 /*storage*/ + 2 /*buffer*/ );
-
-    AV_ASSERT( av.begin() == av.end() );
-    AV_ASSERT( av.cbegin() == av.cend() );
-    AV_ASSERT( av.rbegin() == av.rend() );
-    AV_ASSERT( av.crbegin() == av.crend() );
-}
-
 void test_empty_container()
 {
     {
         AssocVector< Key, Value > av;
 
-        test_empty_container_impl( av );
+        AV_ASSERT( av.empty() );
+        AV_ASSERT_EQUAL( av.size(), 0 );
+        AV_ASSERT_EQUAL( av.capacity(), 0 );
+
+        AV_ASSERT( av.begin() == av.end() );
+        AV_ASSERT( av.cbegin() == av.cend() );
+        AV_ASSERT( av.rbegin() == av.rend() );
+        AV_ASSERT( av.crbegin() == av.crend() );
     }
 
     {
         std::allocator< std::pair< Key, Value > > allocator;
         AssocVector< Key, Value > av( allocator );
 
-        test_empty_container_impl( av );
+        AV_ASSERT( av.empty() );
+        AV_ASSERT_EQUAL( av.size(), 0 );
+        AV_ASSERT_EQUAL( av.capacity(), 0 );
+
+        AV_ASSERT( av.begin() == av.end() );
+        AV_ASSERT( av.cbegin() == av.cend() );
+        AV_ASSERT( av.rbegin() == av.rend() );
+        AV_ASSERT( av.crbegin() == av.crend() );
     }
 
     {
@@ -1892,7 +1903,46 @@ void test_empty_container()
         std::allocator< std::pair< Key, Value > > allocator;
         AssocVector< Key, Value > av( cmp, allocator );
 
-        test_empty_container_impl( av );
+        AV_ASSERT( av.empty() );
+        AV_ASSERT_EQUAL( av.size(), 0 );
+        AV_ASSERT_EQUAL( av.capacity(), 0 );
+
+        AV_ASSERT( av.begin() == av.end() );
+        AV_ASSERT( av.cbegin() == av.cend() );
+        AV_ASSERT( av.rbegin() == av.rend() );
+        AV_ASSERT( av.crbegin() == av.crend() );
+    }
+}
+
+//
+// test_empty_container_push_back
+//
+void test_empty_container_push_back()
+{
+    AssocVector< Key, Value > av;
+
+    {
+        av[ 2 ] = 2;
+
+        AV_ASSERT( av.bufferSize() <= av.bufferCapacity() );
+        AV_ASSERT( av.storageSize() <= av.storageCapacity() );
+        AV_ASSERT( av.erasedSize() <= av.erasedCapacity() );
+    }
+
+    {
+        av[ 1 ] = 1;
+
+        AV_ASSERT( av.bufferSize() <= av.bufferCapacity() );
+        AV_ASSERT( av.storageSize() <= av.storageCapacity() );
+        AV_ASSERT( av.erasedSize() <= av.erasedCapacity() );
+    }
+
+    {
+        av[ 3 ] = 3;
+
+        AV_ASSERT( av.bufferSize() <= av.bufferCapacity() );
+        AV_ASSERT( av.storageSize() <= av.storageCapacity() );
+        AV_ASSERT( av.erasedSize() <= av.erasedCapacity() );
     }
 }
 
@@ -3388,6 +3438,7 @@ int main( int argc, char * argv[] )
         test_clear();
 
         test_empty_container();
+        test_empty_container_push_back();
 
         test_insert_in_increasing_order();
         test_insert_in_decreasing_order();

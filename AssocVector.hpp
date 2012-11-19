@@ -41,10 +41,10 @@
 #endif
 
 #ifdef AV_DEBUG
-    #define AV_PRECONDITION( condition )    if( (bool)( condition ) == false ){abort();}
-    #define AV_CHECK( condition )           if( (bool)( condition ) == false ){abort();}
-    #define AV_POSTCONDITION( condition )   if( (bool)( condition ) == false ){abort();}
-    #define AV_ERROR()                      if( (true)                       ){abort();}
+    #define AV_PRECONDITION( condition )    if( (bool)( condition ) == false ){int*i=0;*i=0;}
+    #define AV_CHECK( condition )           if( (bool)( condition ) == false ){int*i=0;*i=0;}
+    #define AV_POSTCONDITION( condition )   if( (bool)( condition ) == false ){int*i=0;*i=0;}
+    #define AV_ERROR()                      if( (true)                       ){int*i=0;*i=0;}
 #else
     #define AV_PRECONDITION( condition )    (void)( 0 );
     #define AV_CHECK( condition )           (void)( 0 );
@@ -516,6 +516,21 @@ namespace array
             return _data[ index ];
         }
 
+        template< typename __T2 >
+        void place_back( __T2 && value )
+        {
+            AV_CHECK( _data );
+            AV_CHECK( _capacity > 0 );
+            AV_CHECK( _size < _capacity );
+
+            //getAllocator( _storage )
+            //    .construct( _storage.end(), std::forward< __T2 >( value ) );
+
+            new ( _data + _size ) _T( std::forward< __T2 >( value ) );
+
+            _size += 1;
+        }
+
     private:
         _T * _data;
 
@@ -728,6 +743,7 @@ namespace array
         , typename Array< _T >::iterator pos
     )
     {
+        AV_PRECONDITION( array.empty() == false );
         AV_PRECONDITION( array.begin() <= pos );
         AV_PRECONDITION( pos < array.end() );
 
@@ -1773,6 +1789,15 @@ namespace detail
                 // _current <- get it right now
                 _current.setLower( _currentInStorage, _currentInBuffer, _container );
             }
+            else
+            if( ! _currentInStorage && ! _currentInBuffer && ! _currentInErased && !_current )
+            {
+                // begin iterator on empty AssocVector
+                // end iterator on empty AssocVector
+
+                // return, do not make validation
+                return;
+            }
 
             AV_POSTCONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
             AV_POSTCONDITION( _currentInStorage || _currentInBuffer );
@@ -1796,7 +1821,12 @@ namespace detail
 
         bool operator==( AssocVectorLazyIterator const & other )const
         {
-            resolveLazyValues();
+            this->resolveLazyValues();
+            other.resolveLazyValues();
+
+            if( isEmpty() && other.isEmpty() ){
+                return getContainer() == other.getContainer();
+            }
 
             AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
 
@@ -1805,15 +1835,16 @@ namespace detail
 
         bool operator!=( AssocVectorLazyIterator const & other )const
         {
-            resolveLazyValues();
-
-            AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
+            this->resolveLazyValues();
+            other.resolveLazyValues();
 
             return ! ( ( * this ) == other );
         }
 
         AssocVectorLazyIterator & operator++()
         {
+            AV_PRECONDITION( isEmpty() == false );
+
             resolveLazyValues();
 
             AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
@@ -1849,6 +1880,8 @@ namespace detail
 
         AssocVectorLazyIterator & operator--()
         {
+            AV_PRECONDITION( isEmpty() == false );
+
             resolveLazyValues();
 
             AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
@@ -1938,6 +1971,7 @@ namespace detail
 
         pointer get()const
         {
+            AV_PRECONDITION( isEmpty() == false );
             AV_PRECONDITION( _current );
             AV_PRECONDITION( _current.validate( _currentInStorage, _currentInBuffer, _container ) );
 
@@ -1980,6 +2014,24 @@ namespace detail
         }
 
     private:
+        bool isEmpty()const
+        {
+            if( _currentInStorage ){
+                return false;
+            }
+            if( _currentInBuffer ){
+                return false;
+            }
+            if( _currentInErased ){
+                return false;
+            }
+            if( _current ){
+                return false;
+            }
+
+            return true;
+        }
+
         /*const function*/
         static
         void
@@ -2116,6 +2168,12 @@ namespace detail
 
                 // _currentInStorage <- check against _currentInErased
                 // _current <- get it right now
+            }
+            else
+            if( ! _currentInStorage && ! _currentInBuffer && ! _currentInErased && !_current )
+            {
+                // begin iterator on empty AssocVector
+                // end iterator on empty AssocVector
             }
             else
             {
@@ -2673,11 +2731,9 @@ private:
     // insert
     //
     template< typename __ValueType >
-    bool tryPushBack( __ValueType && value );
+    void pushBack( __ValueType && value );
 
-    template<
-        typename __ValueType
-    >
+    template< typename __ValueType >
     bool shouldBePushBack( __ValueType && value )const;
 
     template< typename __ValueType >
@@ -2827,10 +2883,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     array::reset( _storage );
     array::reset( _buffer );
     array::reset( _erased );
-
-    std::size_t const defaultSize = 2 * 2;
-
-    reserve( defaultSize );
 }
 
 template<
@@ -2845,10 +2897,6 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector( _Allocator const & 
     array::reset( _storage );
     array::reset( _buffer );
     array::reset( _erased );
-
-    std::size_t const defaultSize = 2 * 2;
-
-    reserve( defaultSize );
 }
 
 template<
@@ -2869,16 +2917,21 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     : _cmp( cmp )
     , _allocator( allocator )
 {
+    AV_PRECONDITION( std::distance( first, last ) >= 0 );
+
     array::reset( _storage );
     array::reset( _buffer );
     array::reset( _erased );
 
-    std::size_t const defaultSize = 2 * 2;
+    std::size_t const size = std::distance( first, last );
 
-    reserve( defaultSize );
+    if( size > 0 )
+    {
+        reserve( size );
 
-    for( /*empty*/ ; first != last ; ++ first ){
-        insert( * first );
+        for( /*empty*/ ; first != last ; ++ first ){
+            insert( * first );
+        }
     }
 
     AV_POSTCONDITION( validate() );
@@ -3497,14 +3550,22 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( __ValueType && value
     _Mapped const & m = value.second;
 
     {//push back to storage
-        if( tryPushBack( std::forward< __ValueType >( value ) ) )
+        if( shouldBePushBack( value ) )
         {
+            pushBack( std::forward< __ValueType >( value ) );
+
             _InsertImplResult result;
+
+            {
+                AV_CHECK( _storage.empty() == false );
+
+                result._inStorage = ( _storage.end() - 1 );
+                result._current = ( _storage.end() - 1 );
+            }
+
             result._isInserted = true;
-            result._inStorage = ( _storage.end() - 1 );
             result._inBuffer = 0;
             result._inErased = _erased.end();
-            result._current = ( _storage.end() - 1 );
 
             AV_POSTCONDITION( result.validate() );
             AV_POSTCONDITION( validate() );
@@ -3736,27 +3797,33 @@ template<
 template<
     typename __ValueType
 >
-bool
-AssocVector< _Key, _Mapped, _Cmp, _Allocator >::tryPushBack( __ValueType && value )
+void
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::pushBack( __ValueType && value )
 {
-    if( shouldBePushBack( value ) == false ){
-        return false;
-    }
+    while( _storage.size() == _storage.capacity() ){
+        // one call of 'reserve' may be not enough
 
-    if( _storage.size() == _storage.capacity() ){
+        // size=1                       size=2
+        // capacity=1                   capacity=2
+        // S:[a]                        S:[ab]
+        // B:[b]        -> reserve ->   B:[ ]
+        // E:[ ]                        E:[ ]
+
         reserve( calculateNewStorageCapacity( _storage.capacity() ) );
     }
 
     {//push back
-        getAllocator( _storage )
-            .construct( _storage.end(), std::forward< __ValueType >( value ) );
+        _storage.place_back( std::forward< __ValueType >( value ) );
 
-        _storage.setSize( _storage.size() + 1 );
+        //AV_CHECK( _storage.size() < _storage.capacity() );
+
+        //getAllocator( _storage )
+        //    .construct( _storage.end(), std::forward< __ValueType >( value ) );
+
+        //_storage.setSize( _storage.size() + 1 );
     }
 
     AV_POSTCONDITION( validate() );
-
-    return true;
 }
 
 template<
@@ -4206,6 +4273,13 @@ template<
 bool
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateStorage()const
 {
+    if( _storage.size() > _storage.capacity() )
+    {
+        AV_ERROR();
+
+        return false;
+    }
+
     if( std::is_sorted( _storage.begin(), _storage.end(), value_comp() ) == false )
     {
         AV_ERROR();
@@ -4225,6 +4299,13 @@ template<
 bool
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateBuffer()const
 {
+    if( _buffer.size() > _buffer.capacity() )
+    {
+        AV_ERROR();
+
+        return false;
+    }
+
     if( _buffer.empty() ){
         return true;
     }
@@ -4263,6 +4344,13 @@ template<
 bool
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validateErased()const
 {
+    if( _erased.size() > _erased.capacity() )
+    {
+        AV_ERROR();
+
+        return false;
+    }
+
     if( _erased.empty() ){
         return true;
     }
@@ -4733,7 +4821,12 @@ std::size_t AssocVector< _Key, _Mapped, _Cmp, _Allocator >::calculateNewStorageC
     std::size_t storageSize
 )
 {
-    return 2 * storageSize;
+    if( storageSize == 0 ){
+        return 1;
+    }
+    else{
+        return 2 * storageSize;
+    }
 }
 
 template<
