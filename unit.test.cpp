@@ -2221,20 +2221,11 @@ void test_equal_range()
 }
 
 //
-// test_shrink_to_fit
+// test_swap
 //
-void test_shrink_to_fit()
+void test_swap()
 {
-    typedef AssocVector< Key, Value > AV;
-    AV av;
-
-    for( int i = 600 ; i > 0 ; -- i ){
-        av[ i ] = i;
-    }
-
-    AV( av ).swap( av );
-
-    AV_ASSERT_EQUAL( av.size(), av.capacity() );
+    // todo
 }
 
 //
@@ -3337,7 +3328,7 @@ int main( int argc, char * argv[] )
         test_upper_bound();
         test_equal_range();
 
-        test_shrink_to_fit();
+        test_swap();
 
         test_operator_index();
 
@@ -3369,17 +3360,17 @@ int main( int argc, char * argv[] )
     }
 
     {
-        //std::cout << "C++11x tests..."; std::flush( std::cout );
+        std::cout << "C++11x tests..."; std::flush( std::cout );
 
-        //cxx11x_move_test_1();
-        //cxx11x_move_test_2();
+        cxx11x_move_test_1();
+        cxx11x_move_test_2();
 
-        //cxx11x_forward_test_insert();
+        cxx11x_forward_test_insert();
 
-        //cxx11x_at_test();
-        //xx11x_emplace_test();
+        cxx11x_at_test();
+        cxx11x_emplace_test();
 
-        //std::cout << "OK." << std::endl;
+        std::cout << "OK." << std::endl;
     }
 
     {

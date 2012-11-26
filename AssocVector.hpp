@@ -122,10 +122,6 @@ namespace util
         , _T2 const & second
     )
     {
-        if( first < second ){
-            return true;
-        }
-
         return ( second < first ) == false;
     }
 }
@@ -205,31 +201,6 @@ namespace util
 
 namespace util
 {
-    template<
-          typename _InputPtr
-        , typename _OutputPtr
-    >
-    _OutputPtr
-    uninitialized_move(
-          _InputPtr first
-        , _InputPtr last
-        , _OutputPtr output
-    )
-    {
-        AV_PRECONDITION( first <= last );
-
-        for( /*empty*/ ; first != last ; ++output, ++first )
-        {
-            AV_CHECK( first != 0 );
-            AV_CHECK( output != 0 );
-
-            new ( static_cast< void * >(  output ) )
-                typename std::iterator_traits< _OutputPtr >::value_type( std::move( * first ) );
-        }
-
-        return output;
-    }
-
     //
     // move
     //
@@ -380,11 +351,11 @@ namespace array
 
             ArrayImpl( std::size_t capacity, _Alloc const & alloc = _Alloc() )
                 : _Alloc( alloc )
-                , _data( this->allocate( capacity ) )
+                , _data( capacity ? this->allocate( capacity ) : nullptr )
                 , _capacity( capacity )
                 , _size( 0 )
             {
-                AV_PRECONDITION( _capacity < alloc.max_size() );
+                AV_PRECONDITION( _capacity < this->max_size() );
             }
 
             ~ArrayImpl()
@@ -469,14 +440,24 @@ namespace array
         }
 
         Array( Array const & other )
-            : Base( other.size(), other.get_allocator() )
+            // In std::vector new vector's capacity is equal to old vector's size.
+            // Array's capacity is equal to old array's capacity to ensure invariant that:
+            // sqrt( storage.capacity ) == buffer.capacity
+            // sqrt( storage.capacity ) == erased.capacity
+            : Base( other.capacity(), other.get_allocator() )
         {
-            for( /*empty*/ ; this->_impl._size < this->_impl._capacity ; ++ this->_impl._size ){
+            for( /*empty*/ ; this->_impl._size < other.size() ; ++ this->_impl._size ){
                 get_allocator().construct(
                       this->_impl._data + this->_impl._size
                     , * ( other._impl._data + this->_impl._size )
                 );
             }
+        }
+
+        Array( Array && other )
+            : Base( 0, other.get_allocator() )
+        {
+            this->_impl.swap( other._impl );
         }
 
         ~Array() = default;
@@ -490,6 +471,13 @@ namespace array
             return * this;
         }
 
+        Array & operator=( Array && other )
+        {
+            this->_impl.swap( other._impl );
+
+            return * this;
+        }
+
         void swap( Array & other )
         {
             this->_impl.swap( other._impl );
@@ -497,15 +485,19 @@ namespace array
 
         void reserve( std::size_t capacity )
         {
-            AV_PRECONDITION( capacity <= get_allocator().max_size() );
+            AV_PRECONDITION( util::less_equal( capacity, get_allocator().max_size() ) );
 
-            if( capacity <= getCapacity() ){
+            if( util::less_equal( capacity, getCapacity() ) ){
                 return;
             }
 
             Array< _T, _Alloc > temp( capacity, get_allocator() );
 
-            util::uninitialized_move( begin(), end(), temp.begin() );
+            std::uninitialized_copy(
+                  std::make_move_iterator( begin() )
+                , std::make_move_iterator( end() )
+                , temp.begin()
+            );
 
             swap( temp );
         }
@@ -547,7 +539,7 @@ namespace array
 
         bool full()const noexcept
         {
-            return getSize() == getCapacity();
+            return size() == capacity();
         }
 
         std::size_t size()const noexcept
@@ -652,11 +644,11 @@ namespace array
             , _T2 && t
         )
         {
-            AV_PRECONDITION( size() + 1 <= getCapacity() );
+            AV_PRECONDITION( util::less_equal( size() + 1, capacity() ) );
             AV_PRECONDITION( util::is_between( begin(), pos, end() ) );
 
             AV_PRECONDITION( end() != 0 );
-            new ( static_cast< void * >( end() ) ) _T();
+            get_allocator().construct( end() );
 
             if( pos != end() ){
                 util::move( pos, end(), pos + 1 );
@@ -667,16 +659,31 @@ namespace array
             setSize( getSize() + 1 );
         }
 
+        // Array::push_back is not implemented to ensure invariant that:
+        // sqrt( storage.capacity ) == buffer.capacity
+        // sqrt( storage.capacity ) == erased.capacity
         template< typename __T2 >
         void place_back( __T2 && value )
         {
             AV_CHECK( getData() );
-            AV_CHECK( getCapacity() > 0 );
-            AV_CHECK( getSize() < getCapacity() );
+            AV_CHECK( capacity() > 0 );
+            AV_CHECK( getSize() < capacity() );
 
             get_allocator().construct( end(), std::forward< __T2 >( value ) );
 
             setSize( getSize() + 1 );
+        }
+
+        void
+        erase( typename Array< _T >::iterator pos )
+        {
+            AV_PRECONDITION( empty() == false );
+            AV_PRECONDITION( util::less_equal( begin(), pos ) );
+            AV_PRECONDITION( pos < end() );
+
+            util::move( pos + 1, end(), pos );
+            get_allocator().destroy( end() - 1 );
+            setSize( size() - 1 );
         }
 
     private:
@@ -702,7 +709,7 @@ namespace array
         , typename _Cmp
     >
     _Iterator
-    find_in_sorted(
+    binary_search(
           _Iterator first
         , _Iterator last
         , _T const & t
@@ -729,33 +736,6 @@ namespace array
     template<
           typename _T
         , typename _T2
-    >
-    inline
-    void
-    insert(
-          Array< _T > & array
-        , typename Array< _T >::iterator pos
-        , _T2 && t
-    )
-    {
-        AV_PRECONDITION( array.size() + 1 <= array.capacity() );
-        AV_PRECONDITION( util::is_between( array.begin(), pos, array.end() ) );
-        AV_PRECONDITION( array.end() != 0 );
-
-        new ( static_cast< void * >( array.end() ) ) _T();
-
-        if( pos != array.end() ){
-            util::move( pos, array.end(), pos + 1 );
-        }
-
-        * pos = std::move( std::forward< _T2 >( t ) );
-
-        array.setSize( array.size() + 1 );
-    }
-
-    template<
-          typename _T
-        , typename _T2
         , typename _Cmp
     >
     std::pair< typename Array< _T >::iterator, bool >
@@ -765,7 +745,7 @@ namespace array
         , _Cmp cmp
     )
     {
-        AV_PRECONDITION( array.size() + 1 <= array.capacity() );
+        AV_PRECONDITION( util::less_equal( array.size() + 1, array.capacity() ) );
 
         typename Array< _T >::iterator const greaterEqual
             = std::lower_bound( array.begin(), array.end(), t, cmp );
@@ -785,30 +765,13 @@ namespace array
     }
 
     template< typename _T >
-    inline
-    void
-    erase(
-          Array< _T > & array
-        , typename Array< _T >::iterator pos
-    )
-    {
-        AV_PRECONDITION( array.empty() == false );
-        AV_PRECONDITION( array.begin() <= pos );
-        AV_PRECONDITION( pos < array.end() );
-
-        util::move( pos + 1, array.end(), pos );
-        ( array.end() - 1 )-> ~_T();
-        array.setSize( array.size() - 1 );
-    }
-
-    template< typename _T >
     void
     erase_removed(
           array::Array< _T > & storage
         , array::Array< typename array::Array< _T >::const_iterator > const & erased
     )
     {
-        AV_PRECONDITION( storage.size() >= erased.size() );
+        AV_PRECONDITION( util::less_equal( erased.size(), storage.size() ) );
 
         if( erased.empty() ){
             return;
@@ -866,7 +829,7 @@ namespace array
         , _Cmp const & cmp = _Cmp()
     )
     {
-        AV_PRECONDITION( storage.size() + buffer.size() <= storage.capacity() );
+        AV_PRECONDITION( util::less_equal( storage.size() + buffer.size(), storage.capacity() ) );
 
         typedef typename array::Array< _T >::iterator Iterator;
 
@@ -961,8 +924,8 @@ move_merge_into_uninitialized(
     , _Cmp cmp = _Cmp()
 )
 {
-    AV_PRECONDITION( first1 <= last1 );
-    AV_PRECONDITION( first2 <= last2 );
+    AV_PRECONDITION( util::less_equal( first1, last1 ) );
+    AV_PRECONDITION( util::less_equal( first2, last2 ) );
 
     while( first1 != last1 && first2 != last2 )
     {
@@ -989,11 +952,19 @@ move_merge_into_uninitialized(
     }
 
     if( first1 == last1 ){
-        return uninitialized_move( first2, last2, output );
+        return std::uninitialized_copy(
+              std::make_move_iterator( first2 )
+            , std::make_move_iterator( last2 )
+            , output
+        );
     }
 
     if( first2 == last2 ){
-        return uninitialized_move( first1, last1, output );
+        return std::uninitialized_copy(
+              std::make_move_iterator( first1 )
+            , std::make_move_iterator( last1 )
+            , output
+        );
     }
 
     return output;
@@ -2584,11 +2555,11 @@ public:
         , _Allocator const & allocator
     );
 
-    //AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other );
-    //AssocVector(
-    //      AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
-    //    , _Allocator const & allocator
-    //);
+    AssocVector( AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other );
+    AssocVector(
+         AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
+       , _Allocator const & allocator
+    );
 
     AssocVector(
           std::initializer_list< value_type > list
@@ -2610,7 +2581,7 @@ public:
     // operator=
     //
     AssocVector & operator=( AssocVector const & other );
-    //AssocVector & operator=( AssocVector && other );
+    AssocVector & operator=( AssocVector && other );
 
     //
     // methods
@@ -3003,38 +2974,38 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
 {
 }
 
-// template<
-      // typename _Key
-    // , typename _Mapped
-    // , typename _Cmp
-    // , typename _Allocator
-// >
-// AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
-    // AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
-// )
-    // : _storage( other._storage )
-    // , _buffer( other._buffer )
-    // , _erased( other._erased )
-    // , _cmp( other._cmp )
-// {
-// }
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+    AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
+)
+    : _storage( std::move( other._storage ) )
+    , _buffer( std::move( other._buffer ) )
+    , _erased( std::move( other._erased ) )
+    , _cmp( other._cmp )
+{
+}
 
-// template<
-      // typename _Key
-    // , typename _Mapped
-    // , typename _Cmp
-    // , typename _Allocator
-// >
-// AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
-      // AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
-    // , _Allocator const & allocator
-// )
-    // : _storage( other._storage )
-    // , _buffer( other._buffer )
-    // , _erased( other._erased )
-    // , _cmp( other._cmp )
-// {
-// }
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
+      AssocVector< _Key, _Mapped, _Cmp, _Allocator > && other
+    , _Allocator const & allocator
+)
+    : _storage( std::move( other._storage ) )
+    , _buffer( std::move( other._buffer ) )
+    , _erased( std::move( other._erased ) )
+    , _cmp( other._cmp )
+{
+}
 
 template<
       typename _Key
@@ -3096,20 +3067,21 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator=( AssocVector const & o
     return * this;
 }
 
-// template<
-      // typename _Key
-    // , typename _Mapped
-    // , typename _Cmp
-    // , typename _Allocator
-// >
-// AssocVector< _Key, _Mapped, _Cmp, _Allocator > &
-// AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator=( AssocVector && other )
-// {
-    // AssocVector temp( std::move( other ) );
-    // temp.swap( * this );
+template<
+      typename _Key
+    , typename _Mapped
+    , typename _Cmp
+    , typename _Allocator
+>
+AssocVector< _Key, _Mapped, _Cmp, _Allocator > &
+AssocVector< _Key, _Mapped, _Cmp, _Allocator >::operator=( AssocVector && other )
+{
+    AssocVector temp( std::move( other ) );
 
-    // return * this;
-// }
+    temp.swap( * this );
+
+    return * this;
+}
 
 template<
       typename _Key
@@ -3120,7 +3092,7 @@ template<
 void
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reserve( std::size_t newStorageCapacity )
 {
-    if( newStorageCapacity <= _storage.capacity() ){
+    if( util::less_equal( newStorageCapacity, _storage.capacity() ) ){
         return;
     }
 
@@ -3627,7 +3599,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( __ValueType && value
         }
         else
         {// item is in storage but is marked as erased
-            array::erase( _erased, greaterEqualInErased );
+           _erased.erase( greaterEqualInErased );
 
             greaterEqualInStorage->second = m;
 
@@ -3636,7 +3608,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::insertImpl( __ValueType && value
             result._inStorage = greaterEqualInStorage;
             result._inBuffer = 0;
 
-            // greaterEqualInErased is after 'array::erase' but still valid
+            // greaterEqualInErased is after 'Array::erase' but still valid
             result._inErased = greaterEqualInErased;
 
             result._current = greaterEqualInStorage;
@@ -3917,7 +3889,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::isErased(
     typename AssocVector::_Storage::const_iterator iterator
 )const
 {
-    typename _Erased::const_iterator const foundInErased = array::find_in_sorted(
+    typename _Erased::const_iterator const foundInErased = array::binary_search(
           _erased.begin()
         , _erased.end()
         , iterator
@@ -4370,6 +4342,14 @@ template<
 bool
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::validate()const
 {
+    if( calculateNewBufferCapacity( _storage.capacity() ) != _buffer.capacity() ){
+        return false;
+    }
+
+    if( calculateNewErasedCapacity( _storage.capacity() ) != _erased.capacity() ){
+        return false;
+    }
+
     return validateStorage() && validateBuffer() && validateErased();
 }
 
@@ -4442,13 +4422,13 @@ std::size_t
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
 {
     typename _Storage::iterator const foundInStorage
-        = array::find_in_sorted( _storage.begin(), _storage.end(), k, value_comp() );
+        = array::binary_search( _storage.begin(), _storage.end(), k, value_comp() );
 
     {//erase from _buffer
         if( foundInStorage == _storage.end() )
         {
             typename _Storage::iterator const foundInBuffer
-                = array::find_in_sorted( _buffer.begin(), _buffer.end(), k, value_comp() );
+                = array::binary_search( _buffer.begin(), _buffer.end(), k, value_comp() );
 
             if( foundInBuffer == _buffer.end() )
             {
@@ -4458,7 +4438,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( key_type const & k )
             }
             else
             {
-                array::erase( _buffer, foundInBuffer );
+                _buffer.erase( foundInBuffer );
 
                 AV_POSTCONDITION( validate() );
 
@@ -4518,7 +4498,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::erase( iterator pos )
     {//erase from _buffer
         if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) )
         {
-            array::erase( _buffer, posBase );
+            _buffer.erase( posBase );
 
             typename _Storage::iterator const greaterEqualInStorage
                 = pos.getCurrentInStorage()
@@ -4606,7 +4586,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::_erase( iterator pos )
     {//erase from _buffer
         if( util::is_between( _buffer.begin(), posBase, _buffer.end() ) )
         {
-            array::erase( _buffer, posBase );
+            _buffer.erase( posBase );
 
             AV_POSTCONDITION( validate() );
 
