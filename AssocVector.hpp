@@ -745,7 +745,7 @@ namespace array
                 }
             }
 
-            * pos = AV_MOVE_IF_NOEXCEPT( std::forward< _T2 >( t ) );
+            * pos = AV_MOVE_IF_NOEXCEPT( t );
         }
 
         // Array::push_back is not implemented to ensure invariant that:
@@ -895,7 +895,7 @@ namespace array
             }
             else
             {
-              ( * whereInsertInStorage ) = std::move( * currentInStorage );
+              ( * whereInsertInStorage ) = AV_MOVE_IF_NOEXCEPT( * currentInStorage );
 
               ++ whereInsertInStorage;
               ++ currentInStorage;
