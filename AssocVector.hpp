@@ -720,7 +720,7 @@ namespace array
         template< typename _T2 >
         void
         insert(
-              typename Array< _T >::iterator pos
+              typename Array< _T >::iterator const pos
             , _T2 && t
         )
         {
@@ -728,15 +728,24 @@ namespace array
             AV_PRECONDITION( util::is_between( begin(), pos, end() ) );
 
             AV_PRECONDITION( end() != 0 );
-            get_allocator().construct( end() );
 
-            if( pos != end() ){
-                util::move( pos, end(), pos + 1 );
+            get_allocator().construct( end() );
+            setSize( getSize() + 1 );
+
+            if( pos != end() )
+            {
+                typedef typename Array< _T >::iterator iterator;
+
+                iterator const first = pos;
+                iterator last = std::prev( end(), 1 );
+                iterator last2 = end();
+
+                while( first != last ){
+                    *( -- last2 ) = AV_MOVE_IF_NOEXCEPT( *( -- last ) );
+                }
             }
 
             * pos = AV_MOVE_IF_NOEXCEPT( std::forward< _T2 >( t ) );
-
-            setSize( getSize() + 1 );
         }
 
         // Array::push_back is not implemented to ensure invariant that:
@@ -3173,44 +3182,48 @@ void
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::reserve( std::size_t newStorageCapacity )
 {
     if( _storage.get_allocator().max_size() < newStorageCapacity ){
-        throw std::length_error( "AssocVector::reserve" );
+        throw std::length_error( "AssocVector< _K, _M, _C, _A >::reserve" );
     }
 
     if( util::less_equal( newStorageCapacity, _storage.capacity() ) ){
         return;
     }
 
-    std::size_t const newStorageSize = _storage.size() + _buffer.size();
-    _Storage newStorage( newStorageCapacity, _storage.get_allocator() );
-
-    {// may throw
-        iterator current = begin();
-        iterator const end = this->end();
-
-        while( current != end )
-        {
-            // for '++ current' object has exist and can not be moved
-            typename iterator::pointer_mutable const current_raw_ptr = current.getCurrent();
-
-            ++ current;
-
-            newStorage.place_back( AV_MOVE_IF_NOEXCEPT( * current_raw_ptr ) );
+    {// _erased
+        if( _erased.empty() == false ){
+            mergeStorageWithErased();
         }
+
+        _erased.reserve( calculateNewErasedCapacity( newStorageCapacity ) );
+
+        AV_CHECK( _erased.empty() );
     }
-    
-    std::size_t const newBufferCapacity = calculateNewBufferCapacity( newStorageCapacity );
-    _Storage newBuffer( newBufferCapacity, _buffer.get_allocator() );
-    
-    std::size_t const newErasedCapacity = calculateNewErasedCapacity( newStorageCapacity );
-    _Erased newErased( newErasedCapacity, _erased.get_allocator() );
-    
-    newStorage.swap( _storage );
-    newBuffer.swap( _buffer );
-    newErased.swap( _erased );
+
+    std::size_t const newBufferCapacity
+        = calculateNewBufferCapacity( newStorageCapacity );
+
+    std::size_t const newStorageSize = _storage.size() + _buffer.size();
+
+    {
+        _Storage newStorage( newStorageCapacity, _storage.get_allocator() );
+        _Storage newBuffer( newBufferCapacity, _buffer.get_allocator() );
+
+        util::move_merge_into_uninitialized(
+              _storage.begin()
+            , _storage.end()
+            , _buffer.begin()
+            , _buffer.end()
+            , newStorage.begin()
+            , value_comp()
+        );
+
+        newStorage.swap( _storage );
+        newBuffer.swap( _buffer );
+    }// call newStorage newBuffer destructors
+
+    _storage.setSize( newStorageSize );
 
     AV_POSTCONDITION( _buffer.empty() );
-    AV_POSTCONDITION( _erased.empty() );
-
     AV_POSTCONDITION( validate() );
 }
 
@@ -3839,19 +3852,54 @@ template<
 void
 AssocVector< _Key, _Mapped, _Cmp, _Allocator >::pushBack( __ValueType && value )
 {
-    while( _storage.size() == _storage.capacity() ){
-        // one call of 'reserve' may be not enough
+    if( _storage.size() != _storage.capacity() ){
+        _storage.place_back( std::forward< __ValueType >( value ) );
 
-        // size=1                       size=2
-        // capacity=1                   capacity=2
-        // S:[a]                        S:[ab]
-        // B:[b]        -> reserve ->   B:[ ]
-        // E:[ ]                        E:[ ]
+        AV_POSTCONDITION( validate() );
 
-        reserve( calculateNewStorageCapacity( _storage.capacity() ) );
+        return;
     }
 
-    _storage.place_back( std::forward< __ValueType >( value ) );
+    std::size_t const newStorageCapacity = calculateNewStorageCapacity( _storage.capacity() );
+    std::size_t const newBufferCapacity = calculateNewBufferCapacity( newStorageCapacity );
+    std::size_t const newErasedCapacity = calculateNewErasedCapacity( newStorageCapacity );
+
+    if( util::less_equal( newStorageCapacity, _storage.capacity() ) ){
+        return;
+    }
+
+    if( _storage.get_allocator().max_size() < newStorageCapacity ){
+        throw std::length_error( "AssocVector::reserve" );
+    }
+
+    _Storage newStorage( newStorageCapacity, _storage.get_allocator() );
+    _Storage newBuffer( newBufferCapacity, _buffer.get_allocator() );
+    _Erased newErased( newErasedCapacity, _erased.get_allocator() );
+
+    {// may throw
+        iterator current = begin();
+        iterator const end = this->end();
+
+        while( current != end )
+        {
+            // for '++ current' object has still exist and can not be moved before
+            typename iterator::pointer_mutable const current_raw_ptr = current.getCurrent();
+
+            ++ current;
+
+            newStorage.place_back( AV_MOVE_IF_NOEXCEPT( * current_raw_ptr ) );
+        }
+    }
+
+    // may throw an exception in __ValueType copy constructor, not exception safe
+    newStorage.place_back( std::forward< __ValueType >( value ) );
+
+    newStorage.swap( _storage );
+    newBuffer.swap( _buffer );
+    newErased.swap( _erased );
+
+    AV_POSTCONDITION( _buffer.empty() );
+    AV_POSTCONDITION( _erased.empty() );
 
     AV_POSTCONDITION( validate() );
 }
@@ -4857,6 +4905,15 @@ std::size_t AssocVector< _Key, _Mapped, _Cmp, _Allocator >::calculateNewStorageC
 {
     if( storageSize == 0 ){
         return 1;
+    }
+    else if( storageSize == 1 ){
+        // size=1                       size=2
+        // capacity=1                   capacity=2
+        // S:[a]                        S:[ab]
+        // B:[b]        -> reserve ->   B:[ ]
+        // E:[ ]                        E:[ ]
+
+        return 4;
     }
     else{
         return 2 * storageSize;
