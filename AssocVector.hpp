@@ -727,22 +727,14 @@ namespace array
             AV_PRECONDITION( util::less_equal( size() + 1, capacity() ) );
             AV_PRECONDITION( util::is_between( begin(), pos, end() ) );
 
-            AV_PRECONDITION( end() != 0 );
+            iterator const oldEnd = end();
 
             get_allocator().construct( end() );
             setSize( getSize() + 1 );
 
-            if( pos != end() )
+            if( pos != oldEnd )
             {
-                typedef typename Array< _T >::iterator iterator;
-
-                iterator const first = pos;
-                iterator last = std::prev( end(), 1 );
-                iterator last2 = end();
-
-                while( first != last ){
-                    *( -- last2 ) = AV_MOVE_IF_NOEXCEPT( *( -- last ) );
-                }
+                util::move( pos, oldEnd, pos + 1 );
             }
 
             * pos = AV_MOVE_IF_NOEXCEPT( t );
@@ -759,7 +751,6 @@ namespace array
             AV_CHECK( getSize() < capacity() );
 
             get_allocator().construct( end(), std::forward< __T2 >( value ) );
-
             setSize( getSize() + 1 );
         }
 
@@ -772,7 +763,7 @@ namespace array
 
             util::move( pos + 1, end(), pos );
             get_allocator().destroy( end() - 1 );
-            setSize( size() - 1 );
+            setSize( getSize() - 1 );
         }
 
     private:
@@ -947,14 +938,14 @@ namespace array
             )
             {
                 new ( static_cast< void * >( rWhereInsertInStorage ) )
-                    _T( std::move( * rCurrentInBuffer ) );
+                    _T( AV_MOVE_IF_NOEXCEPT( * rCurrentInBuffer ) );
 
                 -- rCurrentInBuffer;
             }
             else
             {
                 new ( static_cast< void * >( rWhereInsertInStorage ) )
-                    _T( std::move( * rCurrentInStorage ) );
+                    _T( AV_MOVE_IF_NOEXCEPT( * rCurrentInStorage ) );
 
                 -- rCurrentInStorage;
             }
@@ -976,13 +967,13 @@ namespace array
                 || cmp( * rCurrentInStorage, * rCurrentInBuffer )
             )
             {
-                * rWhereInsertInStorage = std::move( * rCurrentInBuffer );
+                * rWhereInsertInStorage = AV_MOVE_IF_NOEXCEPT( * rCurrentInBuffer );
 
                 -- rCurrentInBuffer;
             }
             else
             {
-                * rWhereInsertInStorage = std::move( * rCurrentInStorage );
+                * rWhereInsertInStorage = AV_MOVE_IF_NOEXCEPT( * rCurrentInStorage );
 
                 -- rCurrentInStorage;
             }
