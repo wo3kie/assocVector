@@ -77,7 +77,7 @@
         } \
     }
 
-int random( int min = 0, int max = 1024 * 1024 * 1024 )
+int my_random( int min = 0, int max = 1024 * 1024 * 1024 )
 {
 #ifdef AV_TEST_BOOST_RANDOM
     static boost::random::mt19937 gen;
@@ -167,7 +167,7 @@ struct S3
         ++ createdObjects;
 
         for( int i = 0 ; i < 10 ; ++ i ){
-            array.push_back( random() );
+            array.push_back( my_random() );
         }
     }
 
@@ -856,7 +856,7 @@ void insert_random()
         std::vector< int > array;
 
         for( unsigned j = 0 ; j < i ; ++ j )
-            array.push_back( random() );
+            array.push_back( my_random() );
 
         test_insert_random< AssocVector< int, _T > >( REPS / i, array, "insert_random.AssocVector< int, " + name< _T >() + " >" );
 
@@ -938,7 +938,7 @@ void index_operator_random()
         std::vector< int > array;
 
         for( unsigned j = 0 ; j < i ; ++ j )
-            array.push_back( random() );
+            array.push_back( my_random() );
 
         test_index_operator_random< AssocVector< int, _T > >( REPS / i, array, "index_operator_random.AssocVector< int, " + name< _T >() + " >" );
 
@@ -1039,7 +1039,7 @@ void erase_random()
         std::vector< int > array;
 
         for( unsigned j = 0 ; j < i ; ++ j )
-            array.push_back( random() );
+            array.push_back( my_random() );
 
         test_erase_random< AssocVector< int, _T > >( REPS / i, array, "erase_random.AssocVector< int, " + name< _T >() + " >" );
 
@@ -1067,10 +1067,10 @@ void random_operations()
         std::vector< std::pair< int, int > > array;
 
         for( unsigned j = 0 ; j < i/2 ; ++ j )
-            array.push_back( std::make_pair( 0, random() ) );
+            array.push_back( std::make_pair( 0, my_random() ) );
 
         for( unsigned j = i/2 ; j < i ; ++ j )
-            array.push_back( std::make_pair( random( 0, 2 ), random() ) );
+            array.push_back( std::make_pair( my_random( 0, 2 ), my_random() ) );
 
         test_random_operations< AssocVector< int, _T > >( REPS / i, array, "test_random_operations.AssocVector< int, " + name< _T >() + " >" );
 

@@ -475,12 +475,12 @@ namespace array
             return _data[ _size - 1 ];
         }
 
-        _T * const data()const noexcept
+        _T const * data()const noexcept
         {
             return _data;
         }
 
-        _T * const getData()const noexcept
+        _T const * getData()const noexcept
         {
             return data();
         }
@@ -2917,7 +2917,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     , _Allocator const & allocator
 )
     : _cmp( other._cmp )
-    , _allocator( _allocator )
+    , _allocator( allocator )
 {
     array::reset( _storage );
     array::create< value_type_mutable >( _storage, other._storage, getAllocator( _storage ) );
@@ -2963,7 +2963,7 @@ AssocVector< _Key, _Mapped, _Cmp, _Allocator >::AssocVector(
     , _buffer( other._buffer )
     , _erased( other._erased )
     , _cmp( other._cmp )
-    , _allocator( _allocator )
+    , _allocator( allocator )
 {
     array::reset( other._storage );
     array::reset( other._buffer );
