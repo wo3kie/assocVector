@@ -21,14 +21,23 @@
 #include "AssocVector.hpp"
 
 #ifdef AV_DEBUG
-    #define AV_ASSERT( expression )\
+    #define _CORE_DUMP()\
+        { int * core_dump = 0; * core_dump = 0; }
+
+    #define _AV_ASSERT_CORE_DUMP( expression )\
+        if( ( expression ) ){}else{ _CORE_DUMP() }
+
+    #define _AV_ASSERT( expression )\
         assert( expression )
 
+    #define AV_ASSERT( expression )\
+        _AV_ASSERT_CORE_DUMP( expression )
+
     #define AV_ASSERT_EQUAL( actual, expected )\
-        if( ( actual ) != ( expected ) ){ std::cout << "(" << actual << ") == " << expected << std::endl; assert( false );}
+        if( ( actual ) != ( expected ) ){ std::cout << "(" << actual << ") == " << expected << std::endl; AV_ASSERT( false );}
 
     #define AV_ASSERT_NOT_EQUAL( actual, expected )\
-        if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; assert( false );}
+        if( ( actual ) == ( expected ) ){ std::cout << "(" << actual << ") != " << expected << std::endl; AV_ASSERT( false );}
 #else
     #error Are you trying to run unit tests with assertions disabled ?
 #endif
@@ -1309,19 +1318,14 @@ void test_merge_1()
 
     {
         Array< int > a1;
-        a1.setData( new int[ 10 ] );
-        a1.setCapacity( 10 );
-        a1.setSize( 0 );
+        a1.reserve( 10 );
 
         Array< int > a2;
-        a2.setData( new int[ 10 ] );
-        a2.setCapacity( 10 );
-        a2.setSize( 4 );
+        a2.reserve( 10 );
 
-        a2[0] = 1;
-        a2[1] = 2;
-        a2[2] = 3;
-        a2[3] = 4;
+        for( int i : { 1, 2, 3, 4 } ){
+            a2.place_back( i );
+        }
 
         array::move_merge( a1, a2, std::less< int >() );
 
@@ -1335,26 +1339,18 @@ void test_merge_1()
         AV_ASSERT_EQUAL( a1[1], 2 );
         AV_ASSERT_EQUAL( a1[2], 3 );
         AV_ASSERT_EQUAL( a1[3], 4 );
-
-        delete [] a1.getData();
-        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.setData( new int[ 10 ] );
-        a1.setCapacity( 10 );
-        a1.setSize( 4 );
+        a1.reserve( 10 );
 
-        a1[0] = 1;
-        a1[1] = 2;
-        a1[2] = 3;
-        a1[3] = 4;
+        for( int i : { 1, 2, 3, 4 } ){
+            a1.place_back( i );
+        }
 
         Array< int > a2;
-        a2.setData( new int[ 10 ] );
-        a2.setCapacity( 10 );
-        a2.setSize( 0 );
+        a2.reserve( 10 );
 
         array::move_merge( a1, a2, std::less< int >() );
 
@@ -1368,33 +1364,22 @@ void test_merge_1()
         AV_ASSERT_EQUAL( a1[1], 2 );
         AV_ASSERT_EQUAL( a1[2], 3 );
         AV_ASSERT_EQUAL( a1[3], 4 );
-
-        delete [] a1.getData();
-        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.setData( new int[ 10 ] );
-        a1.setCapacity( 10 );
-        a1.setSize( 6 );
+        a1.reserve( 10 );
 
-        a1[0] = 1;
-        a1[1] = 2;
-        a1[2] = 3;
-        a1[3] = 4;
-        a1[4] = 5;
-        a1[5] = 6;
+        for( int i : { 1, 2, 3, 4, 5, 6 } ){
+            a1.place_back( i );
+        }
 
         Array< int > a2;
-        a2.setData( new int[ 10 ] );
-        a2.setCapacity( 10 );
-        a2.setSize( 4 );
+        a2.reserve( 10 );
 
-        a2[0] = 7;
-        a2[1] = 8;
-        a2[2] = 9;
-        a2[3] = 10;
+        for( int i : { 7, 8, 9, 10 } ){
+            a2.place_back( i );
+        }
 
         array::move_merge( a1, a2, std::less< int >() );
 
@@ -1414,33 +1399,22 @@ void test_merge_1()
         AV_ASSERT_EQUAL( a1[7], 8 );
         AV_ASSERT_EQUAL( a1[8], 9 );
         AV_ASSERT_EQUAL( a1[9], 10 );
-
-        delete [] a1.getData();
-        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.setData( new int[ 10 ] );
-        a1.setCapacity( 10 );
-        a1.setSize( 6 );
+        a1.reserve( 10 );
 
-        a1[0] = 1;
-        a1[1] = 3;
-        a1[2] = 5;
-        a1[3] = 7;
-        a1[4] = 9;
-        a1[5] = 11;
+        for( int i : { 1, 3, 5, 7, 9, 11 } ){
+            a1.place_back( i );
+        }
 
         Array< int > a2;
-        a2.setData( new int[ 10 ] );
-        a2.setCapacity( 10 );
-        a2.setSize( 4 );
+        a2.reserve( 10 );
 
-        a2[0] = 2;
-        a2[1] = 4;
-        a2[2] = 6;
-        a2[3] = 8;
+        for( int i : { 2, 4, 6, 8 } ){
+            a2.place_back( i );
+        }
 
         array::move_merge( a1, a2, std::less< int >() );
 
@@ -1460,33 +1434,22 @@ void test_merge_1()
         AV_ASSERT_EQUAL( a1[7], 8 );
         AV_ASSERT_EQUAL( a1[8], 9 );
         AV_ASSERT_EQUAL( a1[9], 11 );
-
-        delete [] a1.getData();
-        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.setData( new int[ 10 ] );
-        a1.setCapacity( 10 );
-        a1.setSize( 6 );
+        a1.reserve( 10 );
 
-        a1[0] = 5;
-        a1[1] = 6;
-        a1[2] = 7;
-        a1[3] = 8;
-        a1[4] = 9;
-        a1[5] = 10;
+        for( int i : { 5, 6, 7, 8, 9, 10 } ){
+            a1.place_back( i );
+        }
 
         Array< int > a2;
-        a2.setData( new int[ 10 ] );
-        a2.setCapacity( 10 );
-        a2.setSize( 4 );
+        a2.reserve( 10 );
 
-        a2[0] = 1;
-        a2[1] = 2;
-        a2[2] = 3;
-        a2[3] = 4;
+        for( int i : { 1, 2, 3, 4 } ){
+            a2.place_back( i );
+        }
 
         array::move_merge( a1, a2, std::less< int >() );
 
@@ -1506,33 +1469,22 @@ void test_merge_1()
         AV_ASSERT_EQUAL( a1[7], 8 );
         AV_ASSERT_EQUAL( a1[8], 9 );
         AV_ASSERT_EQUAL( a1[9], 10 );
-
-        delete [] a1.getData();
-        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.setData( new int[ 10 ] );
-        a1.setCapacity( 10 );
-        a1.setSize( 6 );
+        a1.reserve( 10 );
 
-        a1[0] = 1;
-        a1[1] = 2;
-        a1[2] = 3;
-        a1[3] = 8;
-        a1[4] = 9;
-        a1[5] = 10;
+        for( int i : { 1, 2, 3, 8, 9, 10 } ){
+            a1.place_back( i );
+        }
 
         Array< int > a2;
-        a2.setData( new int[ 10 ] );
-        a2.setCapacity( 10 );
-        a2.setSize( 4 );
+        a2.reserve( 10 );
 
-        a2[0] = 4;
-        a2[1] = 5;
-        a2[2] = 6;
-        a2[3] = 7;
+        for( int i : { 4, 5, 6, 7 } ){
+            a2.place_back( i );
+        }
 
         array::move_merge( a1, a2, std::less< int >() );
 
@@ -1552,33 +1504,22 @@ void test_merge_1()
         AV_ASSERT_EQUAL( a1[7], 8 );
         AV_ASSERT_EQUAL( a1[8], 9 );
         AV_ASSERT_EQUAL( a1[9], 10 );
-
-        delete [] a1.getData();
-        delete [] a2.getData();
     }
 
     {
         Array< int > a1;
-        a1.setData( new int[ 10 ] );
-        a1.setCapacity( 10 );
-        a1.setSize( 6 );
+        a1.reserve( 10 );
 
-        a1[0] = 2;
-        a1[1] = 3;
-        a1[2] = 5;
-        a1[3] = 6;
-        a1[4] = 8;
-        a1[5] = 9;
+        for( int i : { 2, 3, 5, 6, 8, 9 } ){
+            a1.place_back( i );
+        }
 
         Array< int > a2;
-        a2.setData( new int[ 10 ] );
-        a2.setCapacity( 10 );
-        a2.setSize( 4 );
+        a2.reserve( 10 );
 
-        a2[0] = 1;
-        a2[1] = 4;
-        a2[2] = 7;
-        a2[3] = 10;
+        for( int i : { 1, 4, 7, 10 } ){
+            a2.place_back( i );
+        }
 
         array::move_merge( a1, a2, std::less< int >() );
 
@@ -1598,9 +1539,6 @@ void test_merge_1()
         AV_ASSERT_EQUAL( a1[7], 8 );
         AV_ASSERT_EQUAL( a1[8], 9 );
         AV_ASSERT_EQUAL( a1[9], 10 );
-
-        delete [] a1.getData();
-        delete [] a2.getData();
     }
 }
 
@@ -1611,25 +1549,18 @@ void test_merge_2()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage.setData( new std::pair< int, int >[ 10 ] );
-    storage.setSize( 0 );
-    storage.setCapacity( 10 );
+    storage.reserve( 10 );
 
     for( int i = 10 ; i < 15 ; ++ i ){
-        storage.setSize( storage.size() + 1 );
-        storage[ storage.size() - 1 ] = std::pair< int, int >( i, 0 );
+        storage.place_back( std::pair< int, int >( i, 0 ) );
     }
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer.setData( new std::pair< int, int >[ 3 ] );
-    buffer.setSize( 0 );
-    buffer.setCapacity( 3 );
+    buffer.reserve( 3 );
 
     for( int i = 3 ; i < 6 ; ++ i ){
-        buffer.setSize( buffer.size() + 1 );
-        buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
-
+        buffer.place_back( std::pair< int, int >( i, 0 ) );
     }
 
     array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -1648,9 +1579,6 @@ void test_merge_2()
     AV_ASSERT_EQUAL( storage[5].first, 12 );
     AV_ASSERT_EQUAL( storage[6].first, 13 );
     AV_ASSERT_EQUAL( storage[7].first, 14 );
-
-    delete [] storage.getData();
-    delete [] buffer.getData();
 }
 
 //
@@ -1660,25 +1588,18 @@ void test_merge_3()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage.setData( new std::pair< int, int >[ 10 ] );
-    storage.setSize( 0 );
-    storage.setCapacity( 10 );
+    storage.reserve( 10 );
 
     for( int i = 10 ; i < 15 ; ++ i ){
-        storage.setSize( storage.size() + 1 );
-        storage[ storage.size() - 1 ] = std::pair< int, int >( i, 0 );
-
+        storage.place_back( std::pair< int, int >( i, 0 ) );
     }
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer.setData( new std::pair< int, int >[ 3 ] );
-    buffer.setSize( 0 );
-    buffer.setCapacity( 15 );
+    buffer.reserve( 3 );
 
     for( int i = 23 ; i < 26 ; ++ i ){
-        buffer.setSize( buffer.size() + 1 );
-        buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
+        buffer.place_back( std::pair< int, int >( i, 0 ) );
     }
 
     array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -1687,7 +1608,7 @@ void test_merge_3()
     AV_ASSERT_EQUAL( storage.size(), 8 );
 
     AV_ASSERT_EQUAL( buffer.size(), 3 );
-    AV_ASSERT_EQUAL( buffer.capacity(), 15 );
+    AV_ASSERT_EQUAL( buffer.capacity(), 3 );
 
     AV_ASSERT_EQUAL( storage[0].first, 10 );
     AV_ASSERT_EQUAL( storage[1].first, 11 );
@@ -1697,9 +1618,6 @@ void test_merge_3()
     AV_ASSERT_EQUAL( storage[5].first, 23 );
     AV_ASSERT_EQUAL( storage[6].first, 24 );
     AV_ASSERT_EQUAL( storage[7].first, 25 );
-
-    delete [] storage.getData();
-    delete [] buffer.getData();
 }
 
 //
@@ -1709,24 +1627,18 @@ void test_merge_4()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage.setData( new std::pair< int, int >[ 10 ] );
-    storage.setSize( 0 );
-    storage.setCapacity( 10 );
+    storage.reserve( 10 );
 
     for( int i = 10 ; i < 20 ; i += 2 ){
-        storage.setSize( storage.size() + 1 );
-        storage[ storage.size() - 1 ] = std::pair< int, int >( i, 0 );
+        storage.place_back( std::pair< int, int >( i, 0 ) );
     }
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer.setData( new std::pair< int, int >[ 3 ] );
-    buffer.setSize( 0 );
-    buffer.setCapacity( 10 );
+    buffer.reserve( 10 );
 
     for( int i = 13 ; i < 19 ; i += 2 ){
-        buffer.setSize( buffer.size() + 1 );
-        buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
+        buffer.place_back( std::pair< int, int >( i, 0 ) );
     }
 
     array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -1745,9 +1657,6 @@ void test_merge_4()
     AV_ASSERT_EQUAL( storage[5].first, 16 );
     AV_ASSERT_EQUAL( storage[6].first, 17 );
     AV_ASSERT_EQUAL( storage[7].first, 18 );
-
-    delete [] storage.getData();
-    delete [] buffer.getData();
 }
 
 //
@@ -1757,20 +1666,15 @@ void test_merge_5()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage.setData( new std::pair< int, int >[ 10 ] );
-    storage.setSize( 0 );
-    storage.setCapacity( 10 );
+    storage.reserve( 10 );
 
     for( int i = 10 ; i < 20 ; i += 2 ){
-        storage.setSize( storage.size() + 1 );
-        storage[ storage.size() - 1 ] = std::pair< int, int >( i, 0 );
+        storage.place_back( std::pair< int, int >( i, 0 ) );
     }
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer.setData( new std::pair< int, int >[ 3 ] );
-    buffer.setSize( 0 );
-    buffer.setCapacity( 3 );
+    buffer.reserve( 3 );
 
     array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
@@ -1785,9 +1689,6 @@ void test_merge_5()
     AV_ASSERT_EQUAL( storage[2].first, 14 );
     AV_ASSERT_EQUAL( storage[3].first, 16 );
     AV_ASSERT_EQUAL( storage[4].first, 18 );
-
-    delete [] storage.getData();
-    delete [] buffer.getData();
 }
 
 //
@@ -1797,19 +1698,14 @@ void test_merge_6()
 {
     array::Array< std::pair< int, int > > storage;
 
-    storage.setData( new std::pair< int, int >[ 10 ] );
-    storage.setSize( 0 );
-    storage.setCapacity( 10 );
+    storage.reserve( 10 );
 
     array::Array< std::pair< int, int > > buffer;
 
-    buffer.setData( new std::pair< int, int >[ 3 ] );
-    buffer.setSize( 0 );
-    buffer.setCapacity( 20 );
+    buffer.reserve( 20 );
 
     for( int i = 13 ; i < 19 ; i += 2 ){
-        buffer.setSize( buffer.size() + 1 );
-        buffer[ buffer.size() - 1 ] = std::pair< int, int >( i, 0 );
+        buffer.place_back( std::pair< int, int >( i, 0 ) );
     }
 
     array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
@@ -1823,9 +1719,6 @@ void test_merge_6()
     AV_ASSERT_EQUAL( storage[0].first, 13 );
     AV_ASSERT_EQUAL( storage[1].first, 15 );
     AV_ASSERT_EQUAL( storage[2].first, 17 );
-
-    delete [] storage.getData();
-    delete [] buffer.getData();
 }
 
 //
@@ -1834,16 +1727,10 @@ void test_merge_6()
 void test_merge_7()
 {
     array::Array< std::pair< int, int > > storage;
-
-    storage.setData( new std::pair< int, int >[ 10 ] );
-    storage.setSize( 0 );
-    storage.setCapacity( 10 );
+    storage.reserve( 10 );
 
     array::Array< std::pair< int, int > > buffer;
-
-    buffer.setData( new std::pair< int, int >[ 3 ] );
-    buffer.setSize( 0 );
-    buffer.setCapacity( 3 );
+    buffer.reserve( 3 );
 
     array::move_merge( storage, buffer, util::CmpByFirst< std::pair< int, int >, std::less< int > >() );
 
@@ -1852,39 +1739,38 @@ void test_merge_7()
 
     AV_ASSERT_EQUAL( buffer.size(), 0 );
     AV_ASSERT_EQUAL( buffer.capacity(), 3 );
-
-    delete [] storage.getData();
-    delete [] buffer.getData();
 }
 
 //
 // test_empty_container
 //
-void test_empty_container_impl( AssocVector< Key, Value > const & av )
-{
-    AV_ASSERT( av.empty() );
-    AV_ASSERT_EQUAL( av.size(), 0 );
-    AV_ASSERT_EQUAL( av.capacity(), 4 /*storage*/ + 2 /*buffer*/ );
-
-    AV_ASSERT( av.begin() == av.end() );
-    AV_ASSERT( av.cbegin() == av.cend() );
-    AV_ASSERT( av.rbegin() == av.rend() );
-    AV_ASSERT( av.crbegin() == av.crend() );
-}
-
 void test_empty_container()
 {
     {
         AssocVector< Key, Value > av;
 
-        test_empty_container_impl( av );
+        AV_ASSERT( av.empty() );
+        AV_ASSERT_EQUAL( av.size(), 0 );
+        AV_ASSERT_EQUAL( av.capacity(), 0 );
+
+        AV_ASSERT( av.begin() == av.end() );
+        AV_ASSERT( av.cbegin() == av.cend() );
+        AV_ASSERT( av.rbegin() == av.rend() );
+        AV_ASSERT( av.crbegin() == av.crend() );
     }
 
     {
         std::allocator< std::pair< Key, Value > > allocator;
         AssocVector< Key, Value > av( allocator );
 
-        test_empty_container_impl( av );
+        AV_ASSERT( av.empty() );
+        AV_ASSERT_EQUAL( av.size(), 0 );
+        AV_ASSERT_EQUAL( av.capacity(), 0 );
+
+        AV_ASSERT( av.begin() == av.end() );
+        AV_ASSERT( av.cbegin() == av.cend() );
+        AV_ASSERT( av.rbegin() == av.rend() );
+        AV_ASSERT( av.crbegin() == av.crend() );
     }
 
     {
@@ -1892,7 +1778,46 @@ void test_empty_container()
         std::allocator< std::pair< Key, Value > > allocator;
         AssocVector< Key, Value > av( cmp, allocator );
 
-        test_empty_container_impl( av );
+        AV_ASSERT( av.empty() );
+        AV_ASSERT_EQUAL( av.size(), 0 );
+        AV_ASSERT_EQUAL( av.capacity(), 0 );
+
+        AV_ASSERT( av.begin() == av.end() );
+        AV_ASSERT( av.cbegin() == av.cend() );
+        AV_ASSERT( av.rbegin() == av.rend() );
+        AV_ASSERT( av.crbegin() == av.crend() );
+    }
+}
+
+//
+// test_empty_container_push_back
+//
+void test_empty_container_push_back()
+{
+    AssocVector< Key, Value > av;
+
+    {
+        av[ 2 ] = 2;
+
+        AV_ASSERT( av.bufferSize() <= av.bufferCapacity() );
+        AV_ASSERT( av.storageSize() <= av.storageCapacity() );
+        AV_ASSERT( av.erasedSize() <= av.erasedCapacity() );
+    }
+
+    {
+        av[ 1 ] = 1;
+
+        AV_ASSERT( av.bufferSize() <= av.bufferCapacity() );
+        AV_ASSERT( av.storageSize() <= av.storageCapacity() );
+        AV_ASSERT( av.erasedSize() <= av.erasedCapacity() );
+    }
+
+    {
+        av[ 3 ] = 3;
+
+        AV_ASSERT( av.bufferSize() <= av.bufferCapacity() );
+        AV_ASSERT( av.storageSize() <= av.storageCapacity() );
+        AV_ASSERT( av.erasedSize() <= av.erasedCapacity() );
     }
 }
 
@@ -2296,20 +2221,11 @@ void test_equal_range()
 }
 
 //
-// test_shrink_to_fit
+// test_swap
 //
-void test_shrink_to_fit()
+void test_swap()
 {
-    typedef AssocVector< Key, Value > AV;
-    AV av;
-
-    for( int i = 600 ; i > 0 ; -- i ){
-        av[ i ] = i;
-    }
-
-    AV( av ).swap( av );
-
-    AV_ASSERT_EQUAL( av.size(), av.capacity() );
+    // todo
 }
 
 //
@@ -3388,6 +3304,7 @@ int main( int argc, char * argv[] )
         test_clear();
 
         test_empty_container();
+        test_empty_container_push_back();
 
         test_insert_in_increasing_order();
         test_insert_in_decreasing_order();
@@ -3411,7 +3328,7 @@ int main( int argc, char * argv[] )
         test_upper_bound();
         test_equal_range();
 
-        test_shrink_to_fit();
+        test_swap();
 
         test_operator_index();
 
