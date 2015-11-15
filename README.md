@@ -1,4 +1,4 @@
-## Copyright (C) 2012 Lukasz Czerwinski
+## Copyright (C) 2012 Łukasz Czerwiński
 
 ## AssocVector
 AssocVector is a container like std::map but it is implemented using an array for low memory consumption and better cache reusability. Due to keeping data locally searching in a sorted array has the same complexity as searching in a balanced tree however it is faster by a constant factor.
@@ -9,7 +9,7 @@ https://github.com/wo3kie/assocVector
   
 ## Requirements
 C++11  
-Loki from Andrei Alexandrescu (optional for performance test)
+Loki - from Andrei Alexandrescu [here](http://loki-lib.sourceforge.net/) (optional for performance test)
 
 ## How to build it?
 make
@@ -37,12 +37,12 @@ AssocVector is absolutely compatible with _std::map_
 ```
 
 ## How does _AssocVector_ work?
-AssocVector is composed of three arrays,
-* first called 'storage', with objects
-* second called 'buffer', with objects
-* third called 'erased', with pointers to erased objects
+AssocVector is composed of three arrays
+* first with obects called 'storage'
+* second with objects called 'buffer'
+* third with pointers called 'erased'
 
-All arrays are kept sorted all the time. Insert operation puts new items into 'buffer'. Since 'buffer' is much shorter than 'storage' it is quite effective. When 'buffer' is completely full it is merged into 'storage'. This operation may be longer however it is performed only sometimes.
+All arrays are being sorted all the time. _Insert_ puts new items into the 'buffer'. Since 'buffer' is much shorter than 'storage' this is quite effective oprtation. When 'buffer' is full it is being merged into 'storage'. This operation may be not cheap but it is performed only from time to time. Lets take a look at an example:
 
 ```
     +---+---+---+---+---+---+---+---+---+---+---+---+---+  
@@ -102,9 +102,9 @@ After AssocVector::merge called
     +---+---+---+  
 ```
 
-All the time size of 'buffer' is kept as sqrt('storage'.size()) which is an optimal coefficient for it.
+All the time size of 'buffer' is kept as sqrt('storage'.size()) which is an optimal size for it.
 
-Erasing items is implemented in two ways. Items present in 'buffer' are erased immediately. Items in 'storage' are not erased immediately, but they are marked as erased using 'erased' table. If 'erased' table is filled in completely such items are really removed from 'storage'. Size of 'erased' is the same as size of 'buffer' and equal sqrt('storage'.size()).
+Erasing items is implemented in two ways. Items present in 'buffer' are erased immediately. Items in 'storage' are not erased immediately, but they are marked as erased using 'erased' table. If 'erased' table is full all coresponding items are removed from 'storage'. Size of 'erased' is the same as size of 'buffer' and it is equal to sqrt('storage'.size()).
 
 ```
     +---+---+---+---+---+---+---+---+---+---+---+---+---+  
@@ -189,7 +189,7 @@ After erase 50
 ```
 
 ## Why a buffer has a size _sqrt_ of _storage_?
-We may assume that storage has size equal _N_, buffer has size _B_.
+We may assume a that storage has size equal _N_ and a buffer has size equal _B_.
 Putting items to the beginning of AssocVector may be considered as a sequence of following operations:
 
 ```
@@ -208,10 +208,10 @@ Putting items to the beginning of AssocVector may be considered as a sequence of
     Merge  
 ```
 
-If buffer has size of _B_, pair of operations (_InsertToBuffer_, _Merge_) is executed _N_/_B_ times.  
+If buffer has size of _B_, couple of operations (_InsertToBuffer_, _Merge_) is executed _N_/_B_ times.  
   
-The bigger buffer is the longer takes putting into it but merges are performed less often,  
-the shorter buffer is the shorter takes putting into it but merges are have to be performed more often.  
+The bigger buffer is the longer it takes to put an item into but it necesitates merge operation less frequently,  
+the shorter buffer is the shorter it takes to put an item into it but merge operation has to be performed more often.  
   
 We have to find such buffer size _B_, as a function of storage size _N_, to make it optimal.  
   
@@ -241,7 +241,5 @@ f'(_B_) = 0  <->  1 = _N_/(_B_^2)  <->  _B_ = sqrt(_N_).
   
 
 ### Contributors
-I would like to thank you for your contributions
-- you allowed me to improve the quality of the AssocVector library:
-
+I would like to thank you for your contributions which allowed me to improve the quality of the AssocVector library:
 * Arkadiusz Nagorka, did a great code review and found some bugs  
