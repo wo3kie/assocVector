@@ -2266,30 +2266,6 @@ void test_user_type()
     av.find( Key() );
 }
 
-//
-// test_types
-//
-void test_types()
-{
-    typedef AssocVector< Key, Value > AV;
-
-    sizeof( AV::key_type );
-    sizeof( AV::mapped_type );
-    sizeof( AV::value_type );
-    sizeof( AV::key_compare );
-    sizeof( AV::value_compare );
-    sizeof( AV::allocator_type );
-    sizeof( AV::reference );
-    sizeof( AV::const_reference );
-    sizeof( AV::iterator );
-    sizeof( AV::const_iterator );
-    sizeof( AV::size_type );
-    sizeof( AV::difference_type );
-    sizeof( AV::pointer );
-    sizeof( AV::const_pointer );
-    sizeof( AV::reverse_iterator );
-    sizeof( AV::const_reverse_iterator );
-}
 
 //
 // test_constructor
@@ -3099,7 +3075,7 @@ void cxx11x_move_test_2()
 
         {// operator[]( value_type )
             for( unsigned i = counter / 2 ; i < counter ; ++ i ){
-                av[ i ] == i;
+                av[ i ] = i;
             }
         }
 
@@ -3193,7 +3169,7 @@ void cxx11x_at_test()
     AV_ASSERT( av.at( "c" ) == 3 );
 
     try{
-        av.at( "b" ) == 2;
+        av.at( "b" ) = 2;
         AV_ASSERT( false );
     }
     catch( std::out_of_range & ){
@@ -3203,7 +3179,7 @@ void cxx11x_at_test()
     }
 
     try{
-        av.at( "d" ) == 4;
+        av.at( "d" ) = 4;
         AV_ASSERT( false );
     }
     catch( std::out_of_range & ){
@@ -3333,8 +3309,6 @@ int main( int argc, char * argv[] )
         test_operator_index();
 
         test_user_type();
-
-        test_types();
 
         std::cout << "OK." << std::endl;
     }
