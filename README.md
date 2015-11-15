@@ -8,7 +8,7 @@ AssocVector was inspired by Loki::AssocVector written by Andrei Alexandrescu, ho
 https://github.com/wo3kie/assocVector  
   
 ## Requirements
-C++11
+C++11  
 Loki from Andrei Alexandrescu (optional for performance test)
 
 ## How to build it?
@@ -166,6 +166,7 @@ After erase 0
 
 After erase 11
 
+```
     +---+---+---+---+---+---+---+---+---+---+---+---+---+  
     | 0 | 1 | 4 | 6 | 8 | 9 | 11| 13| 32| 35| 47| 48| 50|  
     +---+---+---+---+---+---+---+---+---+---+---+---+---+  
