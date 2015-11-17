@@ -41,7 +41,7 @@ AssocVector is composed of three arrays
 * second with objects called 'buffer'
 * third with pointers called 'erased'
 
-All arrays are kept sorted all the time. _Insert_ puts a new item into 'buffer'. Since 'buffer' is much shorter than 'storage' this is an effective oprtation. When 'buffer' is filled completely it is merged with 'storage'. This operation may be not cheap but it is performed only from time to time. Lets take a look at an example:
+All arrays are kept sorted all the time. _Insert_ puts a new item into 'buffer'. Since 'buffer' is much shorter than 'storage' this is an effective oprtation. When 'buffer' is filled completely it is merged with 'storage'. This operation may not be cheap but it is performed only from time to time. Lets take a look at an example:
 
 ```
     +---+---+---+---+---+---+---+---+---+---+---+---+---+  
@@ -101,7 +101,7 @@ After AssocVector::merge called
     +---+---+---+  
 ```
 
-Erase of item is implemented in two ways. Item present in 'buffer' is erased immediately. Item present in 'storage' are not erased, but it is marked as 'removed' using 'erased' table. If 'erased' table is full all coresponding items are removed from 'storage'. Size of 'erased' is the same as size of 'buffer' and it is equal to sqrt('storage'.size()).
+Erase of item is implemented in two ways. Item present in 'buffer' is erased immediately. Item present in 'storage' is not erased, but it is marked as 'removed' using 'erased' table. If 'erased' table is full all coresponding items are removed from 'storage'. Size of 'erased' is the same as size of 'buffer' and it is equal to sqrt('storage'.size()).
 
 ```
     +---+---+---+---+---+---+---+---+---+---+---+---+---+  
@@ -216,13 +216,13 @@ We can spot also that
 ...  
 last (_N_/_B_)th _Merge_ takes (_N_/_B_)_B_ = _N_ assignments.  
   
-All _Merge_ operations together take (_B_+2_B_+3_B_+4_B_+...+(_N_/_B_)_B_) assignments:  
-(_B_+2_B_+3_B_+4_B_+...+(_N_/_B_)_B_)  
+All _Merge_ operations together take (_B_+2 _B_+3 _B_+4 _B_+...+(_N_/_B_)_B_) assignments:  
+(_B_+2 _B_+3 _B_+4 _B_+...+(_N_/_B_)_B_)  
 = _B_(1+2+3+4+...+(_N_/_B_))  
 = _B_((1+_N_/_B_)(_N_/_B_)/2)  
 = (1+_N_/_B_)(_N_/2) assignments  
   
-Putting is all together we get, that all operations take (_N_/2)(1+_B_)+(1+(_N_/_B_))(_N_/2) assignments what is equal to  
+Putting it all together we are getting, that all operations take
 (_N_/2)(1+_B_)+(1+(_N_/_B_))(_N_/2)  
 = (_N_/2)((1+_B_)+(1+_N_/_B_))  
 = (_N_/2)(_B_+_N_/_B_+2) assignments.  
@@ -239,5 +239,5 @@ f'(_B_) = 0
 _B_ = sqrt(_N_).  
   
 ## Contributors
-I would like to thank to Arkadiusz Nagórka for making a great code review and finding some bugs.
+I would like to thank Arkadiusz Nagórka for making a great code review and finding some bugs.
 
