@@ -209,10 +209,10 @@ We may assume that a storage has a size equal _N_ and a buffer has a size equal 
 One _InsertToBuffer_ takes 1+2+3+4+...+_B_ = (1+_B_)(_B_/2) = (_B_/2)(1+_B_) assignments. All _InsertToBuffer_ operations take _N_/_B_ times more, that's (_N_/_B_)(_B_/2)(1+_B_) = (_N_/2)(1+_B_) assignments.  
   
 We can spot also that  
-1st _Merge_ takes _B_ assignments  
-2nd _Merge_ takes 2 _B_ assignments (_B_ moves for making a place, _B_ assignments)  
-3rd _Merge_ takes 3 _B_ assignments (2 _B_ moves for making a place, _B_ assignments)  
-4th _Merge_ takes 4 _B_ assignments (3 _B_ moves for making a place, _B_ assignments)  
+1st _Merge_ takes *B* assignments  
+2nd _Merge_ takes 2*B* assignments (_B_ moves for making a place, _B_ assignments)  
+3rd _Merge_ takes 3*B* assignments (2*B* moves for making a place, _B_ assignments)  
+4th _Merge_ takes 4*B* assignments (3*B* moves for making a place, _B_ assignments)  
 ...  
 last (_N_/_B_)th _Merge_ takes (_N_/_B_)_B_ = _N_ assignments.  
   
