@@ -216,8 +216,8 @@ We can spot also that
 ...  
 last (_N_/_B_)th _Merge_ takes (_N_/_B_)_B_ = _N_ assignments.  
   
-All _Merge_ operations together take (_B_+2 _B_+3 _B_+4 _B_+...+(_N_/_B_)_B_) assignments:  
-(_B_+2 _B_+3 _B_+4 _B_+...+(_N_/_B_)_B_)  
+All _Merge_ operations together take (*B*+2*B*+3*B*+4*B*+...+(_N_/_B_)_B_) assignments:  
+(*B*+2*B*+3*B*+4*B*+...+(_N_/_B_)_B_)  
 = _B_(1+2+3+4+...+(_N_/_B_))  
 = _B_((1+_N_/_B_)(_N_/_B_)/2)  
 = (1+_N_/_B_)(_N_/2) assignments  
