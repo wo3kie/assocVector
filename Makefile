@@ -1,4 +1,4 @@
-CXX=clang++
+CXX=g++
 CXXFLAGS=--std=c++11 -O1
 
 # put path to your LOKI library here
